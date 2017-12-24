@@ -1,0 +1,66 @@
+#!/sbin/openrc-run
+# vim:set ft=bash:
+
+description="Provides EC2 cloud bootstrap"
+
+depend() {
+    need net
+    provide cloud-final
+}
+
+_get_metadata() {
+    local uri="$1"
+    wget -qO - "http://169.254.169.254/latest/$uri" 2>/dev/null
+}
+
+_update_hostname() {
+    local ec2_fqdn="$(_get_metadata meta-data/hostname)"
+    local short_hostname="${ec2_fqdn%%\.*}"
+    echo "$short_hostname" > /etc/hostname
+    hostname -F /etc/hostname
+    echo -e "127.0.1.1\t$ec2_fqdn $short_hostname" >> /etc/hosts
+}
+
+_set_ssh_keys() {
+    local user="$1"
+    local group="$(getent passwd $user | cut -d: -f4)"
+    local ssh_dir="$(getent passwd $user | cut -d: -f6)/.ssh"
+    local keys_file="$ssh_dir/authorized_keys"
+
+    if [ ! -d "$ssh_dir" ]; then
+        mkdir -p "$ssh_dir"
+        chmod 755 "$ssh_dir"
+    fi
+
+    [ -f "$keys_file" ] && rm "$keys_file"
+
+    touch "$keys_file"
+    chmod 600 "$keys_file"
+    chown -R $user:$group "$ssh_dir"
+
+    for key in "$(_get_metadata meta-data/public-keys/)"; do
+        echo $(_get_metadata "meta-data/public-keys/${key%=*}/openssh-key/") >> "$keys_file"
+    done
+}
+
+_run_userdata() {
+    user_data=$(_get_metadata user-data)
+    if echo $user_data | grep '^#!/' 2>&1 >/dev/null; then
+        echo "$user_data" > /var/lib/cloud/user-data.sh
+        chmod +x  /var/lib/cloud/user-data.sh
+        /var/lib/cloud/user-data.sh > /var/log/cloud-bootstrap.log 2>&1
+    fi
+}
+
+start() {
+    # Don't bootstrap if the host has already been bootstrapped
+    [ -f "/var/lib/cloud/.bootstrap-complete" ] && return 0
+
+    [ -d "/var/lib/cloud" ] || mkdir -p /var/lib/cloud
+
+    ebegin "Setting ec2 hostname"; _update_hostname; eend $?
+    ebegin "Setting ec2 user ssh keys"; _set_ssh_keys "alpine"; eend $?
+    ebegin "Running ec2 user data script"; _run_userdata; eend $?
+
+    touch "/var/lib/cloud/.bootstrap-complete"
+}
