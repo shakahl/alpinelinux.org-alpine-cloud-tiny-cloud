@@ -52,6 +52,10 @@ _run_userdata() {
     fi
 }
 
+_resize_root_partition() {
+    resize2fs $(mountpoint -n / | cut -d' ' -f1)
+}
+
 _scramble_password() {
     echo "$1:$(head -c 100 /dev/urandom | sha512sum | cut -d' ' -f1)" | chpasswd
 }
@@ -64,6 +68,7 @@ start() {
 
     ebegin "Scrambling root password"; _scramble_password root; eend $?
     ebegin "Scrambling alpine password"; _scramble_password alpine; eend $?
+    ebegin "Resizing root partition"; _resize_root_partition; eend $?
     ebegin "Setting ec2 hostname"; _update_hostname; eend $?
     ebegin "Setting ec2 user ssh keys"; _set_ssh_keys "alpine"; eend $?
     ebegin "Running ec2 user data script"; _run_userdata; eend $?
