@@ -52,12 +52,18 @@ _run_userdata() {
     fi
 }
 
+_scramble_password() {
+    echo "$1:$(head -c 100 /dev/urandom | sha512sum | cut -d' ' -f1)" | chpasswd
+}
+
 start() {
     # Don't bootstrap if the host has already been bootstrapped
     [ -f "/var/lib/cloud/.bootstrap-complete" ] && return 0
 
     [ -d "/var/lib/cloud" ] || mkdir -p /var/lib/cloud
 
+    ebegin "Scrambling root password"; _scramble_password root; eend $?
+    ebegin "Scrambling alpine password"; _scramble_password alpine; eend $?
     ebegin "Setting ec2 hostname"; _update_hostname; eend $?
     ebegin "Setting ec2 user ssh keys"; _set_ssh_keys "alpine"; eend $?
     ebegin "Running ec2 user data script"; _run_userdata; eend $?
