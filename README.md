@@ -31,6 +31,8 @@ those things. Instead it supports:
 - setting system hostname
 - install user's configured SSH keys to the alpine user's authorized_keys file
 - run any script-like user data (must start with #!)
+- scramble root and alpine password
+- resize root partition to available disk space
 
 These steps only run once. After the initial bootstrap the bootstrapper script
 is a no-op. To force the script to run again at boot time remove the file
