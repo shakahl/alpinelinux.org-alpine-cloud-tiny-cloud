@@ -14,6 +14,7 @@ built-in. The only required dependencies are:
 
 - bash-like shell (e.g. bash, dash, ash)
 - wget
+- resize2fs
 
 ## Supported Features and Environments
 
