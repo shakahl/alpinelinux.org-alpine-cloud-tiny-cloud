@@ -56,8 +56,8 @@ _resize_root_partition() {
     resize2fs $(mountpoint -n / | cut -d' ' -f1)
 }
 
-_scramble_password() {
-    echo "$1:$(head -c 100 /dev/urandom | sha512sum | cut -d' ' -f1)" | chpasswd
+_disable_password() {
+    echo "$1:*" | chpasswd -e
 }
 
 start() {
@@ -66,8 +66,8 @@ start() {
 
     [ -d "/var/lib/cloud" ] || mkdir -p /var/lib/cloud
 
-    ebegin "Scrambling root password"; _scramble_password root; eend $?
-    ebegin "Scrambling alpine password"; _scramble_password alpine; eend $?
+    ebegin "Disabling root password"; _disable_password root; eend $?
+    ebegin "Disabling alpine password"; _disable_password alpine; eend $?
     ebegin "Resizing root partition"; _resize_root_partition; eend $?
     ebegin "Setting ec2 hostname"; _update_hostname; eend $?
     ebegin "Setting ec2 user ssh keys"; _set_ssh_keys "alpine"; eend $?
