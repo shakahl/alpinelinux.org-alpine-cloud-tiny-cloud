@@ -3,6 +3,9 @@
 
 description="Provides EC2 cloud bootstrap"
 
+# override in /etc/conf.d/tiny-ec2-bootstrap
+EC2_USER=${EC2_USER:-alpine}
+
 depend() {
     need net
     provide cloud-final
@@ -63,10 +66,6 @@ _disable_password() {
 start() {
     # Don't bootstrap if the host has already been bootstrapped
     [ -f "/var/lib/cloud/.bootstrap-complete" ] && return 0
-
-    # load configuration, set defaults
-    [ -f "/etc/conf.d/tiny-ec2-bootstrap" ] && . /etc/conf.d/tiny-ec2-bootstrap
-    EC2_USER=${EC2_USER:-alpine}
 
     [ -d "/var/lib/cloud" ] || mkdir -p /var/lib/cloud
 
