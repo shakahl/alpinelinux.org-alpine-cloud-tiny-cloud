@@ -9,8 +9,8 @@ and cloud platform support for small size and limited external dependencies.
 ## Requirements
 
 The most important feature of this bootstrapper is the very limited set of
-dependencies. In-fact this works with just busybox provided the wget applet is
-built-in. The only required dependencies are:
+dependencies. In-fact, this works with just busybox -- provided the wget applet
+is built-in. The only required dependencies are:
 
 - bash-like shell (e.g. bash, dash, ash)
 - wget
@@ -30,14 +30,22 @@ installing packages, and many other things. This bootstrap does not support
 those things. Instead it supports:
 
 - setting system hostname
-- install user's configured SSH keys to the alpine user's authorized_keys file
-- run any script-like user data (must start with #!)
-- disable root and alpine password
-- resize root partition to available disk space
+- installing the instance's SSH keys in the EC2 user's authorized_keys file
+- running any script-like user data (must start with #!)
+- disabling root and the EC2 user's password
+- resizing root partition to available disk space
 
 These steps only run once. After the initial bootstrap the bootstrapper script
 is a no-op. To force the script to run again at boot time remove the file
 `/var/lib/cloud/.bootstrap-complete` and reboot the instance.
+
+The default EC2 user is `alpine`; this can be overriden with a
+`/etc/conf.d/tiny-ec2-bootstrap` containing...
+```
+EC2-USER="otheruser"
+```
+The EC2 user *must* already exist in the AMI -- `tiny-ec2-bootstrap` will
+**NOT** add the user automatically.
 
 ## User Data
 
@@ -53,7 +61,7 @@ made at the point the script runs.
 
 ## Assumptions
 
-- This was written for Alpine Linux and thus assumes that the login user is
-  called alpine. This could be configurable in the future but currently is not.
+- This was written for Alpine Linux; use on other distributions has not been
+tested.
 
-- The script is run by OpenRC
+- The script is run by OpenRC.
