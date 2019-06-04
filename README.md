@@ -2,7 +2,7 @@
 
 This is designed to do the minimal amount of work required to bootstrap an EC2
 instance based on the local settings assigned at boot time as well as the
-user's configured settings. This is in-concept similar to
+user's configured settings. This is, in-concept, similar to
 [cloud-init](https://cloudinit.readthedocs.io/en/latest/) but trades features
 and cloud platform support for small size and limited external dependencies.
 
@@ -10,7 +10,7 @@ and cloud platform support for small size and limited external dependencies.
 
 The most important feature of this bootstrapper is the very limited set of
 dependencies. In-fact, this works with just busybox -- provided the wget applet
-is built-in. The only required dependencies are:
+is built-in -- and resize2fs. The only required dependencies are:
 
 - bash-like shell (e.g. bash, dash, ash)
 - wget
@@ -19,7 +19,7 @@ is built-in. The only required dependencies are:
 ## Supported Features and Environments
 
 cloud-init has support for many different cloud providers. This project only
-supports EC2, specifically the [EC2 metadata
+supports EC2; [EC2 metadata
 service](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-metadata.html)
 is a hard requirement of using this bootstrapper. All of the data for the
 supported features below is sourced from the EC2 instance metadata service
@@ -51,13 +51,13 @@ The EC2 user *must* already exist in the AMI -- `tiny-ec2-bootstrap` will
 
 User data is provided at instance boot time and can be any arbitrary string of
 data. The bootstrapper will consider any user data that begins with the ASCII
-characters '#!' to be a script. It will write the entire contents of the user
+characters `#!` to be a script. It will write the entire contents of the user
 data to `/var/lib/cloud/user-data.sh`, make the file executable, and execute
 the file piping any output to `/var/log/cloud-bootstrap.log`.
 
 The user data script can do anything it pleases with the instance. It will be
-run as root and networking will be up. No other grantees about system state are
-made at the point the script runs.
+run as root and networking will be up. No other guarantees about system state
+are made at the point the script runs.
 
 ## Assumptions
 
