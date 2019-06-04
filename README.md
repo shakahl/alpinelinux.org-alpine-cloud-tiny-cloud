@@ -42,7 +42,7 @@ is a no-op. To force the script to run again at boot time remove the file
 The default EC2 user is `alpine`; this can be overriden with a
 `/etc/conf.d/tiny-ec2-bootstrap` containing...
 ```
-EC2-USER="otheruser"
+EC2_USER="otheruser"
 ```
 The EC2 user *must* already exist in the AMI -- `tiny-ec2-bootstrap` will
 **NOT** add the user automatically.
