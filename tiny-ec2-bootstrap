@@ -51,7 +51,8 @@ _run_userdata() {
     if echo $user_data | grep '^#!/' 2>&1 >/dev/null; then
         echo "$user_data" > /var/lib/cloud/user-data.sh
         chmod +x  /var/lib/cloud/user-data.sh
-        /var/lib/cloud/user-data.sh > /var/log/cloud-bootstrap.log 2>&1
+        /var/lib/cloud/user-data.sh 2>&1 | tee /var/log/cloud-bootstrap.log
+        echo "User Data Script Exit Status: $?"
     fi
 }
 
