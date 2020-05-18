@@ -1,5 +1,5 @@
 #!/sbin/openrc-run
-# vim:set ft=sh:
+# vim:set ft=sh et ts=4 sts=4 sw=4:
 
 description="Provides EC2 cloud bootstrap"
 
