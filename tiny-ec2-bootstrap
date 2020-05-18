@@ -54,12 +54,19 @@ _set_ssh_keys() {
 }
 
 _run_userdata() {
-	user_data=$(_get_metadata user-data)
-	if echo "$user_data" | grep -q '^#!/'; then
-		echo "$user_data" > /var/lib/cloud/user-data.sh
+	local user_data="$(_get_metadata user-data)"
+	if printf '%s' "$user_data" | head -n1 | grep -q '^#!/'; then
+		printf '%s' "$user_data" >/var/lib/cloud/user-data.sh
 		chmod +x /var/lib/cloud/user-data.sh
-		/var/lib/cloud/user-data.sh 2>&1 | tee /var/log/cloud-bootstrap.log
-		echo "User Data Script Exit Status: $?"
+
+		local log_file=/var/log/cloud-bootstrap.log
+		local ec_file=/var/log/cloud-bootstrap.exit
+
+		{ /var/lib/cloud/user-data.sh 2>&1 ; echo $? >"$ec_file"; } | tee "$log_file"
+		ec=$(cat "$ec_file")
+
+		echo "User Data Script Exit Status: $ec"
+		return $ec
 	fi
 }
 
