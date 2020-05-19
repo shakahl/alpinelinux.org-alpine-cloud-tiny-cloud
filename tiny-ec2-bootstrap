@@ -1,5 +1,5 @@
 #!/sbin/openrc-run
-# vim:set ft=sh et ts=4 sts=4 sw=4:
+# vim:set ft=sh noet ts=4:
 
 description="Provides EC2 cloud bootstrap"
 
@@ -8,81 +8,81 @@ EC2_USER=${EC2_USER:-alpine}
 IMDS2_TOKEN_TTL=${IMDS2_TOKEN_TTL:-5}
 
 depend() {
-    need net
-    provide cloud-final
+	need net
+	provide cloud-final
 }
 
 _get_metadata_token() {
-  echo -ne "PUT /latest/api/token HTTP/1.0\r\nX-aws-ec2-metadata-token-ttl-seconds: $IMDS2_TOKEN_TTL\r\n\r\n" |
-    nc 169.254.169.254 80 | tail -n 1
+	echo -ne "PUT /latest/api/token HTTP/1.0\r\nX-aws-ec2-metadata-token-ttl-seconds: $IMDS2_TOKEN_TTL\r\n\r\n" |
+	nc 169.254.169.254 80 | tail -n 1
 }
 
 _get_metadata() {
-    local uri="$1"
-    wget -qO - --header "X-aws-ec2-metadata-token: $(_get_metadata_token)" \
-      "http://169.254.169.254/latest/$uri" 2>/dev/null
+	local uri="$1"
+	wget -qO - --header "X-aws-ec2-metadata-token: $(_get_metadata_token)" \
+		"http://169.254.169.254/latest/$uri" 2>/dev/null
 }
 
 _update_hostname() {
-    local ec2_fqdn="$(_get_metadata meta-data/hostname)"
-    local short_hostname="${ec2_fqdn%%\.*}"
-    echo "$short_hostname" > /etc/hostname
-    hostname -F /etc/hostname
-    echo -e "127.0.1.1\t$ec2_fqdn $short_hostname" >> /etc/hosts
+	local ec2_fqdn="$(_get_metadata meta-data/hostname)"
+	local short_hostname="${ec2_fqdn%%\.*}"
+	echo "$short_hostname" > /etc/hostname
+	hostname -F /etc/hostname
+	echo -e "127.0.1.1\t$ec2_fqdn $short_hostname" >> /etc/hosts
 }
 
 _set_ssh_keys() {
-    local user="$1"
-    local group="$(getent passwd "$user" | cut -d: -f4)"
-    local ssh_dir="$(getent passwd "$user" | cut -d: -f6)/.ssh"
-    local keys_file="$ssh_dir/authorized_keys"
+	local user="$1"
+	local group="$(getent passwd "$user" | cut -d: -f4)"
+	local ssh_dir="$(getent passwd "$user" | cut -d: -f6)/.ssh"
+	local keys_file="$ssh_dir/authorized_keys"
 
-    if [ ! -d "$ssh_dir" ]; then
-        mkdir -p "$ssh_dir"
-        chmod 755 "$ssh_dir"
-    fi
+	if [ ! -d "$ssh_dir" ]; then
+		mkdir -p "$ssh_dir"
+		chmod 755 "$ssh_dir"
+	fi
 
-    [ -f "$keys_file" ] && rm "$keys_file"
+	[ -f "$keys_file" ] && rm "$keys_file"
 
-    touch "$keys_file"
-    chmod 600 "$keys_file"
-    chown -R "$user:$group" "$ssh_dir"
+	touch "$keys_file"
+	chmod 600 "$keys_file"
+	chown -R "$user:$group" "$ssh_dir"
 
-    for key in $(_get_metadata meta-data/public-keys/); do
-        _get_metadata "meta-data/public-keys/${key%=*}/openssh-key/" >> "$keys_file"
-    done
+	for key in $(_get_metadata meta-data/public-keys/); do
+		_get_metadata "meta-data/public-keys/${key%=*}/openssh-key/" >> "$keys_file"
+	done
 }
 
 _run_userdata() {
-    user_data=$(_get_metadata user-data)
-    if echo "$user_data" | grep -q '^#!/'; then
-        echo "$user_data" > /var/lib/cloud/user-data.sh
-        chmod +x  /var/lib/cloud/user-data.sh
-        /var/lib/cloud/user-data.sh 2>&1 | tee /var/log/cloud-bootstrap.log
-        echo "User Data Script Exit Status: $?"
-    fi
+	user_data=$(_get_metadata user-data)
+	if echo "$user_data" | grep -q '^#!/'; then
+		echo "$user_data" > /var/lib/cloud/user-data.sh
+		chmod +x /var/lib/cloud/user-data.sh
+		/var/lib/cloud/user-data.sh 2>&1 | tee /var/log/cloud-bootstrap.log
+		echo "User Data Script Exit Status: $?"
+	fi
 }
 
 _resize_root_partition() {
-    resize2fs "$(mountpoint -n / | cut -d' ' -f1)"
+	resize2fs "$(mountpoint -n / | cut -d' ' -f1)"
 }
 
 _disable_password() {
-    echo "$1:*" | chpasswd -e
+	echo "$1:*" | chpasswd -e
 }
 
 start() {
-    # Don't bootstrap if the host has already been bootstrapped
-    [ -f "/var/lib/cloud/.bootstrap-complete" ] && return 0
+	# Don't bootstrap if the host has already been bootstrapped
+	[ -f "/var/lib/cloud/.bootstrap-complete" ] && return 0
 
-    [ -d "/var/lib/cloud" ] || mkdir -p /var/lib/cloud
+	[ -d "/var/lib/cloud" ] || mkdir -p /var/lib/cloud
 
-    ebegin "Disabling root password"; _disable_password root; eend $?
-    ebegin "Disabling $EC2_USER password"; _disable_password "$EC2_USER"; eend $?
-    ebegin "Resizing root partition"; _resize_root_partition; eend $?
-    ebegin "Setting ec2 hostname"; _update_hostname; eend $?
-    ebegin "Setting ec2 user ssh keys"; _set_ssh_keys "$EC2_USER"; eend $?
-    ebegin "Running ec2 user data script"; _run_userdata; eend $?
+	ebegin "Disabling root password"; _disable_password root; eend $?
+	ebegin "Disabling $EC2_USER password"; _disable_password "$EC2_USER"; eend $?
+	ebegin "Resizing root partition"; _resize_root_partition; eend $?
+	ebegin "Setting ec2 hostname"; _update_hostname; eend $?
+	ebegin "Setting ec2 user ssh keys"; _set_ssh_keys "$EC2_USER"; eend $?
+	ebegin "Running ec2 user data script"; _run_userdata; eend $?
 
-    touch "/var/lib/cloud/.bootstrap-complete"
+	touch "/var/lib/cloud/.bootstrap-complete"
 }
