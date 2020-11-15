@@ -66,11 +66,22 @@ _run_userdata() {
 		ec=$(cat "$ec_file")
 
 		echo "User Data Script Exit Status: $ec"
-		return $ec
+		return "$ec"
 	fi
 }
 
 _resize_root_partition() {
+	local mountpoint="$(mountpoint -n / | cut -d' ' -f1)"
+
+	# mountpoint is the second partition...
+	if echo "$mountpoint" | cut -d' ' -f1 | grep -qE '/(nvme\d+n\d+p|xvd[a-z]+)2$'; then
+		local volume="$(echo "$mountpoint" | sed -Ee 's/(nvme\d+n\d+|xvd[a-z]+)p?2/\1/')"
+		einfo "Expanding root partition to volume size..."
+		echo ", +" | sfdisk -q --no-reread -N 2 "$volume"
+		einfo "Updating kernel with new partition table..."
+		partx -u "$volume"
+	fi
+	einfo "Resizing..."
 	resize2fs "$(mountpoint -n / | cut -d' ' -f1)"
 }
 
@@ -86,7 +97,7 @@ start() {
 
 	ebegin "Disabling root password"; _disable_password root; eend $?
 	ebegin "Disabling $EC2_USER password"; _disable_password "$EC2_USER"; eend $?
-	ebegin "Resizing root partition"; _resize_root_partition; eend $?
+	ebegin "Expanding root partition"; _resize_root_partition; eend $?
 	ebegin "Setting ec2 hostname"; _update_hostname; eend $?
 	ebegin "Setting ec2 user ssh keys"; _set_ssh_keys "$EC2_USER"; eend $?
 	ebegin "Running ec2 user data script"; _run_userdata; eend $?

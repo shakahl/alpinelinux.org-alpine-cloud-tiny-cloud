@@ -9,11 +9,14 @@ and cloud platform support for small size and limited external dependencies.
 ## Requirements
 
 The most important feature of this bootstrapper is the very limited set of
-dependencies. In-fact, this works with just busybox -- provided the wget applet
-is built-in -- and resize2fs. The only required dependencies are:
+dependencies. In-fact, this works with just BusyBox (provided ash and wget
+are built in) and a couple utilities for expanding the root filesystem.
+The full list of required dependencies are:
 
 - bash-like shell (e.g. bash, dash, ash)
 - wget
+- sfdisk
+- partx
 - resize2fs
 
 ## Supported Features and Environments
@@ -33,7 +36,7 @@ those things. Instead it supports:
 - installing the instance's SSH keys in the EC2 user's authorized_keys file
 - running any script-like user data (must start with #!)
 - disabling root and the EC2 user's password
-- resizing root partition to available disk space
+- expanding root partition to available disk space
 
 These steps only run once. After the initial bootstrap the bootstrapper script
 is a no-op. To force the script to run again at boot time remove the file
