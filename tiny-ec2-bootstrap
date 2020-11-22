@@ -71,7 +71,7 @@ _run_userdata() {
 }
 
 _resize_root_partition() {
-	local mountpoint="$(mountpoint -n / | cut -d' ' -f1)"
+	local mountpoint="$(busybox mountpoint -n / | cut -d' ' -f1)"
 
 	# mountpoint is the second partition...
 	if echo "$mountpoint" | cut -d' ' -f1 | grep -qE '/(nvme\d+n\d+p|xvd[a-z]+)2$'; then
@@ -82,7 +82,7 @@ _resize_root_partition() {
 		partx -u "$volume"
 	fi
 	einfo "Resizing..."
-	resize2fs "$(mountpoint -n / | cut -d' ' -f1)"
+	resize2fs "$mountpoint"
 }
 
 _disable_password() {
