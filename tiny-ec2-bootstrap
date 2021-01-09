@@ -86,7 +86,7 @@ _resize_root_partition() {
 }
 
 _disable_password() {
-	echo "$1:*" | chpasswd -e
+	passwd -l "$1"
 }
 
 start() {
