@@ -85,7 +85,7 @@ _resize_root_partition() {
 	resize2fs "$mountpoint"
 }
 
-_lock_root_user() {
+_lock_root_account() {
 	passwd -l root
 }
 
