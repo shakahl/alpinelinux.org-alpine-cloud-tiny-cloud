@@ -1,0 +1,10 @@
+# tiny-cloud configuration
+
+# REQUIRED: The instance's cloud provider (valid: aws, azure, gcp, oci)
+CLOUD=
+
+# User account where instance SSH keys are installed
+#CLOUD_USER=alpine
+
+# Number of seconds an AWS IMDS token is valid
+#IMDS_TOKEN_TTL=5

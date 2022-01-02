@@ -1,0 +1,60 @@
+# tiny-cloud Instance MetaData Service related functions and variables
+# vim:set ft=sh ts=4 noet:
+
+CONF_DIR="/etc/conf.d"
+LIB_DIR="/lib/tiny-cloud"
+
+### load configuration
+
+[ -f "$CONF_DIR"/tiny-cloud ] && source "$CONF_DIR"/tiny-cloud
+
+### configuration defaults
+
+CLOUD="${CLOUD:-unknown}"
+CLOUD_LOGIN="${CLOUD_LOGIN:-alpine}"
+if [ ! -d "$LIB_DIR/$CLOUD" ]; then
+	echo "ERROR: Unknown Cloud '$CLOUD'" >&2
+	exit 1
+fi
+
+IMDS_HEADER=
+IMDS_QUERY=
+IMDS_URL=
+
+IMDS_HOSTNAME=
+IMDS_SSH_KEYS=
+IMDS_USERDATA=
+
+### default/common functions
+
+_imds() {
+	wget --quiet --header "$(_imds_header)" --output-document - \
+		"$IMDS_URL/$1/$IMDS_QUERY"
+}
+
+_enforce_ending_newline() { sed '$a\'; }
+
+imds() {
+	set -o pipefail
+	_imds "$1" | _enforce_ending_newline
+	RV=$?
+	set +o pipefail
+	[ $RV != 0 ] && echo "ERROR: $RV" >&2
+	return $RV
+}
+
+imds_hostname() {
+	imds "$IMDS_HOSTNAME"
+}
+
+imds_userdata() {
+	imds "$IMDS_USERDATA"
+}
+
+imds_ssh_keys() {
+	imds "$IMDS_SSH_KEYS"
+}
+
+# cloud-specific things (potentially overriding the above)
+
+[ -f "$LIB_DIR/$CLOUD/metadata" ] && source "$LIB_DIR/$CLOUD"/imds

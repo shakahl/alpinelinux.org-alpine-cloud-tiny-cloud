@@ -1,0 +1,28 @@
+# AWS Instance MetaData Service related variables and functions
+# vim:set ft=sh noet ts=4:
+
+IMDS_HEADER="X-aws-ec2-metadata-token"
+IMDS_TOKEN_TTL_HEADER="X-aws-ec2-metadata-token-ttl-seconds"
+IMDS_TOKEN_TTL=${IMDS_TOKEN_TTL:-5}
+IMDS_URL="http://169.254.169.254/latest"
+
+IMDS_HOSTNAME="meta-data/hostname"
+IMDS_SSH_KEYS="meta-data/public-keys"
+IMDS_USERDATA="user-data"
+
+_imds_token() {
+	echo -ne "PUT /latest/api/token HTTP/1.0\r\n"\
+			"$IMDS_TOKEN_TTL_HEADER: $IMDS_TOKEN_TTL\r\n\r\n" |
+		nc 169.254.169.254 80 | tail -n 1
+}
+
+_imds_header() {
+	echo "$IMDS_HEADER: $(_imds_token)"
+}
+
+# digs deeper than the default
+imds_ssh_keys() {
+	for key in $(imds "$IMDS_SSH_KEYS"); do
+		imds "$IMDS_SSH_KEYS/${key%=*}/openssh-key"
+	done | sort -u
+}

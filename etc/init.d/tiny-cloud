@@ -1,0 +1,51 @@
+#!/sbin/openrc-run
+# vim:set ft=sh noet ts=4:
+
+description="Tiny Cloud Bootstrap - main phase"
+
+depend() {
+	need net
+	before sshd
+}
+
+_update_hostname() {
+	local fqdn=$(imds_hostname)
+	local host="${fqdn%%\.*}"
+	echo "$host" > /etc/hostname
+	hostname -F /etc/hostname
+	echo -e "127.0.1.1\t$fqdn $host" >> /etc/hosts
+}
+
+_set_ssh_keys() {
+	local user="$1"
+	local pwent=$(getent passwd "$user")
+	local group=$(echo "$pwent" | cut -d: -f4)
+	local ssh_dir="$(echo "$pwent" | cut -d: -f6)/.ssh"
+	local keys_file="$ssh_dir/authorized_keys"
+
+	if [ ! -d "$ssh_dir" ]; then
+		mkdir -p "$ssh_dir"
+		chmod 700 "$ssh_dir"
+	fi
+
+	touch "$keys_file"
+	chmod 600 "$keys_file"
+	chown -R "$user:$group" "$ssh_dir"
+	imds_ssh_keys > "$keys_file"
+}
+
+start() {
+	[ -f "/var/lib/cloud/.bootstrap-complete" ] && return 0
+	[ -d "/var/lib/cloud" ] || mkdir -p /var/lib/cloud
+
+	source /var/lib/tiny-cloud/imds
+	CLOUD_USER="${CLOUD_USER:-alpine}"
+
+	ebegin "Setting Instance Hostname"; _update_hostname; eend $?
+
+	ebegin "Installing SSH Keys for $CLOUD_USER User"
+	_set_ssh_keys "$CLOUD_USER"
+	eend $?
+
+	# TODO: background tiny-cloud-network watcher?
+}
