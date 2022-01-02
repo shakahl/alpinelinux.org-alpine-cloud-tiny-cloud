@@ -1,4 +1,4 @@
-# Azure metadata-related variables and functions
+# Azure Instance MetaData Service variables and functions
 # vim:set ft=sh noet ts=4:
 
 IMDS_HEADER="Metadata"

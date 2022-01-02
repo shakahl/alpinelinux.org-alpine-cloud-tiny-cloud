@@ -1,4 +1,4 @@
-# tiny-cloud configuration
+# Tiny Cloud configuration
 
 # REQUIRED: The instance's cloud provider (valid: aws, azure, gcp, oci)
 CLOUD=
@@ -6,5 +6,17 @@ CLOUD=
 # User account where instance SSH keys are installed
 #CLOUD_USER=alpine
 
-# Number of seconds an AWS IMDS token is valid
+# Filename of userdata file (in TINY_CLOUD_VAR directory)
+#CLOUD_USERDATA=user-data
+
+# IMDS token validity, in seconds (AWS only)
 #IMDS_TOKEN_TTL=5
+
+# Location of libraries
+#TINY_CLOUD_LIBS=/lib/tiny-cloud
+
+# Location of var directory
+#TINY_CLOUD_VAR=/var/lib/cloud
+
+# Location of log directory
+#TINY_CLOUD_LOGS=/var/log

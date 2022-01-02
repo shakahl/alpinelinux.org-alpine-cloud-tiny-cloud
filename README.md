@@ -22,8 +22,8 @@ instance:
 * set the instance's hostname from instance metadata
 * install SSH keys from instance metadata to the cloud user account's
   `authorized_keys` file (the user must already exist)
-* save the instance user-data to a file and if it's a script, execute it at the
-  end of the **default** runlevel 
+* save the instance user-data to a file, and if it's a script, execute it at
+  the end of the **default** runlevel
 
 Optional features, which may not be universally necessary:
 * manage symlinks from NVMe block devices to `/dev/xvd` and `/dev/sd` devices
@@ -68,26 +68,26 @@ rc-update add tiny-cloud-final default
 
 ## Configuration
 
-Tiny Cloud looks expects configuration to be found at
-[`/etc/conf.d/tiny-cloud`](etc/conf.d/tiny-cloud), which documents all
-tuneable parameters (and their defaults).
+By default, Tiny Cloud expects configuration at `/etc/conf.d/tiny-cloud`,
+although the location can be overridden by setting the `TINY_CLOUD_CONF`
+environment variable.  The stock [`etc/conf.d/tiny-cloud`](
+etc/conf.d/tiny-cloud) file contains details of all tuneable settings.
 
-However, because Tiny Cloud does not do auto-detection, you ***must*** set a
-value for `CLOUD` indicating which cloud provider which will be used when
-instantiating the image.  Current valid values are `aws`, `azure`, `gcp`, and
-`oci`.
+*Because Tiny Cloud does not currently do auto-detection, you **MUST** set a
+configuration value for `CLOUD` indicating which cloud provider will be used.
+Current valid values are `aws`, `azure`, `gcp`, and `oci`.*
 
 ## Operation
 
 The first time an instance boots -- either freshly instantiated from an image,
-or after installation on an existing instance -- Tiny Cloud sets up the
+or after installation on a pre-existing instance -- Tiny Cloud sets up the
 instance in three phases...
 
 ### Early Phase
 
 The `tiny-cloud-early` init script does not depend on the cloud provider's
-Instance MetaData Service (IMDS), and does therefore does not have a dependency
-on networking.  During this "early" phase, the root filesystem is expanded, and
+Instance MetaData Service (IMDS), and therefore does not have a dependency on
+networking.  During this "early" phase, the root filesystem is expanded, and
 any necessary `mdev` rules for device hotplug are set up.
 
 ### Main Phase
@@ -99,16 +99,18 @@ data, and sets up instance's hostname and the cloud user's SSH keys before
 ### Final Phase
 
 `tiny-cloud-final` should be the very last init script to run in the
-**default** runlevel, and saves the instance's user data to
-`/var/lib/cloud/user-data`.
+**default** runlevel.  By default, it saves the instance's user data to
+`/var/lib/cloud/user-data`, which is overrideable via the `TINY_CLOUD_VAR`
+andr `CLOUD_USERDATA` config settings.
 
-If the user data is a script that starts with `#!` (aka "[shebang](
-https://en.wikipedia.org/wiki/Shebang_(Unix))"), it will be executed; its
-output (combined STDOUT and STDERR) is saved to `/var/log/cloud/user-data.log`
-and the exit code can be found in `/var/log/cloud/user-data.exit`.
+If the user data is a script starting with `#!/`, it will be executed; its
+output (combined STDOUT and STDERR) and exit code are saved to
+`/var/log/user-data.log` and `/var/log/user-data.exit`, respectively -- unless
+overriden with `TINY_CLOUD_LOGS` and `CLOUD_USERDATA` config settings.
 
 If all went well, the very last thing `tiny-cloud-final` does is touch
-`/var/lib/cloud/.bootstrap-complete` into existence.
+a `.bootstrap-complete` file into existence in `/var/lib/cloud` or another
+directory specified by the `TINY_CLOUD_VAR` config setting.
 
 ### Further Reboots
 

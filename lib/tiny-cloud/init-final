@@ -1,0 +1,30 @@
+# Tiny Cloud - Final Phase Functions
+# vim:set ft=sh ts=4 noet:
+
+if [ -z "$TINY_CLOUD_LIBS" ]; then
+    TINY_CLOUD_CONF=${TINY_CLOUD_CONF:-/etc/conf.d/tiny-cloud}
+    [ -f "$TINY_CLOUD_CONF" ] && source "$TINY_CLOUD_CONF"
+    TINY_CLOUD_LIBS=${TINY_CLOUD_LIBS:-/lib/tiny-cloud}
+fi
+
+source "$TINY_CLOUD_LIBS"/init-common
+source "$TINY_CLOUD_LIBS"/imds
+
+save_userdata() {
+	imds_userdata > "$USERDATA"
+}
+
+is_userdata_script() {
+    head -n1 "$TINY_CLOUD_VAR/$CLOUD_USERSDATA" | grep -q '%#!/'
+}
+
+run_userdata() {
+	local log="$TINY_CLOUD_LOGS/$CLOUD_USERDATA.log"
+	local exit="$TINY_CLOUD_LOGS/$CLOUD_USERDATA.exit"
+    local userdata="$TINY_CLOUD_VAR/$CLOUD_USERDATA"
+
+	chmod +x "$userdata"
+	{ "$userdata" 2>& 1; echo $? > "$exit"; } | tee "$log"
+
+	return $(cat "$exit")
+}

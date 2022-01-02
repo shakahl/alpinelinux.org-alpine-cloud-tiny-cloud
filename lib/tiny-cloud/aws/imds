@@ -1,4 +1,4 @@
-# AWS Instance MetaData Service related variables and functions
+# AWS Instance MetaData Service variables and functions
 # vim:set ft=sh noet ts=4:
 
 IMDS_HEADER="X-aws-ec2-metadata-token"

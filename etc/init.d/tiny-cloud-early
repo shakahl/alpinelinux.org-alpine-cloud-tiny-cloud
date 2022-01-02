@@ -7,30 +7,14 @@ depend() {
 	before mdev
 }
 
-_expand_root_partition() {
-	local mountpoint=$(busybox mountpoint -n / | cut -d' ' -f1)
-	local volume=$(echo "$mountpoint" |
-		sed -Ee "s/(nvme\d+n\d|(xv|s)d[a-z])p?\d?$/\1/"
-	)
-
-	if [ "$mountpoint" != "$volume" ]; then
-		partition=$(echo "$volume" | sed -Ee "s/.*(\d+)$/\2/")
-		einfo "Expanding root partition to volume size..."
-		echo ", +" | sfdisk -q --no-reread -N "$partition" "$volume"
-		einfo "Updating kernel with new partition table..."
-		partx -u "$volume"
-	fi
-	einfo "Resizing root filesystem..."
-	resize2fs "$mountpoint"
-}
-
 start() {
-	[ -f "/var/lib/cloud/.bootstrap-complete" ] && return 0
-	[ -d "/var/lib/cloud" ] || mkdir -p /var/lib/cloud
+	source /lib/tiny-cloud/init-early
 
-	source /etc/conf.d/tiny-cloud	# or use auto-sourced tiny-cloud-early?
+	is_bootstrapped && return 0
 
-	ebegin "Expanding Root Partition"; _expand_root_partition; eend $?
+	ebegin "Expanding Root Volume/Partition"
+	expand_root
+	eend $?
 
 	# TODO: _setup mdev things, if applicable
 }

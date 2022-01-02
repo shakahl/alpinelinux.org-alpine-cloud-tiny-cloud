@@ -1,4 +1,4 @@
-# Google Cloud metadata-related variables and functions
+# Google Cloud Instance MetaData Service variables and functions
 # vim:set ft=sh noet ts=4:
 
 IMDS_HEADER="Metadata-Flavor"

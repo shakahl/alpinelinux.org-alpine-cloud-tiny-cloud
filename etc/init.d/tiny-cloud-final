@@ -8,30 +8,18 @@ depend() {
 	provide cloud-final
 }
 
-_save_userdata() {
-	imds_userdata > "$USERDATA"
-}
-
-_run_userdata() {
-	local log="/var/log/user-data.log"
-	local exit="/var/log/user-data.exit"
-
-	chmod +x "$USERDATA"
-	{ "$USERDATA" 2>& 1; echo $? > "$exit"; } | tee "$log"
-
-	return $(cat "$exit")
-}
-
 start() {
-	[ -f "/var/lib/cloud/.bootstrap-complete" ] && return 0
-	[ -d "/var/lib/cloud" ] || mkdir -p /var/lib/cloud
+	source /lib/tiny-cloud/init-final
 
-	source /lib/tiny-cloud/imds
+	is_bootstrapped && return 0
 
-	USERDATA="/var/lib/cloud/user-data"
+	ebegin "Saving Instance UserData"
+	save_userdata
+	eend $?
 
-	ebegin "Saving Instance UserData"; _save_userdata; eend $?
-	if head -n1 "$USERDATA" | grep -q '^#!/'; then
-		ebegin "Executing UserData Script"; _run_userdata; eend $?
+	if is_userdata_script; then
+		ebegin "Executing UserData Script"
+		run_userdata
+		eend $?
 	fi
 }
