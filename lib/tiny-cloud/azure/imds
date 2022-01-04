@@ -22,5 +22,5 @@ imds_ssh_keys() {
 
 # decode userdata value
 imds_userdata() {
-	imds "$IMDS_USERDATA" | base64 -d | _enforce_ending_newline
+	imds "$IMDS_USERDATA" | base64 -d
 }

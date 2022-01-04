@@ -19,6 +19,6 @@ _imds_header() {
 imds_ssh_keys() {
 	for ssh_keys in $IMDS_SSH_KEYS; do
 		# ignore errors and strip leading '<login>:'
-		_imds "$ssh_keys" | cut -d: -f2- | _enforce_ending_newline
+		_imds "$ssh_keys" | cut -d: -f2-
 	done | sort -u
 }

@@ -4,9 +4,9 @@
 ### configuration
 
 if [ -z "$TINY_CLOUD_LIBS" ]; then
-    TINY_CLOUD_CONF=${TINY_CLOUD_CONF:-/etc/conf.d/tiny-cloud}
-    [ -f "$TINY_CLOUD_CONF" ] && source "$TINY_CLOUD_CONF"
-    TINY_CLOUD_LIBS=${TINY_CLOUD_LIBS:-/lib/tiny-cloud}
+	TINY_CLOUD_CONF=${TINY_CLOUD_CONF:-/etc/conf.d/tiny-cloud}
+	[ -f "$TINY_CLOUD_CONF" ] && source "$TINY_CLOUD_CONF"
+	TINY_CLOUD_LIBS=${TINY_CLOUD_LIBS:-/lib/tiny-cloud}
 fi
 
 # defaults
@@ -15,7 +15,7 @@ CLOUD="${CLOUD:-unknown}"
 # these are always cloud-specific
 
 unset \
-	IMDS_HEADER	\
+	IMDS_HEADER \
 	IMDS_QUERY \
 	IMDS_URL \
 	IMDS_HOSTNAME \
@@ -27,19 +27,15 @@ unset -f \
 	_imds_header \
 	2>/dev/null	|| true
 
-# without error reporting or ending newline enforcement
+# without error reporting
 _imds() {
 	wget --quiet --header "$(_imds_header)" --output-document - \
-		"$IMDS_URL/$1/$IMDS_QUERY"
+		"$IMDS_URL/$1$IMDS_QUERY"
 }
 
-_enforce_ending_newline() { sed '$a\'; }
-
 imds() {
-	set -o pipefail
-	_imds "$1" | _enforce_ending_newline
+	_imds "$1"
 	RV=$?
-	set +o pipefail
 	[ $RV != 0 ] && echo "ERROR: $RV" >&2
 	return $RV
 }
@@ -48,12 +44,12 @@ imds_hostname() {
 	imds "$IMDS_HOSTNAME"
 }
 
-imds_userdata() {
-	imds "$IMDS_USERDATA"
-}
-
 imds_ssh_keys() {
 	imds "$IMDS_SSH_KEYS"
+}
+
+imds_userdata() {
+	imds "$IMDS_USERDATA"
 }
 
 ### load cloud-specific things

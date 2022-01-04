@@ -2,13 +2,17 @@
 # vim:set ft=sh ts=4 noet:
 
 if [ -z "$TINY_CLOUD_LIBS" ]; then
-    TINY_CLOUD_CONF=${TINY_CLOUD_CONF:-/etc/conf.d/tiny-cloud}
-    [ -f "$TINY_CLOUD_CONF" ] && source "$TINY_CLOUD_CONF"
-    TINY_CLOUD_LIBS=${TINY_CLOUD_LIBS:-/lib/tiny-cloud}
+	TINY_CLOUD_CONF=${TINY_CLOUD_CONF:-/etc/conf.d/tiny-cloud}
+	[ -f "$TINY_CLOUD_CONF" ] && source "$TINY_CLOUD_CONF"
+	TINY_CLOUD_LIBS=${TINY_CLOUD_LIBS:-/lib/tiny-cloud}
 fi
 
 source "$TINY_CLOUD_LIBS"/init-common
 source "$TINY_CLOUD_LIBS"/imds
+
+# ensure existence of output directories
+[ ! -d "$TINY_CLOUD_LOGS" ] && mkdir -p "$TINY_CLOUD_LOGS"
+[ ! -d "$TINY_CLOUD_VAR" ] && mkdir -p "$TINY_CLOUD_VAR"
 
 set_hostname() {
 	local fqdn=$(imds_hostname)

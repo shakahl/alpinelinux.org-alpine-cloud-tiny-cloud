@@ -7,9 +7,8 @@ CLOUD_USERDATA=${CLOUD_USERDATA:-user-data}
 TINY_CLOUD_LOGS=${TINY_CLOUD_LOGS:-/var/log}
 TINY_CLOUD_VAR=${TINY_CLOUD_VAR:-/var/lib/cloud}
 
-# ensure existence of output directories
-[ ! -d "$TINY_CLOUD_VAR" ] && mkdir -p "$TINY_CLOUD_VAR"
-[ ! -d "$TINY_CLOUD_LOGS" ] && mkdir -p "$TINY_CLOUD_LOGS"
-
 # is initial bootstrap already done?
 is_bootstrapped() { [ -f "$TINY_CLOUD_VAR"/.bootstrap-complete ]; }
+
+# indicate bootstrap is done
+bootstrap_complete() { touch "$TINY_CLOUD_VAR"/.bootstrap-complete ]; }

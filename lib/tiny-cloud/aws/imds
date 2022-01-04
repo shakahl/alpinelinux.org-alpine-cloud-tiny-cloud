@@ -11,9 +11,9 @@ IMDS_SSH_KEYS="meta-data/public-keys"
 IMDS_USERDATA="user-data"
 
 _imds_token() {
-	echo -ne "PUT /latest/api/token HTTP/1.0\r\n"\
-			"$IMDS_TOKEN_TTL_HEADER: $IMDS_TOKEN_TTL\r\n\r\n" |
-		nc 169.254.169.254 80 | tail -n 1
+	echo -ne "PUT /latest/api/token" \
+		"HTTP/1.0\r\n$IMDS_TOKEN_TTL_HEADER: $IMDS_TOKEN_TTL\r\n\r\n" |
+			nc 169.254.169.254 80 | tail -n 1
 }
 
 _imds_header() {
@@ -25,4 +25,9 @@ imds_ssh_keys() {
 	for key in $(imds "$IMDS_SSH_KEYS"); do
 		imds "$IMDS_SSH_KEYS/${key%=*}/openssh-key"
 	done | sort -u
+}
+
+# ignore 404s from IMDS, if no user-data is set
+imds_userdata() {
+	_imds "$IMDS_USERDATA" || true
 }

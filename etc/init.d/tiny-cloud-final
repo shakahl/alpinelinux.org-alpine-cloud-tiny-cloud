@@ -22,4 +22,8 @@ start() {
 		run_userdata
 		eend $?
 	fi
+
+	ebegin "Marking Instance Bootstrap Complete"
+	bootstrap_complete
+	eend $?
 }
