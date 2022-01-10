@@ -16,5 +16,9 @@ start() {
 	expand_root
 	eend $?
 
-	# TODO: _setup mdev things, if applicable
+	if has_cloud_hotplugs; then
+		ebegin "Installing Cloud Hotplugs"
+		install_hotplugs
+		eend $?
+	fi
 }
