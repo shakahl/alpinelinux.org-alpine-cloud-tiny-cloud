@@ -22,6 +22,8 @@ _imds_header() {
 
 # digs deeper than the default
 imds_ssh_keys() {
+	local key
+
 	for key in $(imds "$IMDS_SSH_KEYS"); do
 		imds "$IMDS_SSH_KEYS/${key%=*}/openssh-key"
 	done | sort -u

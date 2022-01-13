@@ -1,0 +1,39 @@
+#!/bin/sh
+# vim: set ts=4 et:
+
+set -e
+
+IFACE_CFG=/etc/network/interfaces
+IFACE_DIR="${IFACE_CFG}.d"
+
+cd "$IFACE_DIR"
+
+cat > "$IFACE_CFG.new" <<EOT
+# NOTE: $0 rewrites this file.  Edit files in
+#       /etc/network/interfaces.d/ to persist any customizations.
+
+EOT
+
+# existing loopback and eths
+for i in /sys/class/net/{lo,eth*}; do
+    IFACE="$(basename "$i")"
+    [ ! -f "$IFACE" ] && sed -e "s/%%/$IFACE/g" DEFAULT > "$IFACE"
+    printf "%s\n\n" "$(cat "$IFACE")" >> "$IFACE_CFG.new"
+done
+
+# all the rest
+for i in "$IFACE_DIR"/*; do
+    IFACE="$(basename "$i")"
+    case $IFACE in
+        DEFAULT|lo|eth*)
+            continue
+            ;;
+        *)
+            printf "%s\n\n" "$(cat "$IFACE")" >> "$IFACE_CFG.new"
+            ;;
+    esac
+done
+
+# install new interfaces config
+[ -f "$IFACE_CFG" ] && cp -a "$IFACE_CFG" "$IFACE_CFG.bak"
+mv "$IFACE_CFG.new" "$IFACE_CFG"

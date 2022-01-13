@@ -17,6 +17,8 @@ _imds_header() {
 
 # merge project and instance keys
 imds_ssh_keys() {
+	local ssh_keys
+
 	for ssh_keys in $IMDS_SSH_KEYS; do
 		# ignore errors and strip leading '<login>:'
 		_imds "$ssh_keys" | cut -d: -f2-

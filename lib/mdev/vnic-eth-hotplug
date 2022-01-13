@@ -1,0 +1,109 @@
+#!/bin/sh
+# vim: set ts=4 et:
+
+set -e
+
+PROC="$(basename "$0")[$$]"
+
+DEBUG=
+
+log() {
+    [ -z "$DEBUG" ] && [ "$1" = "debug" ] && return
+    local facility="kern.$1"
+    shift
+    logger -p "$facility" -t "$PROC" "$@"
+}
+
+if [ -z "$MDEV" ]; then
+    log err "MDEV env not defined"
+    exit 1
+fi
+
+# where's the tiny-cloud lib directory?
+if [ -z "$TINY_CLOUD_LIBS" ]; then
+	TINY_CLOUD_CONF=${TINY_CLOUD_CONF:-/etc/conf.d/tiny-cloud}
+	[ -f "$TINY_CLOUD_CONF" ] && source "$TINY_CLOUD_CONF"
+	TINY_CLOUD_LIBS=${TINY_CLOUD_LIBS:-/lib/tiny-cloud}
+fi
+
+IFACE_CFG=/etc/network/interfaces
+
+ip() {
+    local v=-4 lev=info
+    if [ "$1" = '-4' ] || [ "$1" = '-6' ]; then
+        v="$1"
+        shift
+    fi
+    local op="$2"
+
+    [ "$op" = show ] && lev=debug
+    if /sbin/ip "$v" "$@" || [ -n "$FAIL_OK" ]; then
+        log "$lev" "OK: ip $v $*"
+    else
+        log err "FAIL: ip $v $*"
+    fi
+}
+
+assemble_interfaces() {
+    log info "Rebuilding $IFACE_CFG"
+    # TODO: might be elsewhere, source /etc/conf.d/tiny-cloud
+    "$TINY_CLOUD_LIBS"/network-interfaces
+}
+
+interface_up() {
+    log info "Bringing up $MDEV"
+    # so /run/udhcpcd.$MDEV.pid isn't non-owner writeable
+    (umask 0022 && ifup "$MDEV")
+}
+
+cleanup_interface() {
+    local v p rtable="${MDEV#eth}"
+    let rtable+=1000
+
+    log info "Cleaning up $MDEV"
+
+    # kill related udhcpc, don't panic if it's not there
+    kill "$(cat "/run/udhcpc.$MDEV.pid")" || true
+
+    # tidy up /run/ifstate, if it exists
+    [ -f /run/ifstate ] && sed -i -e "/^$MDEV=/d" /run/ifstate
+    rm -f /run/ifstate."$MDEV".lock
+
+    # remove related rules
+    for v in 4 6; do
+        for p in $(ip -"$v" rule show table "$rtable" | cut -d: -f1); do
+            ip -"$v" rule del pref "$p"
+        done
+    done
+}
+
+is_networking_started() { service networking status -q 2>/dev/null; }
+
+log info "STARTING: $ACTION $MDEV"
+
+if exec 200>>"$IFACE_CFG"; then
+    if flock 200; then
+        case $ACTION in
+            add|"")
+                assemble_interfaces
+                is_networking_started && interface_up
+                ;;
+            remove)
+                assemble_interfaces
+                is_networking_started && cleanup_interface
+                ;;
+            *)
+                log err "Unknown action '$ACTION'"
+                exit 1
+                ;;
+        esac
+    else
+        log err "Unable to flock $IFACE_CFG"
+        exit 1
+    fi
+else
+    log err "Unable to assign fd 200 to flock $IFACE_CFG"
+    exit 1
+fi
+
+log info "FINISHED: $ACTION $MDEV"

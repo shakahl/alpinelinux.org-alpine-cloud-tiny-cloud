@@ -15,6 +15,8 @@ _imds_header() {
 
 # dig deeper than default
 imds_ssh_keys() {
+	local key
+
 	for key in $(imds "$IMDS_SSH_KEYS"); do
 		imds "$IMDS_SSH_KEYS/${key}/keyData"
 	done | sort -u

@@ -28,6 +28,7 @@ instance:
 Optional features, which may not be universally necessary:
 * manage symlinks from NVMe block devices to `/dev/xvd` and `/dev/sd` devices
   (i.e. AWS Nitro instances)
+* manage hotpluggable network interfaces
 * manage secondary IPv4 and IPv6 addresses on network interfaces
 
 ## Requirements
@@ -125,3 +126,9 @@ If you're instantiating an instance in order to create a new cloud image
 (using [Packer](https://packer.io), or some other means), you will need to
 remove this file before creating the image to ensure that instances using the
 new image will also run Tiny Cloud init scripts during their first boot.
+
+## Cloud Hotplug Modules
+
+### `vnic_eth_hotplug`
+
+### `nvme_ebs_links`
