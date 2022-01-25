@@ -1,5 +1,5 @@
 #!/bin/sh
-# vim: set ts=4 et:
+# vim:set ts=4 et:
 
 set -e
 
@@ -15,10 +15,15 @@ cat > "$IFACE_CFG.new" <<EOT
 EOT
 
 # existing loopback and eths
-for i in /sys/class/net/{lo,eth*}; do
+for i in /sys/class/net/*; do
     IFACE="$(basename "$i")"
-    [ ! -f "$IFACE" ] && sed -e "s/%%/$IFACE/g" DEFAULT > "$IFACE"
-    printf "%s\n\n" "$(cat "$IFACE")" >> "$IFACE_CFG.new"
+    case $IFACE in
+        lo|eth*)
+            [ ! -f "$IFACE" ] && sed -e "s/%%/$IFACE/g" DEFAULT > "$IFACE"
+            printf "%s\n\n" "$(cat "$IFACE")" >> "$IFACE_CFG.new"
+            ;;
+        *) continue ;;
+    esac
 done
 
 # all the rest

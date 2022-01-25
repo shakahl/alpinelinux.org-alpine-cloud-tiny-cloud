@@ -2,5 +2,4 @@ PREFIX?=/
 
 .PHONY: install
 install:
-	cp -r etc $(PREFIX)
-	cp -r lib $(PREFIX)
+	cp -r bin etc lib sbin usr $(PREFIX)

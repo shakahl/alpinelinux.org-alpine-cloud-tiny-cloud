@@ -1,28 +1,30 @@
 # Azure Instance MetaData Service variables and functions
-# vim:set ft=sh noet ts=4:
+# vim:set ts=4 et ft=sh:
 
 IMDS_HEADER="Metadata"
 IMDS_QUERY="?format=text&api-version=2021-05-01"
-IMDS_URL="http://169.254.169.254/metadata/instance"
+IMDS_URI="metadata/instance"
 
 IMDS_HOSTNAME="compute/name"
 IMDS_SSH_KEYS="compute/publicKeys"
 IMDS_USERDATA="compute/userData"
 
+IMDS_NICS=""
+
 _imds_header() {
-	echo "$IMDS_HEADER: true"
+    echo "$IMDS_HEADER: true"
 }
 
 # dig deeper than default
-imds_ssh_keys() {
-	local key
+_imds_ssh_keys() {
+    local key
 
-	for key in $(imds "$IMDS_SSH_KEYS"); do
-		imds "$IMDS_SSH_KEYS/${key}/keyData"
-	done | sort -u
+    for key in $(imds "$IMDS_SSH_KEYS"); do
+        imds "$IMDS_SSH_KEYS/${key}/keyData"
+    done | sort -u
 }
 
 # decode userdata value
-imds_userdata() {
-	imds "$IMDS_USERDATA" | base64 -d
+_imds_userdata() {
+    imds "$IMDS_USERDATA" | base64 -d
 }

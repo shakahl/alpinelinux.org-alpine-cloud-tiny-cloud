@@ -1,26 +1,26 @@
 # Google Cloud Instance MetaData Service variables and functions
-# vim:set ft=sh noet ts=4:
+# vim:set ts=4 et ft=sh:
 
 IMDS_HEADER="Metadata-Flavor"
-IMDS_URL="http://169.254.169.254/computeMetadata/v1"
+IMDS_URI="computeMetadata/v1"
 
 IMDS_HOSTNAME="instance/hostname"
 IMDS_SSH_KEYS="
-	project/attributes/ssh-keys
-	instance/attributes/ssh-keys
+    project/attributes/ssh-keys
+    instance/attributes/ssh-keys
 "
 IMDS_USERDATA="instance/attributes/user-data"
 
 _imds_header() {
-	echo "$IMDS_HEADER: Google"
+    echo "$IMDS_HEADER: Google"
 }
 
 # merge project and instance keys
-imds_ssh_keys() {
-	local ssh_keys
+_imds_ssh_keys() {
+    local ssh_keys
 
-	for ssh_keys in $IMDS_SSH_KEYS; do
-		# ignore errors and strip leading '<login>:'
-		_imds "$ssh_keys" | cut -d: -f2-
-	done | sort -u
+    for ssh_keys in $IMDS_SSH_KEYS; do
+        # ignore errors and strip leading '<login>:'
+        imds -e "$ssh_keys" | cut -d: -f2-
+    done | sort -u
 }

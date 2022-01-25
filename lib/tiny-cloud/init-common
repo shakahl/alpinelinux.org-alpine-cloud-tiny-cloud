@@ -1,5 +1,5 @@
 # Tiny Cloud - Common Initialization
-# vim:set ft=sh ts=4 noet:
+# vim:set ts=4 et ft=sh:
 
 # set defaults
 CLOUD_USER=${CLOUD_USER:-alpine}

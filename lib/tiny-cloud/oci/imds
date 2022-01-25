@@ -1,13 +1,22 @@
 # OCI Instance MetaData Service variables and functions
-# vim:set ft=sh noet ts=4:
+# vim:set ts=4 et ft=sh:
 
 IMDS_HEADER="Authorization"
-IMDS_URL="http://169.254.169.254/opc/v2"
+IMDS_URI="opc/v2"
 
 IMDS_HOSTNAME="instance/hostname"
 IMDS_SSH_KEYS="instance/metadata/ssh_authorized_keys"
 IMDS_USERDATA="instance/metadata/userdata"
 
 _imds_header() {
-	echo "$IMDS_HEADER: Bearer Oracle"
+    echo "$IMDS_HEADER: Bearer Oracle"
+}
+
+_imds_nic_index() {
+    local m n=0
+    local mac=$(cat /sys/class/net/$1/mac)
+    while m=$(imds $IMDS_NICS/$n/mac | tr A-F a-f); do
+        [ "$m" = "$mac" ] && echo $n; return 0
+    done
+    return 1
 }

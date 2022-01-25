@@ -13,9 +13,6 @@
 # IMDS token validity, in seconds (AWS only)
 #IMDS_TOKEN_TTL=5
 
-# Location of libraries
-#TINY_CLOUD_LIBS=/lib/tiny-cloud
-
 # Location of var directory
 #TINY_CLOUD_VAR=/var/lib/cloud
 

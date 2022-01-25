@@ -1,2 +1,5 @@
 auto %%
-iface %% inet dhcp
+iface %%
+  use dhcp
+  use imds
+  imds-resync 300

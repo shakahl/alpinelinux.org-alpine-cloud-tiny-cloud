@@ -1,35 +1,35 @@
 # Tiny Cloud - mdev hotplug functions
-# vim:set ft=sh ts=4 noet:
+# vim:set ts=4 et ft=sh:
 
 # generic helper function to install mdev rules
 install_before() {
-	local before="$1"
-	shift
-	local line="$*"
+    local before="$1"
+    shift
+    local line="$*"
 
-	# already installed
-	fgrep -q "$line" /etc/mdev.conf && return 0
+    # already installed
+    fgrep -q "$line" /etc/mdev.conf && return 0
 
-	if grep -q "$before" /etc/mdev.conf; then
-		# install before existing rule
-		line="-$line"
-	else
-		# no rule exists, put it before the catch-all fallback
-		before='^# fallback'
-		line="$line\n"
-	fi
-	sed -i -Ee "s|($before.*)|$line\n\1|" /etc/mdev.conf
+    if grep -q "$before" /etc/mdev.conf; then
+        # install before existing rule
+        line="-$line"
+    else
+        # no rule exists, put it before the catch-all fallback
+        before='^# fallback'
+        line="$line\n"
+    fi
+    sed -i -Ee "s|($before.*)|$line\n\1|" /etc/mdev.conf
 }
 
 # hotpluggable VNICs (multi-cloud)
 mod__vnic_eth_hotplug() {
-	install_before '^eth' \
-		'eth[0-9]	root:root 0644 */lib/mdev/vnic-eth-hotplug'
+    install_before '^eth' \
+        'eth[0-9]	root:root 0644 */lib/mdev/vnic-eth-hotplug'
 
-	# NICs attached at launch don't get added with mdev -s
-	assemble_interfaces
+    # NICs attached at launch don't get added with mdev -s
+    assemble_interfaces
 }
 
 # load cloud-specific functions
 
-[ -f "$TINY_CLOUD_LIBS/$CLOUD/mdev" ] && source "$TINY_CLOUD_LIBS/$CLOUD/mdev"
+[ -f /lib/tiny-cloud/"$CLOUD"/mdev ] && source /lib/tiny-cloud/"$CLOUD"/mdev

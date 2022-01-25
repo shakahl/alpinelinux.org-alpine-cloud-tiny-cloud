@@ -1,29 +1,12 @@
 #!/bin/sh
-# vim: set ts=4 et:
+# vim:set ts=4 et:
 
 set -e
 
-PROC="$(basename "$0")[$$]"
+source /lib/tiny-cloud/common
 
-DEBUG=
-
-log() {
-    [ -z "$DEBUG" ] && [ "$1" = "debug" ] && return
-    local facility="kern.$1"
-    shift
-    logger -p "$facility" -t "$PROC" "$@"
-}
-
-if [ -z "$MDEV" ]; then
-    log err "MDEV env not defined"
-    exit 1
-fi
-
-# where's the tiny-cloud lib directory?
-if [ -z "$TINY_CLOUD_LIBS" ]; then
-	TINY_CLOUD_CONF=${TINY_CLOUD_CONF:-/etc/conf.d/tiny-cloud}
-	[ -f "$TINY_CLOUD_CONF" ] && source "$TINY_CLOUD_CONF"
-	TINY_CLOUD_LIBS=${TINY_CLOUD_LIBS:-/lib/tiny-cloud}
+if [ -z "$MDEV" ] || [ -z "$ACTION" ]; then
+    log crit "MDEV or ACTION undefined, aborting"
 fi
 
 IFACE_CFG=/etc/network/interfaces
@@ -46,19 +29,18 @@ ip() {
 
 assemble_interfaces() {
     log info "Rebuilding $IFACE_CFG"
-    # TODO: might be elsewhere, source /etc/conf.d/tiny-cloud
-    "$TINY_CLOUD_LIBS"/network-interfaces
+    /lib/tiny-cloud/network-interfaces
 }
 
 interface_up() {
     log info "Bringing up $MDEV"
-    # so /run/udhcpcd.$MDEV.pid isn't non-owner writeable
+    # umask so udhcpc PID file isn't non-owner writeable
     (umask 0022 && ifup "$MDEV")
 }
 
 cleanup_interface() {
-    local v p rtable="${MDEV#eth}"
-    let rtable+=1000
+    local v pref rtable="${MDEV#eth}"
+    let rtable+=10000
 
     log info "Cleaning up $MDEV"
 
@@ -71,8 +53,8 @@ cleanup_interface() {
 
     # remove related rules
     for v in 4 6; do
-        for p in $(ip -"$v" rule show table "$rtable" | cut -d: -f1); do
-            ip -"$v" rule del pref "$p"
+        for pref in $(ip -"$v" rule show table "$rtable" | cut -d: -f1); do
+            ip -"$v" rule del pref "$pref"
         done
     done
 }
