@@ -29,12 +29,18 @@ Optional features, which may not be universally necessary:
 * manage symlinks from NVMe block devices to `/dev/xvd` and `/dev/sd` devices
   (i.e. AWS Nitro instances)
 * manage hotpluggable network interfaces
-* manage secondary IPv4 and IPv6 addresses on network interfaces
+* sync IMDS-provided secondary IPv4 and IPv6 addresses network interfaces
+
+Also included is a handy `imds` client script for easy access to an instance's
+IMDS data.
 
 ## Requirements
 
 As Tiny Cloud is meant to be tiny, it has very few dependencies:
 * Busybox (`ash`, `wget`, etc.)
+* `ifupdown-ng` (optional, for network management)
+* `iproute2-minimal` (optional, for syncing IPv4/IPv6 from IMDS)
+* `nvme-cli` (optional, for AWS nitro NVMe symlinks)
 * `partx`
 * `resize2fs`
 * `sfdisk`
@@ -70,9 +76,8 @@ rc-update add tiny-cloud-final default
 ## Configuration
 
 By default, Tiny Cloud expects configuration at `/etc/conf.d/tiny-cloud`,
-although the location can be overridden by setting the `TINY_CLOUD_CONF`
-environment variable.  The stock [`etc/conf.d/tiny-cloud`](
-etc/conf.d/tiny-cloud) file contains details of all tuneable settings.
+The stock [`etc/conf.d/tiny-cloud`](etc/conf.d/tiny-cloud) file contains
+details of all tuneable settings.
 
 *Because Tiny Cloud does not currently do auto-detection, you **MUST** set a
 configuration value for `CLOUD` indicating which cloud provider will be used.
