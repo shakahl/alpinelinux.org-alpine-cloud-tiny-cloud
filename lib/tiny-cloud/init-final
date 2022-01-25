@@ -1,7 +1,6 @@
 # Tiny Cloud - Final Phase Functions
 # vim:set ts=4 et ft=sh:
 
-source /etc/conf.d/tiny-cloud
 source /lib/tiny-cloud/init-common
 
 save_userdata() {

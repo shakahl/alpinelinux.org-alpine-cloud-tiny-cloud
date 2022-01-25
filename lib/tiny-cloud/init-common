@@ -1,6 +1,8 @@
 # Tiny Cloud - Common Initialization
 # vim:set ts=4 et ft=sh:
 
+source /etc/conf.d/tiny-cloud
+
 # set defaults
 CLOUD_USER=${CLOUD_USER:-alpine}
 CLOUD_USERDATA=${CLOUD_USERDATA:-user-data}

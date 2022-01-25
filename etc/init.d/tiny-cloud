@@ -11,8 +11,6 @@ depend() {
 start() {
 	source /lib/tiny-cloud/init-main
 
-	# TODO: background tiny-cloud network watcher?
-
 	is_bootstrapped && return 0
 
 	ebegin "Setting Instance Hostname"

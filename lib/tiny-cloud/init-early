@@ -1,7 +1,6 @@
 # Tiny Cloud - Early Phase Functions
 # vim:set ts=4 et ft=sh:
 
-source /etc/conf.d/tiny-cloud
 source /lib/tiny-cloud/init-common
 
 expand_root() {
