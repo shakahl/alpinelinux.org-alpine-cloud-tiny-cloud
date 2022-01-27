@@ -22,8 +22,6 @@ expand_root() {
     resize2fs "$mountpoint"
 }
 
-assemble_interfaces() { /lib/tiny-cloud/network-interfaces; }
-
 has_cloud_hotplugs() { [ -n "$HOTPLUG_MODULES" ]; }
 
 install_hotplugs() {
@@ -40,4 +38,4 @@ install_hotplugs() {
 }
 
 HOTPLUG_TYPE=${HOTPLUG_TYPE:-mdev}
-source /lib/tiny-cloud/"$HOTPLUG_TYPE"
+[ -f /lib/tiny-cloud/"$HOTPLUG_TYPE" ] && source /lib/tiny-cloud/"$HOTPLUG_TYPE"

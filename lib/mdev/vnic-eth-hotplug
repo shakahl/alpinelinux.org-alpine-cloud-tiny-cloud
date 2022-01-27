@@ -27,11 +27,6 @@ ip() {
     fi
 }
 
-assemble_interfaces() {
-    log info "Rebuilding $IFACE_CFG"
-    /lib/tiny-cloud/network-interfaces
-}
-
 interface_up() {
     log info "Bringing up $MDEV"
     # umask so udhcpc PID file isn't non-owner writeable
@@ -67,11 +62,11 @@ if exec 200>>"$IFACE_CFG"; then
     if flock 200; then
         case $ACTION in
             add|"")
-                assemble_interfaces
+                assemble-interfaces
                 is_networking_started && interface_up
                 ;;
             remove)
-                assemble_interfaces
+                assemble-interfaces
                 is_networking_started && cleanup_interface
                 ;;
             *)

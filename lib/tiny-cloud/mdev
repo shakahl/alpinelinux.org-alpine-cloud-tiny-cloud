@@ -23,11 +23,13 @@ install_before() {
 
 # hotpluggable VNICs (multi-cloud)
 mod__vnic_eth_hotplug() {
+    [ -f /lib/mdev/vnic-eth-hotplug ] || return 1
+
     install_before '^eth' \
         'eth[0-9]	root:root 0644 */lib/mdev/vnic-eth-hotplug'
 
     # NICs attached at launch don't get added with mdev -s
-    assemble_interfaces
+    assemble-interfaces
 }
 
 # load cloud-specific functions

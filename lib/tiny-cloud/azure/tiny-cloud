@@ -1,0 +1,27 @@
+# Tiny Cloud configuration
+
+# REQUIRED: The instance's cloud provider (valid: aws, azure, gcp, oci)
+# valid: aws, azure, gcp, oci
+CLOUD=azure
+
+# User account where instance SSH keys are installed
+#CLOUD_USER=alpine
+
+# Filename of userdata file (in TINY_CLOUD_VAR directory)
+#CLOUD_USERDATA=user-data
+
+# IMDS token validity, in seconds (AWS only)
+#IMDS_TOKEN_TTL=5
+
+# Location of var directory
+#TINY_CLOUD_VAR=/var/lib/cloud
+
+# Location of log directory
+#TINY_CLOUD_LOGS=/var/log
+
+# Hotplug Method (valid: mdev)
+#HOTPLUG_TYPE=mdev
+
+# Cloud-related Hotplug Modules
+# valid: vnic_eth_hotplug, nvme_ebs_links (aws)
+#HOTPLUG_MODULES=
