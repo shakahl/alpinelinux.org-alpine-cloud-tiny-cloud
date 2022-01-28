@@ -136,4 +136,17 @@ new image will also run Tiny Cloud init scripts during their first boot.
 
 ### `vnic_eth_hotplug`
 
+This hotplug module adds and removes ethernet interfaces as virtual NICs are
+attached/detached from the instance.
+
+An `ifupdown-ng` executor also syncs the interfaces' secondary IPv4 and IPV6
+addresses associated with those VNICs, if the cloud's IMDS provides that
+configuration data.
+
 ### `nvme_ebs_links`
+
+EBS volumes are attached to AWS EC2 Nitro instances using the NVMe driver.
+Unfortunately, the `/dev/nvme*` device names do not match the device name
+assigned to the attached EBS volume.  This hotplug module figures out what the
+assigned device name is, and sets up `/dev/xvd*` and `/dev/sd*` symlinks to
+the right NVMe devices for EBS volumes and their partitions.
