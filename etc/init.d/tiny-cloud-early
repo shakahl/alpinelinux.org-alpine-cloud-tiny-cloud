@@ -1,0 +1,24 @@
+#!/sbin/openrc-run
+# vim:set ts=8 noet ft=sh:
+
+description="Tiny Cloud Bootstrap - early phase"
+
+depend() {
+	before mdev
+}
+
+start() {
+	source /lib/tiny-cloud/init-early
+
+	is_bootstrapped && return 0
+
+	ebegin "Expanding Root Volume/Partition"
+	expand_root
+	eend $?
+
+	if has_cloud_hotplugs; then
+		ebegin "Installing Cloud Hotplugs"
+		install_hotplugs
+		eend $?
+	fi
+}

@@ -1,0 +1,14 @@
+#!/bin/sh 
+# vim: set ts=8 noet:
+
+# Tiny Cloud IMDS ifupdown-ng executor
+
+case "$PHASE" in
+post-up)
+	/sbin/imds-net-sync
+	;;
+pre-down)
+	/sbin/imds-net-sync -k
+	;;
+*) ;;
+esac

@@ -1,0 +1,29 @@
+#!/sbin/openrc-run
+# vim:set ts=8 noet ft=sh:
+
+description="Tiny Cloud Bootstrap - final phase"
+
+depend() {
+	after *
+	provide cloud-final
+}
+
+start() {
+	source /lib/tiny-cloud/init-final
+
+	is_bootstrapped && return 0
+
+	ebegin "Saving Instance UserData"
+	save_userdata
+	eend $?
+
+	if is_userdata_script; then
+		ebegin "Executing UserData Script"
+		run_userdata
+		eend $?
+	fi
+
+	ebegin "Marking Instance Bootstrap Complete"
+	bootstrap_complete
+	eend $?
+}

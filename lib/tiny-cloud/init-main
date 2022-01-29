@@ -1,0 +1,39 @@
+# Tiny Cloud - Main Phase Functions
+# vim:set ts=4 et ft=sh:
+
+source /lib/tiny-cloud/init-common
+
+# ensure existence of output directories
+[ ! -d "$TINY_CLOUD_LOGS" ] && mkdir -p "$TINY_CLOUD_LOGS"
+[ ! -d "$TINY_CLOUD_VAR" ] && mkdir -p "$TINY_CLOUD_VAR"
+
+set_hostname() {
+    skip_action set_hostname && return
+
+    local fqdn=$(imds @hostname)
+    local host="${fqdn%%\.*}"
+
+    echo "$host" > /etc/hostname
+    hostname -F /etc/hostname
+    echo -e "127.0.1.1\t$fqdn $host" >> /etc/hosts
+}
+
+set_ssh_keys() {
+    skip_action set_ssh_keys && return
+
+    local user="$CLOUD_USER"
+    local pwent=$(getent passwd "$user")
+    local group=$(echo "$pwent" | cut -d: -f4)
+    local ssh_dir="$(echo "$pwent" | cut -d: -f6)/.ssh"
+    local keys_file="$ssh_dir/authorized_keys"
+
+    if [ ! -d "$ssh_dir" ]; then
+        mkdir -p "$ssh_dir"
+        chmod 700 "$ssh_dir"
+    fi
+
+    touch "$keys_file"
+    chmod 600 "$keys_file"
+    chown -R "$user:$group" "$ssh_dir"
+    imds @ssh-keys > "$keys_file"
+}

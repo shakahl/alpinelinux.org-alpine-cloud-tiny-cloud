@@ -1,0 +1,147 @@
+#!/bin/sh
+# vim:set ts=4 et ft=sh:
+
+# Tiny Cloud - Instance MetaData Service client
+
+### configuration
+
+source /etc/conf.d/tiny-cloud
+
+### cloud-specific variables/functions
+
+unset \
+    IMDS_HEADER \
+    IMDS_URI \
+    IMDS_QUERY \
+    IMDS_HOSTNAME \
+    IMDS_SSH_KEYS \
+    IMDS_USERDATA \
+    IMDS_NICS \
+    IMDS_MAC \
+    IMDS_IPV4 \
+    IMDS_IPV6 \
+    IMDS_IPV4_NET \
+    IMDS_IPV6_NET \
+    IMDS_IPV4_PREFIX \
+    IMDS_IPV6_PREFIX
+unset -f \
+    _imds_token \
+    _imds_header \
+    _imds_nic_index \
+        2>/dev/null	|| true
+
+### default variables/functions
+
+CLOUD="${CLOUD:-unknown}"
+IMDS_ENDPOINT="169.254.169.254"
+
+_imds_ssh_keys() { _imds "$IMDS_SSH_KEYS"; }
+_imds_userdata() { _imds "$IMDS_USERDATA"; }
+
+### load cloud-specific variables and functions
+
+if [ ! -d /lib/tiny-cloud/"$CLOUD" ]; then
+    echo "ERROR: Unknown Cloud '$CLOUD'" >&2
+    exit 1
+fi
+source /lib/tiny-cloud/"$CLOUD"/imds
+
+### non-overrideable functions
+
+_imds() {
+    wget --quiet --timeout 1 --output-document - \
+        --header "$(_imds_header)" \
+        "http://$IMDS_ENDPOINT/$IMDS_URI/$1$IMDS_QUERY"
+}
+
+imds() {
+    local cmd args key rv err=1
+    if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+        _imds_help
+        return
+    fi
+    while [ -n "$1" ]; do
+        cmd=_imds
+        args=
+        key="$1"; shift
+        case $key in
+            # error handling
+            -e) err=0; continue ;;          # ignore
+            +e) err=1; continue ;;          # return
+            # TODO: retry/deadline
+            # output control
+            +n) echo; continue ;;           # insert newline
+            +s) echo -n " "; continue ;;    # insert space
+            +t) echo -en "\t"; continue ;;  # insert tab
+            # key aliasing
+            @hostname)  args="$IMDS_HOSTNAME" ;;
+            @ssh-keys)  cmd=_imds_ssh_keys ;;
+            @userdata)  cmd=_imds_userdata ;;
+            @nics)      args="$IMDS_NICS" ;;
+            @nic:*)
+                cmd=imds
+                args=$(_imds_nic_args $(echo "${key#@nic:}" | tr , ' '))
+                ;;
+            # use key verbatim
+            *) args="$key" ;;
+        esac
+        # TODO: retry/deadline
+        "$cmd" $args 2>/dev/null
+        rv=$?
+        [ $err -eq 0 ] && continue
+        [ $rv = "0" ] || return $rv
+    done
+}
+
+_imds_nic_args() {
+    local key nic
+    nic=$(_imds_nic_index "$1") || return 1
+    if [ -z "$2" ]; then
+        echo "$IMDS_NICS/$nic"
+        return
+    fi
+    while [ -n "$2" ]; do
+        key="$2"
+        shift
+        case "$key" in
+            @mac)           key="$IMDS_MAC" ;;
+            @ipv4)          key="$IMDS_IPV4" ;;
+            @ipv6)          key="$IMDS_IPV6" ;;
+            @ipv4-net)      key="$IMDS_IPV4_NET" ;;
+            @ipv6-net)      key="$IMDS_IPV6_NET" ;;
+            @ipv4-prefix)   key="$IMDS_IPV4_PREFIX" ;;
+            @ipv6-prefix)   key="$IMDS_IPV6_PREFIX" ;;
+            # error/output control passthrough
+            -e|+[enst])     printf "$key\n"; continue ;;
+        esac
+        printf "$IMDS_NICS/$nic/$key\n"
+    done
+}
+
+_imds_help() {
+    cat <<EOT
+Usage: imds [-h] { -e | +e | +n | +s | +t | @<alias> | <imds-path> } ...
+  -h           : help
+  -e / +e      : ignore / catch errors
+  +n / +s / +t : insert newline / space / tab
+  <alias> :-
+    hostname : instance hostname
+    ssh-keys : instance SSH keys
+    userdata : instance user data
+    nics     : instance NICs
+    nic:<iface>[,<nic-key> ...] : specific NIC interface
+      <iface>   : network interface (i.e. eth1)
+      <nic-key> :- { -e | +e | +n | +s | +t | @<nic-alias> | <nic-path> }
+        <nic-alias> :-
+          mac         : mac address
+          ipv4        : ipv4 address(es)
+          ipv6        : ipv6 address(es)
+          ipv4-net    : subnet ipv4 network(s)
+          ipv6-net    : subnet ipv6 network(s)
+          ipv4-prefix : delegated ipv4 CIDR(s)
+          ipv6-prefix : delegated ipv6 CIDR(s)
+EOT
+}
+
+
+imds "$@"

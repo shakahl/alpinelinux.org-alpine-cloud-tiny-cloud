@@ -1,0 +1,45 @@
+# Tiny Cloud - Early Phase Functions
+# vim:set ts=4 et ft=sh:
+
+source /lib/tiny-cloud/init-common
+
+expand_root() {
+    skip_action expand_root && return
+
+    # explicitly use busybox, in case util-linux is also installed
+    local mountpoint=$(busybox mountpoint -n / | cut -d' ' -f1)
+    local volume=$(echo "$mountpoint" |
+        sed -Ee "s/(nvme\d+n\d|(xv|s)d[a-z])p?\d?$/\1/"
+    )
+    local partition
+
+    if [ "$mountpoint" != "$volume" ]; then
+        # it's a partition, resize it
+        partition=$(echo "$mountpoint" | sed -Ee "s/.*(\d+)$/\1/")
+        echo ", +" | sfdisk -q --no-reread -N "$partition" "$volume"
+        partx -u "$volume"
+    fi
+    # resize filesystem
+    mount -orw,remount /
+    resize2fs "$mountpoint"
+}
+
+has_cloud_hotplugs() { [ -n "$HOTPLUG_MODULES" ]; }
+
+install_hotplugs() {
+    skip_action install_hotplugs && return
+
+    local result
+
+    for module in $HOTPLUG_MODULES; do
+        result='-'
+        echo -n " $module"
+        if type "mod__$module" | grep -q "is a function"; then
+            "mod__$module" && result='+' || result='!'
+        fi
+        echo -n "($result)"
+    done
+}
+
+HOTPLUG_TYPE=${HOTPLUG_TYPE:-mdev}
+[ -f /lib/tiny-cloud/"$HOTPLUG_TYPE" ] && source /lib/tiny-cloud/"$HOTPLUG_TYPE"

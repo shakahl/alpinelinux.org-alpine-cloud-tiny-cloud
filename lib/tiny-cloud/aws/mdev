@@ -1,0 +1,11 @@
+# AWS mdev Hotplug Modules
+# vim:set ts=4 et ft=sh:
+
+# makes symlinks for NVMe devices that correlate to AWS EBS sd/xvd devices
+mod__nvme_ebs_links() {
+    # nvme-cli not installed?
+    [ -x /usr/sbin/nvme ] || return 1
+
+    install_before '^nvme\.\*' \
+        'nvme[0-9]+n.*	root:disk 0660 */lib/mdev/nvme-ebs-links'
+}

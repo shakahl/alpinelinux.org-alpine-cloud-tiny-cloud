@@ -1,0 +1,23 @@
+#!/sbin/openrc-run
+# vim:set ts=8 noet ft=sh:
+
+description="Tiny Cloud Bootstrap - main phase"
+
+depend() {
+	need net
+	before sshd
+}
+
+start() {
+	source /lib/tiny-cloud/init-main
+
+	is_bootstrapped && return 0
+
+	ebegin "Setting Instance Hostname"
+	set_hostname
+	eend $?
+
+	ebegin "Installing SSH Keys for $CLOUD_USER User"
+	set_ssh_keys "$CLOUD_USER"
+	eend $?
+}

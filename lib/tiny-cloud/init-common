@@ -1,0 +1,29 @@
+# Tiny Cloud - Common Initialization
+# vim:set ts=4 et ft=sh:
+
+source /etc/conf.d/tiny-cloud
+
+# set defaults
+CLOUD_USER=${CLOUD_USER:-alpine}
+CLOUD_USERDATA=${CLOUD_USERDATA:-user-data}
+TINY_CLOUD_LOGS=${TINY_CLOUD_LOGS:-/var/log}
+TINY_CLOUD_VAR=${TINY_CLOUD_VAR:-/var/lib/cloud}
+SKIP_INIT_ACTIONS=${SKIP_INIT_ACTIONS:-}
+
+# is initial bootstrap already done?
+is_bootstrapped() { [ -f "$TINY_CLOUD_VAR"/.bootstrap-complete ]; }
+
+# indicate bootstrap is done
+bootstrap_complete() { touch "$TINY_CLOUD_VAR"/.bootstrap-complete ]; }
+
+# should we skip this action?
+skip_action() {
+    local action="$1"
+
+    # no action?  don't skip.
+    [ -z "$action" ] && return 1
+
+    # action not in the skip list?
+    echo "$SKIP_INIT_ACTIONS" | grep -Eq "\b$action\b" || return 1
+    echo -n " SKIPPING"
+}

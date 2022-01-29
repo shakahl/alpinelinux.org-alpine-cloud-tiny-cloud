@@ -1,0 +1,4 @@
+auto lo
+iface lo
+  use link
+  use loopback
