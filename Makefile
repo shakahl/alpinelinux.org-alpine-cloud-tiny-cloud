@@ -32,7 +32,7 @@ openrc:
 	install -Dm755 -t "$(PREFIX)"/etc/init.d \
 		etc/init.d/*
 
-aws:
+aws: conf_dir
 	install -Dm755 -t "$(PREFIX)"/lib/mdev \
 		lib/mdev/nvme-ebs-links
 	install -Dm644 -t "$(PREFIX)"/lib/tiny-cloud/aws \
@@ -41,20 +41,23 @@ aws:
 		-e 's/^#?HOTPLUG_MODULES=.*/HOTPLUG_MODULES="vnic_eth_hotplug nvme_ebs_links"/' \
 		etc/conf.d/tiny-cloud.example > "$(PREFIX)"/etc/conf.d/tiny-cloud
 
-azure:
+azure: conf_dir
 	install -Dm644 -t $(PREFIX)/lib/tiny-cloud/azure \
 		lib/tiny-cloud/azure/*
 	sed -e 's/^#?CLOUD=.*/CLOUD=azure/' \
 		etc/conf.d/tiny-cloud.example > "$(PREFIX)"/etc/conf.d/tiny-cloud
 
-gcp:
+gcp: conf_dir
 	install -Dm644 -t $(PREFIX)/lib/tiny-cloud/gcp \
 		lib/tiny-cloud/gcp/*
 	sed -e 's/^#?CLOUD=.*/CLOUD=gcp/' \
 		etc/conf.d/tiny-cloud.example > "$(PREFIX)"/etc/conf.d/tiny-cloud
 
-oci:
+oci: conf_dir
 	install -Dm644 -t $(PREFIX)/lib/tiny-cloud/oci \
 		lib/tiny-cloud/oci/*
 	sed -e 's/^#?CLOUD=.*/CLOUD=oci/' \
 		etc/conf.d/tiny-cloud.example > "$(PREFIX)"/etc/conf.d/tiny-cloud
+
+conf_dir:
+	mkdir -p "$(PREFIX)"/etc/conf.d
