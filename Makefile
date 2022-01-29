@@ -4,7 +4,9 @@ SUBPACKAGES = core network openrc aws azure gcp oci
 
 .PHONY: install $(SUBPACKAGES)
 
+# installs all subpackages, then replaces cloud-specific config with example
 install: $(SUBPACKAGES)
+	mv $(PREFIX)/etc/conf.d/tiny-cloud.example $(PREFIX)/etc/conf.d/tiny-cloud
 
 core:
 	install -Dm755 -t $(PREFIX)/bin \
