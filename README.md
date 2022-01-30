@@ -1,3 +1,14 @@
+# ***NOTICE***
+
+**This repository has been retired in favor of its direct descendant,
+[Tiny Cloud](https://gitlab.alpinelinux.org/alpine/cloud/tiny-cloud),
+which adds new features and supports multiple cloud providers; the new repo was
+forked from this one, and is preserved in its [tiny-ec2-bootstrap](
+https://gitlab.alpinelinux.org/alpine/cloud/tiny-cloud/-/tree/tiny-ec2-bootstrap)
+branch.**
+
+----
+----
 # Tiny EC2 Bootstrapper
 
 This is designed to do the minimal amount of work required to bootstrap an EC2
