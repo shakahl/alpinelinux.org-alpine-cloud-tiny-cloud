@@ -5,7 +5,7 @@
 
 ### configuration
 
-source /etc/conf.d/tiny-cloud
+[ -f /etc/conf.d/tiny-cloud ] && source /etc/conf.d/tiny-cloud
 
 ### cloud-specific variables/functions
 
