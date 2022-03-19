@@ -99,7 +99,7 @@ start() {
 
 	[ -d "/var/lib/cloud" ] || mkdir -p /var/lib/cloud
 
-	ebegin "Locking root account"; _lock_root_user; eend $?
+	ebegin "Locking root account"; _lock_root_account; eend $?
 	ebegin "Disabling $EC2_USER password"; _disable_password "$EC2_USER"; eend $?
 	ebegin "Expanding root partition"; _resize_root_partition; eend $?
 	ebegin "Setting ec2 hostname"; _update_hostname; eend $?
