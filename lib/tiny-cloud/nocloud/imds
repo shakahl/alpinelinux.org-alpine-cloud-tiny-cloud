@@ -1,0 +1,59 @@
+# NoCloud Instance Metadata
+# vim: ts=4 et ft=sh:
+
+IMDS_HOSTNAME=meta-data/hostname
+IMDS_SSH_KEYS=meta-data/ssh-keys
+IMDS_USERDATA=user-data
+
+# have we loaded the nocloud meta/user/vendor data?
+is_nocloud_loaded() { [ -f "$TINY_CLOUD_VAR/.nocloud_loaded" ]; }
+
+# from location specified in kernel cmdline
+_load_nocloud_cmdline() {
+    # TODO
+}
+
+# from volume labeled cidata|CIDATA
+_load_nocloud_volume() {
+    local mntdir='/mnt/cidata'
+
+    mkdir "$mntdir"
+    mount -L cidata "$mntdir" || mount -L CIDATA "$mntdir" || return 1
+    for data in meta user vendor; do
+        if ! cp "$mntdir/$data-data" "$TINY_CLOUD_VAR/$data-data"; then
+            [ "$data" = vendor ] && continue
+            echo "ERROR: Required $data-data not found on CIDATA volume"
+            umount "$mntdir"
+            return 1
+        fi
+    done
+    umount "$mntdir"
+}
+
+load_nocloud() {
+    is_nocloud_loaded && return
+    if grep -qE ' ds=nocloud(-net)?[; ]' /proc/cmdline; then
+        if ! _load_nocloud_cmdline; then
+            echo 'ERROR: Unable to load nocloud data specified in kernel cmdline' >&2
+            return 1
+        fi
+    elif ! _load_nocloud_volume; then
+        echo 'ERROR: Unable to load nocloud data from CIDATA volume' >&2
+        return 1
+    fi
+    touch "$TINY_CLOUD_VAR/.nocloud_loaded"
+}
+
+_imds() {
+    local file="$TINY_CLOUD_VAR"/$(echo "$1" | cut -d/ -f1)
+    local key=$(echo "$1" | cut -d/ -f2-)
+    local data value
+
+    is_nocloud_loaded || load_nocloud || return 1
+
+    # does file exist?
+    [ -f "$file" ] || return 1
+
+    # use 'file/' to get top-level keys
+    [ "$1" = "$file" ] && cat "$file" || yx -f "$file" "$key"
+}

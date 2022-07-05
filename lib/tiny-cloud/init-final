@@ -3,10 +3,40 @@
 
 source /lib/tiny-cloud/init-common
 
+
+match_header() {
+    local bytes=$(echo -en "$1")
+    [ "$bytes" = $(dd bs=1 count=${#bytes} if="$2" 2>/dev/null) ]
+}
+
+# TODO: also do this for nocloud meta-data and vendor-data?
 save_userdata() {
     skip_action save_userdata && return
 
-    imds -e @userdata > "$TINY_CLOUD_VAR/$CLOUD_USERDATA"
+    local userdata="$TINY_CLOUD_VAR/$CLOUD_USERDATA"
+    local tmpfile=$(mktemp "$userdata.XXXXXX")
+    local cmd
+
+    imds -e @userdata > "$tmpfile"
+    if match_header '\037\213\010' "$tmpfile"; then
+        cmd='gzip -dc'
+    elif match_header 'BZh' "$tmpfile"; then
+        cmd='bzip2 -dc'
+    elif match_header '\3757zXZ\000' "$tmpfile"; then
+        cmd='xz -dc'
+    elif match_header '\135\0\0\0' "$tmpfile"; then
+        cmd='lzma -dc'
+    elif match_header '\211\114\132' "$tmpfile"; then
+        cmd='lzop -dc'
+    elif match_header '\002!L\030' "$tmpfile"; then
+        cmd='lz4 -dc'
+    elif match_header '(\265/\375' "$tmpfile"; then
+        cmd='zstd -dc'
+    else
+        cmd='cat'
+    fi
+    $cmd "$tmpfile" > "$userdata"
+    rm "$tmpfile"
 }
 
 is_userdata_script() {
