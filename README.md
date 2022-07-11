@@ -120,7 +120,7 @@ supported compression algorithms are `gzip`, `bzip2`, `unxz`, `lzma`, `lzop`,
 `lz4`, and `zstd`.  _(Note that `lz4` and `zstd` are not installed in Alpine
 by default, and would need to be added to the image.)_
 
-If the user data is a script starting with `#!`, it will be executed; its
+If the user data is a script starting with `#!/`, it will be executed; its
 output (combined STDOUT and STDERR) and exit code are saved to
 `/var/log/user-data.log` and `/var/log/user-data.exit`, respectively; the
 directory is overrideable via the `TINY_CLOUD_LOGS` config setting.
