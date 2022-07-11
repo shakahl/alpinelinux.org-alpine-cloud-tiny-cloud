@@ -1,46 +1,76 @@
 # NoCloud Instance Metadata
 # vim: ts=4 et ft=sh:
 
-IMDS_HOSTNAME=meta-data/hostname
-IMDS_SSH_KEYS=meta-data/ssh-keys
-IMDS_USERDATA=user-data
+NOCLOUD_FILES="meta-data user-data vendor-data network-config"
 
-# have we loaded the nocloud meta/user/vendor data?
 is_nocloud_loaded() { [ -f "$TINY_CLOUD_VAR/.nocloud_loaded" ]; }
 
-# from location specified in kernel cmdline
 _load_nocloud_cmdline() {
-    # TODO
+    local kopt kv k v data
+
+    for kopt in $(cat /proc/cmdline); do
+        echo "$kopt" | grep -qE '(^|=)ds=nocloud(-net)?(;|$)' || continue
+        for kv in $(echo "$kopt" | cut -d\; -f2-); do
+            k=$(echo "$kv" | cut -d= -f1)
+            v=$(echo "$kv" | cut -d= -f2- | sed -Ee s'|^file://|/|')
+            case "$k" in
+                h|hostname)
+                    echo -e "\nhostname: $hostname" >> "$TINY_CLOUD_VAR/meta-data"
+                    ;;
+                i|instance-id)
+                    echo -e "\ninstance-id: $hostname" >> "$TINY_CLOUD_VAR/meta-data"
+                    ;;
+                s|seedfrom)
+                    for data in $NOCLOUD_FILES; do
+                        case "$v" in
+                            /*)
+                                cat "$v" >> "$TINY_CLOUD_VAR/$data" || continue
+                                echo >> "$TINY_CLOUD_VAR/$data"
+                                ;;
+                            http://*|https://*)
+                                wget -qO - "$v" >> "$TINY_CLOUD_VAR/$data" || continue
+                                echo >> "$TINY_CLOUD_VAR/$data"
+                                ;;
+                            *) echo "WARNING: Ignoring unknown seedfrom value '$v'" >&2
+                                ;;
+                        esac
+                        ;;
+                    done
+                    ;;
+                *)  echo "WARNING: Ignoring unknown nocloud kernel cmdline key '$k'" >&2
+                    ;;
+            esac
+        done
+        return
+    done
 }
 
-# from volume labeled cidata|CIDATA
 _load_nocloud_volume() {
-    local mntdir='/mnt/cidata'
+    local mntdir=$(mktmemp /mnt/cidata-XXXXXX)
+    local data
 
-    mkdir "$mntdir"
-    mount -L cidata "$mntdir" || mount -L CIDATA "$mntdir" || return 1
-    for data in meta user vendor; do
-        if ! cp "$mntdir/$data-data" "$TINY_CLOUD_VAR/$data-data"; then
-            [ "$data" = vendor ] && continue
-            echo "ERROR: Required $data-data not found on CIDATA volume"
-            umount "$mntdir"
-            return 1
-        fi
+    mkdir -p "$mntdir"
+    # TODO: are lables case insensitive?
+    mount LABEL=cidata "$mntdir" || mount LABEL=CIDATA "$mntdir" || return 1
+    for data in $NOCLOUD_FILES; do
+        cp "$mntdir/$data" "$TINY_CLOUD_VAR/$data" 2>/dev/null
     done
     umount "$mntdir"
+    rmdir "$mntdir"
 }
 
 load_nocloud() {
     is_nocloud_loaded && return
-    if grep -qE ' ds=nocloud(-net)?[; ]' /proc/cmdline; then
-        if ! _load_nocloud_cmdline; then
-            echo 'ERROR: Unable to load nocloud data specified in kernel cmdline' >&2
-            return 1
-        fi
-    elif ! _load_nocloud_volume; then
-        echo 'ERROR: Unable to load nocloud data from CIDATA volume' >&2
+
+    # start with a clean slate
+    rm -f $NOCLOUD_FILES
+
+    if ! _load_nocloud_cmdline || _load_nocloud_volume; then
+        echo "ERROR: Unable to load NoCloud data" >&2
         return 1
     fi
+    # at the very minimum, we expect something in meta-data
+
     touch "$TINY_CLOUD_VAR/.nocloud_loaded"
 }
 

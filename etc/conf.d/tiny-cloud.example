@@ -1,14 +1,11 @@
 # Tiny Cloud configuration
 
-# REQUIRED: The instance's cloud provider (valid: aws, azure, gcp, oci)
-# valid: aws, azure, gcp, oci
+# REQUIRED: The instance's cloud provider
+# valid: aws, azure, gcp, oci, nocloud
 #CLOUD=
 
 # User account where instance SSH keys are installed
 #CLOUD_USER=alpine
-
-# Filename of userdata file (in TINY_CLOUD_VAR directory)
-#CLOUD_USERDATA=user-data
 
 # IMDS token validity, in seconds (AWS only)
 #IMDS_TOKEN_TTL=5
@@ -28,5 +25,5 @@
 
 # Explicitly skip these (whitespace delimited) things during init
 # valid: expand_root install_hotplugs set_hostname set_ssh_keys
-#   save_userdata run_userdata
+#   save_userdata decompress_userdata run_userdata
 #SKIP_INIT_ACTIONS=

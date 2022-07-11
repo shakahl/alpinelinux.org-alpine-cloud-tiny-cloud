@@ -2,7 +2,7 @@
 # vim: ts=4 et ft=sh:
 
 log() {
-    local facility=kern
+    local facility="kern"
     local stderr
     local tag=$(basename "$0")
     while [ "${1:0:1}" = '-' ]; do

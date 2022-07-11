@@ -7,10 +7,23 @@ IMDS_URI="opc/v2"
 IMDS_HOSTNAME="instance/hostname"
 IMDS_SSH_KEYS="instance/metadata/ssh_authorized_keys"
 IMDS_USERDATA="instance/metadata/userdata"
+IMDS_NICS="nics"
+
+# TODO: flesh out networking
+unset \
+    IMDS_MAC \
+    IMDS_IPV4 \
+    IMDS_IPV6 \
+    IMDS_IPV4_NET \
+    IMDS_IPV6_NET \
+    IMDS_IPV4_PREFIX \
+    IMDS_IPV6_PREFIX
 
 _imds_header() {
     echo "$IMDS_HEADER: Bearer Oracle"
 }
+
+_imds_ssh_keys() { _imds "$IMDS_SSH_KEYS"; }
 
 _imds_nic_index() {
     local m n=0

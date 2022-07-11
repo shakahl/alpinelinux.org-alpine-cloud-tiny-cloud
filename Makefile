@@ -1,6 +1,6 @@
 PREFIX?=/
 
-SUBPACKAGES = core network openrc aws azure gcp oci
+SUBPACKAGES = core network openrc aws azure gcp oci nocloud
 
 .PHONY: install $(SUBPACKAGES)
 
@@ -57,6 +57,12 @@ oci: conf_dir
 	install -Dm644 -t $(PREFIX)/lib/tiny-cloud/oci \
 		lib/tiny-cloud/oci/*
 	sed -Ee 's/^#?CLOUD=.*/CLOUD=oci/' \
+		etc/conf.d/tiny-cloud.example > "$(PREFIX)"/etc/conf.d/tiny-cloud
+
+nocloud: conf_dir
+	install -Dm644 -t $(PREFIX)/lib/tiny-cloud/nocloud \
+		lib/tiny-cloud/nocloud/*
+	sed -Ee 's/^#?CLOUD=.*/CLOUD=nocloud/' \
 		etc/conf.d/tiny-cloud.example > "$(PREFIX)"/etc/conf.d/tiny-cloud
 
 conf_dir:

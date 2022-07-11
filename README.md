@@ -8,10 +8,13 @@ do just what is necessary with a small footprint and minimal dependencies.
 A direct descendant of [tiny-ec2-bootstrap](
 https://gitlab.alpinelinux.org/alpine/cloud/tiny-ec2-bootstrap), Tiny Cloud
 works with multiple cloud providers.  Currently, the following are supported:
-* AWS (Amazon Web Services)
-* Azure (Microsoft Azure)
-* GCP (Google Cloud Platform)
-* OCI (Oracle Cloud Infrastructure)
+* [AWS](https://aws.amazon.com) (Amazon Web Services)
+* [Azure](https://azure.microsoft.com) (Microsoft Azure)
+* [GCP](https://cloud.google.com) (Google Cloud Platform)
+* [OCI](https://cloud.oracle.com) (Oracle Cloud Infrastructure)
+* [NoCloud](
+    https://cloudinit.readthedocs.io/en/latest/topics/datasources/nocloud.html)
+  (cloud-init's NoCloud AWS-compatible data source)
 
 ## Features
 
@@ -44,9 +47,12 @@ As Tiny Cloud is meant to be tiny, it has very few dependencies:
 * `partx`
 * `resize2fs`
 * `sfdisk`
+* [`yx`](https://gitlab.com/tomalok/yx)
+  (optional, allows NoCloud to extract metadata from YAML files)
 
 Tiny Cloud has been developed specifically for use with the
-[Alpine Cloud Images](https://gitlab.alpinelinux.org/alpine/cloud/alpine-cloud-images)
+[Alpine Cloud Images](
+  https://gitlab.alpinelinux.org/alpine/cloud/alpine-cloud-images)
 project, and as such, it is currently tailored for use with [Alpine Linux](
 https://alpinelinux.org), the [OpenRC](https://github.com/OpenRC/openrc) init
 system, and the `ext4` root filesystem.  If you would like to see Tiny Cloud
@@ -57,12 +63,12 @@ open an issue with your request -- or better yet, submit a merge request!
 
 Typically, Tiny Cloud is installed and configured when building a cloud image,
 and is available on Alpine Linux as the [`tiny-cloud`](
-https://pkgs.alpinelinux.org/packages?name=tiny-cloud) APK...
+  https://pkgs.alpinelinux.org/packages?name=tiny-cloud*) APKs...
 ```
-apk install tiny-cloud
+apk install tiny-cloud-<cloud>
 ```
 This will install the necessary init scripts, libraries, etc. plus any missing
-dependencies.
+dependencies for Tiny Cloud to support _`<cloud>`_.
 
 Alternately, you can download a release tarball, and use `make` to install it.
 
@@ -79,9 +85,9 @@ By default, Tiny Cloud expects configuration at `/etc/conf.d/tiny-cloud`,
 The stock [`etc/conf.d/tiny-cloud`](etc/conf.d/tiny-cloud) file contains
 details of all tuneable settings.
 
-*Because Tiny Cloud does not currently do auto-detection, you **MUST** set a
+_Because Tiny Cloud does not currently do auto-detection, you **MUST** set a
 configuration value for `CLOUD` indicating which cloud provider will be used.
-Current valid values are `aws`, `azure`, `gcp`, and `oci`.*
+Current valid values are `aws`, `azure`, `gcp`, `oci`, and `nocloud`._
 
 ## Operation
 
@@ -106,13 +112,18 @@ data, and sets up instance's hostname and the cloud user's SSH keys before
 
 `tiny-cloud-final` should be the very last init script to run in the
 **default** runlevel.  By default, it saves the instance's user data to
-`/var/lib/cloud/user-data`, which is overrideable via the `TINY_CLOUD_VAR`
-andr `CLOUD_USERDATA` config settings.
+`/var/lib/cloud/user-data`; the directory overrideable via the `TINY_CLOUD_VAR`
+config setting.
 
-If the user data is a script starting with `#!/`, it will be executed; its
+If the user data is compressed, Tiny Cloud will decompress it.  Currently
+supported compression algorithms are `gzip`, `bzip2`, `unxz`, `lzma`, `lzop`,
+`lz4`, and `zstd`.  _(Note that `lz4` and `zstd` are not installed in Alpine
+by default, and would need to be added to the image.)_
+
+If the user data is a script starting with `#!`, it will be executed; its
 output (combined STDOUT and STDERR) and exit code are saved to
-`/var/log/user-data.log` and `/var/log/user-data.exit`, respectively -- unless
-overriden with `TINY_CLOUD_LOGS` and `CLOUD_USERDATA` config settings.
+`/var/log/user-data.log` and `/var/log/user-data.exit`, respectively; the
+directory is overrideable via the `TINY_CLOUD_LOGS` config setting.
 
 If all went well, the very last thing `tiny-cloud-final` does is touch
 a `.bootstrap-complete` file into existence in `/var/lib/cloud` or another
