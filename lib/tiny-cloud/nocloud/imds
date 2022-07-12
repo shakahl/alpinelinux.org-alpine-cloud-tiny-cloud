@@ -15,10 +15,10 @@ _load_nocloud_cmdline() {
             v=$(echo "$kv" | cut -d= -f2- | sed -Ee s'|^file://|/|')
             case "$k" in
                 h|hostname)
-                    echo -e "\nhostname: $hostname" >> "$TINY_CLOUD_VAR/meta-data"
+                    echo -e "\nhostname: $v" >> "$TINY_CLOUD_VAR/meta-data"
                     ;;
                 i|instance-id)
-                    echo -e "\ninstance-id: $hostname" >> "$TINY_CLOUD_VAR/meta-data"
+                    echo -e "\ninstance-id: $v" >> "$TINY_CLOUD_VAR/meta-data"
                     ;;
                 s|seedfrom)
                     for data in $NOCLOUD_FILES; do
@@ -34,7 +34,6 @@ _load_nocloud_cmdline() {
                             *) echo "WARNING: Ignoring unknown seedfrom value '$v'" >&2
                                 ;;
                         esac
-                        ;;
                     done
                     ;;
                 *)  echo "WARNING: Ignoring unknown nocloud kernel cmdline key '$k'" >&2
@@ -77,7 +76,6 @@ load_nocloud() {
 _imds() {
     local file="$TINY_CLOUD_VAR"/$(echo "$1" | cut -d/ -f1)
     local key=$(echo "$1" | cut -d/ -f2-)
-    local data value
 
     is_nocloud_loaded || load_nocloud || return 1
 
@@ -85,5 +83,9 @@ _imds() {
     [ -f "$file" ] || return 1
 
     # use 'file/' to get top-level keys
-    [ "$1" = "$file" ] && cat "$file" || yx -f "$file" "$key"
+    if [ "$1" = "$file" ]; then
+        cat "$file"
+    else
+        yx -f "$file" "$key"
+    fi
 }

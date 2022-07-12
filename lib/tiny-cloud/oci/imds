@@ -27,7 +27,7 @@ _imds_ssh_keys() { _imds "$IMDS_SSH_KEYS"; }
 
 _imds_nic_index() {
     local m n=0
-    local mac=$(cat /sys/class/net/$1/mac)
+    local mac=$(cat "/sys/class/net/$1/mac")
     while m=$(imds $IMDS_NICS/$n/mac | tr A-F a-f); do
         [ "$m" = "$mac" ] && echo $n; return 0
     done
