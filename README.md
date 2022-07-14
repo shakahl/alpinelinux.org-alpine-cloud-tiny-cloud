@@ -82,8 +82,8 @@ rc-update add tiny-cloud-final default
 ## Configuration
 
 By default, Tiny Cloud expects configuration at `/etc/conf.d/tiny-cloud`,
-The stock [`etc/conf.d/tiny-cloud`](etc/conf.d/tiny-cloud) file contains
-details of all tuneable settings.
+The stock [lib/tiny-cloud/tiny-cloud.conf`](lib/tiny-cloud/tiny-cloud.conf)
+file contains details of all tuneable settings.
 
 _Because Tiny Cloud does not currently do auto-detection, you **MUST** set a
 configuration value for `CLOUD` indicating which cloud provider will be used.
