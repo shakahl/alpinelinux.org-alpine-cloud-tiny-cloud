@@ -14,7 +14,7 @@ core:
 		lib/tiny-cloud/init-* \
 		lib/tiny-cloud/mdev \
 		lib/tiny-cloud/tiny-cloud.conf
-	install -Dm644 lib/tiny-cloud.conf \
+	install -Dm644 lib/tiny-cloud/tiny-cloud.conf \
 		"$(PREFIX)"/etc/conf.d/tiny-cloud
 
 network:
