@@ -3,16 +3,18 @@
 
 source /lib/tiny-cloud/init-common
 
+# DEBUG
+set -x
 
 match_header() {
     local bytes=$(echo -en "$1")
-    [ "$bytes" = $(dd bs=1 count=${#bytes} if="$2" 2>/dev/null) ]
+    [ "$bytes" = "$(dd bs=1 count=${#bytes} if="$2" 2>/dev/null)" ]
 }
 
 save_userdata() {
     skip_action save_userdata && return
 
-    local userdata="$TINY_CLOUD_VAR/$CLOUD_USERDATA"
+    local userdata="$TINY_CLOUD_VAR/user-data"
     local tmpfile=$(mktemp "$userdata.XXXXXX")
     local cmd
 
@@ -40,15 +42,15 @@ save_userdata() {
 }
 
 is_userdata_script() {
-    head -n1 "$TINY_CLOUD_VAR/$CLOUD_USERDATA" | grep -q "#!/"
+    head -n1 "$TINY_CLOUD_VAR/user-data" | grep -q "#!/"
 }
 
 run_userdata() {
     skip_action run_userdata && return
 
-    local log="$TINY_CLOUD_LOGS/$CLOUD_USERDATA.log"
-    local exit="$TINY_CLOUD_LOGS/$CLOUD_USERDATA.exit"
-    local userdata="$TINY_CLOUD_VAR/$CLOUD_USERDATA"
+    local log="$TINY_CLOUD_LOGS/user-data.log"
+    local exit="$TINY_CLOUD_LOGS/user-data.exit"
+    local userdata="$TINY_CLOUD_VAR/user-data"
 
     chmod +x "$userdata"
     { "$userdata" 2>& 1; echo $? > "$exit"; } | tee "$log"
