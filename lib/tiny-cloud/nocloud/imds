@@ -47,11 +47,17 @@ _load_nocloud_cmdline() {
 
 _load_nocloud_volume() {
     local mntdir=$(mktemp /mnt/cidata-XXXXXX)
-    local data
+    local data mounted
 
     mkdir -p "$mntdir"
-    # TODO: are lables case insensitive?
-    if mount LABEL=cidata "$mntdir" || mount LABEL=CIDATA "$mntdir"; then
+    for fstype in vfat iso9660; do
+        [ "$mounted" ] && break
+        for label in cidata CIDATA; do
+            [ -n "$mounted" ] && break
+            mount -t "$fstype" LABEL="$label" "$mntdir" && mounted=1
+        done
+    done
+    if [ -n "$mounted" ]; then
         for data in $NOCLOUD_FILES; do
             # lack of source results in empty target
             cat "$mntdir/$data" > "$TINY_CLOUD_VAR/$data"
