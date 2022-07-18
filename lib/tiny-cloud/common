@@ -1,6 +1,13 @@
 # Tiny Cloud - common script functions
 # vim: ts=4 et ft=sh:
 
+# set defaults
+[ -f /etc/conf.d/tiny-cloud ] && source /etc/conf.d/tiny-cloud
+CLOUD="${CLOUD:-unknown}"
+CLOUD_USER=${CLOUD_USER:-alpine}
+TINY_CLOUD_LOGS=${TINY_CLOUD_LOGS:-/var/log}
+TINY_CLOUD_VAR=${TINY_CLOUD_VAR:-/var/lib/cloud}
+
 log() {
     local facility="kern"
     local stderr
@@ -17,7 +24,7 @@ log() {
     [ -z "$DEBUG" ] && [ "$level" = debug ] && return
     shift
 
-    logger $stderr -p "$facility.$level" -t "$tag" "$@"
+    logger $stderr -p "$facility.$level" -t "$tag[$$]" "$@"
     case "$level" in
         crit|alert|emerg) exit 1 ;;
     esac

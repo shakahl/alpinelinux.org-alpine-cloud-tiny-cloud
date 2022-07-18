@@ -3,9 +3,9 @@
 
 # Tiny Cloud - Instance MetaData Service client
 
-### configuration
+### configuration, common functions
 
-[ -f /etc/conf.d/tiny-cloud ] && source /etc/conf.d/tiny-cloud
+source /lib/tiny-cloud/common
 
 ### cloud-specific variables/functions
 
@@ -21,7 +21,7 @@ unset -f \
 
 ### default variables/functions
 
-CLOUD="${CLOUD:-unknown}"
+# Common to many clouds
 IMDS_ENDPOINT="169.254.169.254"
 
 # Common to AWS and NoCloud(ish)
@@ -47,8 +47,9 @@ _imds_userdata() { _imds "$IMDS_USERDATA"; }
 
 _imds_ssh_keys() {
     local key
-    for key in $(imds "$IMDS_SSH_KEYS"); do
-        imds "$IMDS_SSH_KEYS/${key%=*}/openssh-key"
+    for key in $(_imds "$IMDS_SSH_KEYS"); do
+        _imds "$IMDS_SSH_KEYS/${key%=*}/openssh-key"
+        echo
     done | sort -u
 }
 

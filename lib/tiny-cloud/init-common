@@ -1,12 +1,8 @@
 # Tiny Cloud - Common Initialization
 # vim:set ts=4 et ft=sh:
 
-[ -f /etc/conf.d/tiny-cloud ] && source /etc/conf.d/tiny-cloud
-
 # set defaults
-CLOUD_USER=${CLOUD_USER:-alpine}
-TINY_CLOUD_LOGS=${TINY_CLOUD_LOGS:-/var/log}
-TINY_CLOUD_VAR=${TINY_CLOUD_VAR:-/var/lib/cloud}
+source /lib/tiny-cloud/common
 SKIP_INIT_ACTIONS=${SKIP_INIT_ACTIONS:-}
 
 # is initial bootstrap already done?
