@@ -3,9 +3,6 @@
 
 source /lib/tiny-cloud/init-common
 
-# DEBUG
-set -x
-
 match_header() {
     local bytes=$(echo -en "$1")
     [ "$bytes" = "$(dd bs=1 count=${#bytes} if="$2" 2>/dev/null)" ]

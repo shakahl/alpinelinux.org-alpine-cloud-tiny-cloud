@@ -1,9 +1,6 @@
 # NoCloud Instance Metadata
 # vim: ts=4 et ft=sh:
 
-# DEBUG
-set -x 
-
 NOCLOUD_FILES="meta-data user-data vendor-data network-config"
 
 is_nocloud_loaded() { [ -f "$TINY_CLOUD_VAR/.nocloud_loaded" ]; }
@@ -92,7 +89,7 @@ _imds() {
     [ -f "$file" ] || return 1
 
     # use 'file/' to get top-level keys
-    if [ $(basename "$file") = "keypath" ]; then
+    if [ $(basename "$file") = "$keypath" ]; then
         cat "$file"
     else
         yx -f "$file" $keypath
