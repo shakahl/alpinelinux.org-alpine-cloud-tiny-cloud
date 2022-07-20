@@ -9,10 +9,10 @@ _load_nocloud_cmdline() {
     local kopt kv k v data
 
     for kopt in $(cat /proc/cmdline); do
-        echo "$kopt" | grep -qE '(^|=)ds=nocloud(-net)?(;|$)' || continue
-        for kv in $(echo "$kopt" | sed -Ee 's/.*ds=nocloud(-net)?(;|$)//' | tr \; ' '); do
+        echo "$kopt" | grep -qE '(^|=)ds=nocloud(-net)?;' || continue
+        for kv in $(echo "${kopt#*;}" | tr \; ' '); do
             k=$(echo "$kv" | cut -d= -f1)
-            v=$(echo "$kv" | cut -d= -f2- | sed -Ee s'|^file://|/|')
+            v=$(echo "$kv" | cut -d= -f2-)
             case "$k" in
                 h|hostname)
                     echo -e "\nhostname: $v" >> "$TINY_CLOUD_VAR/meta-data"
@@ -22,7 +22,7 @@ _load_nocloud_cmdline() {
                     ;;
                 s|seedfrom)
                     for data in $NOCLOUD_FILES; do
-                        case "$v" in
+                        case "${v#file:/}" in
                             /*)
                                 cat "$v/$data" >> "$TINY_CLOUD_VAR/$data" || continue
                                 echo >> "$TINY_CLOUD_VAR/$data"
@@ -46,7 +46,7 @@ _load_nocloud_cmdline() {
 }
 
 _load_nocloud_volume() {
-    local mntdir=$(mktemp /mnt/cidata-XXXXXX)
+    local mntdir=$(mktemp -d /mnt/cidata-XXXXXX)
     local data mounted
 
     mkdir -p "$mntdir"
