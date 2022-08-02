@@ -15,7 +15,7 @@ install_before() {
         line="-$line"
     else
         # no rule exists, put it before the catch-all fallback
-        before='^# fallback'
+        before="^# fallback"
         line="$line\n"
     fi
     sed -i -Ee "s|($before.*)|$line\n\1|" /etc/mdev.conf
@@ -25,8 +25,8 @@ install_before() {
 mod__vnic_eth_hotplug() {
     [ -f /lib/mdev/vnic-eth-hotplug ] || return 1
 
-    install_before '^eth' \
-        'eth[0-9]	root:root 0644 */lib/mdev/vnic-eth-hotplug'
+    install_before "^eth" \
+        "eth[0-9]	root:root 0644 */lib/mdev/vnic-eth-hotplug"
 
     # NICs attached at launch don't get added with mdev -s
     assemble-interfaces

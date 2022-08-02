@@ -8,8 +8,17 @@ IMDS_URI="metadata/instance"
 IMDS_HOSTNAME="compute/name"
 IMDS_SSH_KEYS="compute/publicKeys"
 IMDS_USERDATA="compute/userData"
+IMDS_NICS="network/interface"
 
-IMDS_NICS=""
+# TODO: flesh out networking
+unset \
+    IMDS_MAC \
+    IMDS_IPV4 \
+    IMDS_IPV6 \
+    IMDS_IPV4_NET \
+    IMDS_IPV6_NET \
+    IMDS_IPV4_PREFIX \
+    IMDS_IPV6_PREFIX
 
 _imds_header() {
     echo "$IMDS_HEADER: true"

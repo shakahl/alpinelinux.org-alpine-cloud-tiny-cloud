@@ -3,27 +3,16 @@
 
 # Tiny Cloud - Instance MetaData Service client
 
-### configuration
+### configuration, common functions
 
-[ -f /etc/conf.d/tiny-cloud ] && source /etc/conf.d/tiny-cloud
+source /lib/tiny-cloud/common
 
 ### cloud-specific variables/functions
 
 unset \
     IMDS_HEADER \
     IMDS_URI \
-    IMDS_QUERY \
-    IMDS_HOSTNAME \
-    IMDS_SSH_KEYS \
-    IMDS_USERDATA \
-    IMDS_NICS \
-    IMDS_MAC \
-    IMDS_IPV4 \
-    IMDS_IPV6 \
-    IMDS_IPV4_NET \
-    IMDS_IPV6_NET \
-    IMDS_IPV4_PREFIX \
-    IMDS_IPV6_PREFIX
+    IMDS_QUERY
 unset -f \
     _imds_token \
     _imds_header \
@@ -32,11 +21,39 @@ unset -f \
 
 ### default variables/functions
 
-CLOUD="${CLOUD:-unknown}"
+# Common to many clouds
 IMDS_ENDPOINT="169.254.169.254"
 
-_imds_ssh_keys() { _imds "$IMDS_SSH_KEYS"; }
+# Common to AWS and NoCloud(ish)
+IMDS_HOSTNAME="meta-data/hostname"
+IMDS_SSH_KEYS="meta-data/public-keys"
+IMDS_USERDATA="user-data"
+IMDS_NICS="meta-data/network/interfaces/macs"
+IMDS_MAC="mac"
+IMDS_IPV4="local-ipv4s"
+IMDS_IPV6="ipv6s"
+IMDS_IPV4_NET="subnet-ipv4-cidr-block"
+IMDS_IPV6_NET="subnet-ipv6-cidr-blocks"
+IMDS_IPV4_PREFIX="ipv4-prefix"
+IMDS_IPV6_PREFIX="ipv6-prefix"
+
+_imds() {
+    wget --quiet --timeout 1 --output-document - \
+        --header "$(_imds_header)" \
+        "http://$IMDS_ENDPOINT/$IMDS_URI/$1$IMDS_QUERY"
+}
+
 _imds_userdata() { _imds "$IMDS_USERDATA"; }
+
+_imds_ssh_keys() {
+    local key
+    for key in $(_imds "$IMDS_SSH_KEYS"); do
+        _imds "$IMDS_SSH_KEYS/${key%=*}/openssh-key"
+        echo
+    done | sort -u
+}
+
+_imds_nic_index() { cat "/sys/class/net/$1/address"; }
 
 ### load cloud-specific variables and functions
 
@@ -47,12 +64,6 @@ fi
 source /lib/tiny-cloud/"$CLOUD"/imds
 
 ### non-overrideable functions
-
-_imds() {
-    wget --quiet --timeout 1 --output-document - \
-        --header "$(_imds_header)" \
-        "http://$IMDS_ENDPOINT/$IMDS_URI/$1$IMDS_QUERY"
-}
 
 imds() {
     local cmd args key rv err=1

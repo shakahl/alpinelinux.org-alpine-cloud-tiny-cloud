@@ -6,19 +6,6 @@ IMDS_TOKEN_TTL_HEADER="X-aws-ec2-metadata-token-ttl-seconds"
 IMDS_TOKEN_TTL=${IMDS_TOKEN_TTL:-5}
 IMDS_URI="latest"
 
-IMDS_HOSTNAME="meta-data/hostname"
-IMDS_SSH_KEYS="meta-data/public-keys"
-IMDS_USERDATA="user-data"
-
-IMDS_NICS="meta-data/network/interfaces/macs"
-IMDS_MAC="mac"
-IMDS_IPV4="local-ipv4s"
-IMDS_IPV6="ipv6s"
-IMDS_IPV4_NET="subnet-ipv4-cidr-block"
-IMDS_IPV6_NET="subnet-ipv6-cidr-blocks"
-IMDS_IPV4_PREFIX="ipv4-prefix"
-IMDS_IPV6_PREFIX="ipv6-prefix"
-
 _imds_token() {
     echo -ne "PUT /latest/api/token" \
         "HTTP/1.0\r\n$IMDS_TOKEN_TTL_HEADER: $IMDS_TOKEN_TTL\r\n\r\n" |
@@ -28,13 +15,3 @@ _imds_token() {
 _imds_header() {
     echo "$IMDS_HEADER: $(_imds_token)"
 }
-
-# digs deeper than the default
-_imds_ssh_keys() {
-    local key
-    for key in $(imds "$IMDS_SSH_KEYS"); do
-        imds "$IMDS_SSH_KEYS/${key%=*}/openssh-key"
-    done | sort -u
-}
-
-_imds_nic_index() { cat "/sys/class/net/$1/address"; }
