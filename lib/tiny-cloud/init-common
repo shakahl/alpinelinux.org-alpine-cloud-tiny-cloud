@@ -9,7 +9,7 @@ SKIP_INIT_ACTIONS=${SKIP_INIT_ACTIONS:-}
 is_bootstrapped() { [ -f "$TINY_CLOUD_VAR"/.bootstrap-complete ]; }
 
 # indicate bootstrap is done
-bootstrap_complete() { touch "$TINY_CLOUD_VAR"/.bootstrap-complete ]; }
+bootstrap_complete() { touch "$TINY_CLOUD_VAR"/.bootstrap-complete ; }
 
 # should we skip this action?
 skip_action() {
