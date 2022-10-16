@@ -41,5 +41,4 @@ install_hotplugs() {
     done
 }
 
-HOTPLUG_TYPE=${HOTPLUG_TYPE:-mdev}
-[ -f /lib/tiny-cloud/"$HOTPLUG_TYPE" ] && source /lib/tiny-cloud/"$HOTPLUG_TYPE"
+[ -f /lib/tiny-cloud/"${HOTPLUG_TYPE:=mdev}" ] && source /lib/tiny-cloud/"$HOTPLUG_TYPE"

@@ -8,36 +8,6 @@ match_header() {
     [ "$bytes" = "$(dd bs=1 count=${#bytes} if="$2" 2>/dev/null)" ]
 }
 
-save_userdata() {
-    skip_action save_userdata && return
-
-    local userdata="$TINY_CLOUD_VAR/user-data"
-    local tmpfile=$(mktemp "$userdata.XXXXXX")
-    local cmd
-
-    imds -e @userdata > "$tmpfile"
-    cmd="cat"
-    if ! skip_action decompress_userdata; then
-        if match_header '\037\213\010' "$tmpfile"; then
-            cmd="gzip -dc"
-        elif match_header 'BZh' "$tmpfile"; then
-            cmd="bzip2 -dc"
-        elif match_header '\3757zXZ\000' "$tmpfile"; then
-            cmd="unxz -c"
-        elif match_header '\135\0\0\0' "$tmpfile"; then
-            cmd="lzma -dc"
-        elif match_header '\211\114\132' "$tmpfile"; then
-            cmd="lzop -dc"
-        elif match_header '\002!L\030' "$tmpfile"; then
-            cmd="lz4 -dc"
-        elif match_header '(\265/\375' "$tmpfile"; then
-            cmd="zstd -dc"
-        fi
-    fi
-    $cmd "$tmpfile" > "$userdata"
-    rm "$tmpfile"
-}
-
 is_userdata_script() {
     head -n1 "$TINY_CLOUD_VAR/user-data" | grep -q "#!/"
 }

@@ -7,13 +7,12 @@
 
 source /lib/tiny-cloud/common
 
-IFACE=${IFACE:-unknown}
-[ "$IFACE" = unknown ] && log -s crit "IFACE not set, aborting"
+[ "${IFACE:=unknown}" = unknown ] && log -s crit "IFACE not set, aborting"
 
 # kill interface's imds-net-sync daemon
-[ "$1" = '-k' ] && PHASE=pre=down && shift
+[ "$1" = '-k' ] && PHASE=pre-down && shift
 
-PHASE=${PHASE:-post-up}
+: "${PHASE:=post-up}"
 
 # route table number
 RTABLE=${IFACE#eth}

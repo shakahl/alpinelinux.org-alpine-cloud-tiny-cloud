@@ -3,7 +3,7 @@
 
 IMDS_HEADER="X-aws-ec2-metadata-token"
 IMDS_TOKEN_TTL_HEADER="X-aws-ec2-metadata-token-ttl-seconds"
-IMDS_TOKEN_TTL=${IMDS_TOKEN_TTL:-5}
+: "${IMDS_TOKEN_TTL:=5}"
 IMDS_URI="latest"
 
 _imds_token() {

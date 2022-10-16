@@ -13,10 +13,6 @@ start() {
 
 	is_bootstrapped && return 0
 
-	ebegin "Saving Instance UserData"
-	save_userdata
-	eend $?
-
 	if is_userdata_script; then
 		ebegin "Executing UserData Script"
 		run_userdata

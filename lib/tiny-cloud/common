@@ -3,17 +3,17 @@
 
 # set defaults
 [ -f /etc/conf.d/tiny-cloud ] && source /etc/conf.d/tiny-cloud
-CLOUD="${CLOUD:-unknown}"
-CLOUD_USER=${CLOUD_USER:-alpine}
-TINY_CLOUD_LOGS=${TINY_CLOUD_LOGS:-/var/log}
-TINY_CLOUD_VAR=${TINY_CLOUD_VAR:-/var/lib/cloud}
+: "${CLOUD:=unknown}"
+: "${CLOUD_USER:=alpine}"
+: "${TINY_CLOUD_LOGS:=/var/log}"
+: "${TINY_CLOUD_VAR:=/var/lib/cloud}"
 
 log() {
     local facility="kern"
     local stderr
     local tag=$(basename "$0")
     while [ "${1:0:1}" = '-' ]; do
-        case "$1" in 
+        case "$1" in
             -f) facility="$2"; shift ;;
             -s) stderr=-s ;;
             -t) tag="$tag/$2"; shift ;;

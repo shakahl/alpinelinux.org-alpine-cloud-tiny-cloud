@@ -2,6 +2,9 @@
 # vim:set ts=8 noet ft=sh:
 
 description="Tiny Cloud Bootstrap - main phase"
+extra_commands="complete incomplete"
+
+source /lib/tiny-cloud/init-main
 
 depend() {
 	need net
@@ -9,9 +12,12 @@ depend() {
 }
 
 start() {
-	source /lib/tiny-cloud/init-main
 
 	is_bootstrapped && return 0
+
+	ebegin "Saving Instance UserData"
+	save_userdata
+	eend $?
 
 	ebegin "Setting Instance Hostname"
 	set_hostname
@@ -21,3 +27,7 @@ start() {
 	set_ssh_keys "$CLOUD_USER"
 	eend $?
 }
+
+# allow setting / unsetting of bootstrap state
+complete() { bootstrap_complete ; }
+incomplete() { bootstrap_incomplete ; }

@@ -105,20 +105,19 @@ any necessary `mdev` rules for device hotplug are set up.
 ### Main Phase
 
 The main `tiny-cloud` init script *does* depend on the cloud provider's IMDS
-data, and sets up instance's hostname and the cloud user's SSH keys before
-`sshd` starts.
-
-### Final Phase
-
-`tiny-cloud-final` should be the very last init script to run in the
-**default** runlevel.  By default, it saves the instance's user data to
-`/var/lib/cloud/user-data`; the directory overrideable via the `TINY_CLOUD_VAR`
-config setting.
+data; it saves the instance's user data to `/var/lib/cloud/user-data`, sets up
+instance's hostname, and installs the cloud user's SSH keys before `sshd`
+starts.
 
 If the user data is compressed, Tiny Cloud will decompress it.  Currently
 supported compression algorithms are `gzip`, `bzip2`, `unxz`, `lzma`, `lzop`,
 `lz4`, and `zstd`.  _(Note that `lz4` and `zstd` are not installed in Alpine
 by default, and would need to be added to the image.)_
+
+### Final Phase
+
+`tiny-cloud-final` should be the very last init script to run in the
+**default** runlevel.
 
 If the user data is a script starting with `#!/`, it will be executed; its
 output (combined STDOUT and STDERR) and exit code are saved to
@@ -144,10 +143,14 @@ To force the init scripts to re-run on the next boot...
 ```
 rm -f /var/lib/cloud/.bootstrap-complete
 ```
+or
+```
+service tiny-cloud incomplete
+```
 If you're instantiating an instance in order to create a new cloud image
 (using [Packer](https://packer.io), or some other means), you will need to
-remove this file before creating the image to ensure that instances using the
-new image will also run Tiny Cloud init scripts during their first boot.
+do this before creating the image to ensure that instances using the new
+image will also run Tiny Cloud init scripts during their first boot.
 
 ## Cloud Hotplug Modules
 
