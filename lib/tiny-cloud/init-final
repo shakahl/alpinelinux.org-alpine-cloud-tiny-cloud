@@ -3,11 +3,6 @@
 
 source /lib/tiny-cloud/init-common
 
-match_header() {
-    local bytes=$(echo -en "$1")
-    [ "$bytes" = "$(dd bs=1 count=${#bytes} if="$2" 2>/dev/null)" ]
-}
-
 is_userdata_script() {
     head -n1 "$TINY_CLOUD_VAR/user-data" | grep -q "#!/"
 }

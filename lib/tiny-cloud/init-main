@@ -38,6 +38,11 @@ set_ssh_keys() {
     imds @ssh-keys > "$keys_file"
 }
 
+match_header() {
+    local bytes=$(echo -en "$1")
+    [ "$bytes" = "$(dd bs=1 count=${#bytes} if="$2" 2>/dev/null)" ]
+}
+
 save_userdata() {
     skip_action save_userdata && return
 

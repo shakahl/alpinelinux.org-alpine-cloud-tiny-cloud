@@ -7,7 +7,7 @@
 
 source /lib/tiny-cloud/common
 
-[ "${IFACE:=unknown}" = unknown ] && log -s crit "IFACE not set, aborting"
+[ -z "${IFACE}" ] && log -s crit "IFACE not set, aborting"
 
 # kill interface's imds-net-sync daemon
 [ "$1" = '-k' ] && PHASE=pre-down && shift
