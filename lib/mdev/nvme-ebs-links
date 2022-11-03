@@ -38,7 +38,7 @@ case $ACTION in
   remove)
     for TARGET in sd* xvd*
     do
-      [ $(readlink "$TARGET" 2>/dev/null) = "$MDEV" ] && rm -f "$TARGET" && \
+      [ "$(readlink "$TARGET" 2>/dev/null)" = "$MDEV" ] && rm -f "$TARGET" && \
         log notice "Removed $TARGET symlink for $MDEV"
     done
     ;;
