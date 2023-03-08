@@ -19,11 +19,11 @@ bootstrap_incomplete() { rm -f "$TINY_CLOUD_VAR"/.bootstrap-complete ; }
 # should we skip this action?
 skip_action() {
     local action="$1"
-
-    # no action?  don't skip.
-    [ -z "$action" ] && return 1
-
-    # action not in the skip list?
-    echo "$SKIP_INIT_ACTIONS" | grep -Eq "\b$action\b" || return 1
-    printf " SKIPPING"
+    for i in $SKIP_INIT_ACTIONS; do
+        if [ "$i" = "$action" ]; then
+            printf " SKIPPING"
+            return 0
+        fi
+    done
+    return 1
 }
