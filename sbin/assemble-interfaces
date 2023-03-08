@@ -3,7 +3,7 @@
 
 set -e
 
-IFACE_CFG=/etc/network/interfaces
+IFACE_CFG="$ROOT"/etc/network/interfaces
 IFACE_DIR="${IFACE_CFG}.d"
 
 cd "$IFACE_DIR"
@@ -15,7 +15,7 @@ cat > "$IFACE_CFG.new" <<EOT
 EOT
 
 # existing loopback and eths
-for i in /sys/class/net/*; do
+for i in $ROOT/sys/class/net/*; do
     IFACE="$(basename "$i")"
     case $IFACE in
         lo|eth*)

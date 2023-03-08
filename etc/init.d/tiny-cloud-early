@@ -3,12 +3,14 @@
 
 description="Tiny Cloud Bootstrap - early phase"
 
+: "${LIBDIR:=$PREFIX/lib}"
+
 depend() {
 	before mdev
 }
 
 start() {
-	source /lib/tiny-cloud/init-early
+	. "$LIBDIR"/tiny-cloud/init-early
 
 	is_bootstrapped && return 0
 

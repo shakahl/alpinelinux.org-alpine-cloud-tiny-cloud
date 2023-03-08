@@ -2,7 +2,7 @@ PREFIX?=/
 
 SUBPACKAGES = core network openrc aws azure gcp oci nocloud
 
-.PHONY: install $(SUBPACKAGES)
+.PHONY: check install $(SUBPACKAGES)
 
 install: $(SUBPACKAGES)
 
@@ -52,3 +52,21 @@ oci:
 nocloud:
 	install -Dm644 -t $(PREFIX)/lib/tiny-cloud/nocloud \
 		lib/tiny-cloud/nocloud/*
+
+check: tests/Kyuafile Kyuafile
+	kyua test || (kyua report --verbose && exit 1)
+
+tests/Kyuafile: $(wildcard tests/*.test)
+	echo "syntax(2)" > $@.tmp
+	echo "test_suite('tiny-cloud')" >> $@.tmp
+	for i in $(notdir $(wildcard tests/*.test)); do \
+		echo "atf_test_program{name='$$i',timeout=5}" >> $@.tmp ; \
+	done
+	mv $@.tmp $@
+
+Kyuafile:
+	echo "syntax(2)" > $@.tmp
+	echo "test_suite('tiny-cloud')" >> $@.tmp
+	echo "include('tests/Kyuafile')" >> $@.tmp
+	mv $@.tmp $@
+

@@ -2,7 +2,9 @@
 # vim:set ts=4 et ft=sh:
 
 # set defaults
-source /lib/tiny-cloud/common
+: "${LIBDIR:=$PREFIX/lib}"
+. "$LIBDIR"/tiny-cloud/common
+
 : "${SKIP_INIT_ACTIONS:=}"
 
 # is initial bootstrap already done?

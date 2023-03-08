@@ -8,17 +8,17 @@ is_nocloud_loaded() { [ -f "$TINY_CLOUD_VAR/.nocloud_loaded" ]; }
 _load_nocloud_cmdline() {
     local kopt kv k v data
 
-    for kopt in $(cat /proc/cmdline); do
+    for kopt in $(cat "$ROOT"/proc/cmdline 2>/dev/null); do
         echo "$kopt" | grep -qE '(^|=)ds=nocloud(-net)?;' || continue
         for kv in $(echo "${kopt#*;}" | tr \; ' '); do
             k=$(echo "$kv" | cut -d= -f1)
             v=$(echo "$kv" | cut -d= -f2-)
             case "$k" in
                 h|hostname)
-                    echo -e "\nhostname: $v" >> "$TINY_CLOUD_VAR/meta-data"
+                    printf "\nhostname: %s" "$v" >> "$TINY_CLOUD_VAR/meta-data"
                     ;;
                 i|instance-id)
-                    echo -e "\ninstance-id: $v" >> "$TINY_CLOUD_VAR/meta-data"
+                    printf "\ninstance-id: %s" "$v" >> "$TINY_CLOUD_VAR/meta-data"
                     ;;
                 s|seedfrom)
                     for data in $NOCLOUD_FILES; do
@@ -46,7 +46,7 @@ _load_nocloud_cmdline() {
 }
 
 _load_nocloud_volume() {
-    local mntdir=$(mktemp -d /mnt/cidata-XXXXXX)
+    local mntdir=$(mktemp -d "$ROOT"/mnt/cidata-XXXXXX)
     local data mounted
 
     mkdir -p "$mntdir"
@@ -60,7 +60,7 @@ _load_nocloud_volume() {
     if [ -n "$mounted" ]; then
         for data in $NOCLOUD_FILES; do
             # lack of source results in empty target
-            cat "$mntdir/$data" > "$TINY_CLOUD_VAR/$data"
+            cat "$mntdir/$data" > "$TINY_CLOUD_VAR/$data" 2>/dev/null
         done
         umount "$mntdir"
     else
@@ -86,6 +86,7 @@ load_nocloud() {
 }
 
 _imds() {
+    mkdir -p "$TINY_CLOUD_VAR"
     local file="$TINY_CLOUD_VAR"/$(echo "$1" | cut -d/ -f1)
     local keypath=$(echo "$1" | cut -d/ -f2- | tr / ' ')
 

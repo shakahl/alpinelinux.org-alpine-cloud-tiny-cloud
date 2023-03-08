@@ -3,13 +3,15 @@
 
 description="Tiny Cloud Bootstrap - final phase"
 
+: "${LIBDIR:=$PREFIX/lib}"
+
 depend() {
 	after *
 	provide cloud-final
 }
 
 start() {
-	source /lib/tiny-cloud/init-final
+	. "$LIBDIR"/tiny-cloud/init-final
 
 	is_bootstrapped && return 0
 

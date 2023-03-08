@@ -4,7 +4,8 @@
 description="Tiny Cloud Bootstrap - main phase"
 extra_commands="complete incomplete"
 
-source /lib/tiny-cloud/init-main
+: "${LIBDIR:=$PREFIX/lib}"
+. "$LIBDIR"/tiny-cloud/init-main
 
 depend() {
 	need net

@@ -33,5 +33,7 @@ mod__vnic_eth_hotplug() {
 }
 
 # load cloud-specific functions
-
-[ -f /lib/tiny-cloud/"$CLOUD"/mdev ] && source /lib/tiny-cloud/"$CLOUD"/mdev
+: "${LIBDIR:=$PREFIX/lib}"
+if [ -f "$LIBDIR"/lib/tiny-cloud/"$CLOUD"/mdev ]; then
+	"$LIBDIR"/tiny-cloud/"$CLOUD"/mdev
+fi

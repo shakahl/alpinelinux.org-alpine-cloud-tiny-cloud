@@ -5,7 +5,34 @@
 
 ### configuration, common functions
 
-source /lib/tiny-cloud/common
+: "${LIBDIR:=$PREFIX/lib}"
+. "$LIBDIR"/tiny-cloud/common
+
+if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+    cat <<EOT
+Usage: imds [-h] { -e | +e | +n | +s | +t | @<alias> | <imds-path> } ...
+  -h           : help
+  -e / +e      : ignore / catch errors
+  +n / +s / +t : insert newline / space / tab
+  <alias> :-
+    hostname : instance hostname
+    ssh-keys : instance SSH keys
+    userdata : instance user data
+    nics     : instance NICs
+    nic:<iface>[,<nic-key> ...] : specific NIC interface
+      <iface>   : network interface (i.e. eth1)
+      <nic-key> :- { -e | +e | +n | +s | +t | @<nic-alias> | <nic-path> }
+        <nic-alias> :-
+          mac         : mac address
+          ipv4        : ipv4 address(es)
+          ipv6        : ipv6 address(es)
+          ipv4-net    : subnet ipv4 network(s)
+          ipv6-net    : subnet ipv6 network(s)
+          ipv4-prefix : delegated ipv4 CIDR(s)
+          ipv6-prefix : delegated ipv6 CIDR(s)
+EOT
+    exit 0
+fi
 
 ### cloud-specific variables/functions
 
@@ -57,20 +84,15 @@ _imds_nic_index() { cat "/sys/class/net/$1/address"; }
 
 ### load cloud-specific variables and functions
 
-if [ ! -d /lib/tiny-cloud/"$CLOUD" ]; then
+if [ ! -d "$LIBDIR"/tiny-cloud/"$CLOUD" ]; then
     echo "ERROR: Unknown Cloud '$CLOUD'" >&2
-    exit 1
 fi
-source /lib/tiny-cloud/"$CLOUD"/imds
+. "$LIBDIR"/tiny-cloud/"$CLOUD"/imds
 
 ### non-overrideable functions
 
 imds() {
     local cmd args key rv err=1
-    if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
-        _imds_help
-        return
-    fi
     while [ -n "$1" ]; do
         cmd=_imds
         args=
@@ -128,31 +150,5 @@ _imds_nic_args() {
         printf "$IMDS_NICS/$nic/$key\n"
     done
 }
-
-_imds_help() {
-    cat <<EOT
-Usage: imds [-h] { -e | +e | +n | +s | +t | @<alias> | <imds-path> } ...
-  -h           : help
-  -e / +e      : ignore / catch errors
-  +n / +s / +t : insert newline / space / tab
-  <alias> :-
-    hostname : instance hostname
-    ssh-keys : instance SSH keys
-    userdata : instance user data
-    nics     : instance NICs
-    nic:<iface>[,<nic-key> ...] : specific NIC interface
-      <iface>   : network interface (i.e. eth1)
-      <nic-key> :- { -e | +e | +n | +s | +t | @<nic-alias> | <nic-path> }
-        <nic-alias> :-
-          mac         : mac address
-          ipv4        : ipv4 address(es)
-          ipv6        : ipv6 address(es)
-          ipv4-net    : subnet ipv4 network(s)
-          ipv6-net    : subnet ipv6 network(s)
-          ipv4-prefix : delegated ipv4 CIDR(s)
-          ipv6-prefix : delegated ipv6 CIDR(s)
-EOT
-}
-
 
 imds "$@"

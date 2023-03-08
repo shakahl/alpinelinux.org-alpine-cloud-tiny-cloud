@@ -1,7 +1,8 @@
 # Tiny Cloud - Final Phase Functions
 # vim:set ts=4 et ft=sh:
 
-source /lib/tiny-cloud/init-common
+: "${LIBDIR:=$PREFIX/lib}"
+. "$LIBDIR"/tiny-cloud/init-common
 
 is_userdata_script() {
     head -n1 "$TINY_CLOUD_VAR/user-data" | grep -q "#!/"

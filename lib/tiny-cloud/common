@@ -2,17 +2,17 @@
 # vim: ts=4 et ft=sh:
 
 # set defaults
-[ -f /etc/conf.d/tiny-cloud ] && source /etc/conf.d/tiny-cloud
+[ -f "$ROOT"/etc/conf.d/tiny-cloud ] && . "$ROOT"/etc/conf.d/tiny-cloud
 : "${CLOUD:=unknown}"
 : "${CLOUD_USER:=alpine}"
-: "${TINY_CLOUD_LOGS:=/var/log}"
-: "${TINY_CLOUD_VAR:=/var/lib/cloud}"
+: "${TINY_CLOUD_LOGS:=$ROOT/var/log}"
+: "${TINY_CLOUD_VAR:=$ROOT/var/lib/cloud}"
 
 log() {
     local facility="kern"
     local stderr
     local tag=$(basename "$0")
-    while [ "${1:0:1}" = '-' ]; do
+    while [ "${1#-}" != "$1" ]; do
         case "$1" in
             -f) facility="$2"; shift ;;
             -s) stderr=-s ;;

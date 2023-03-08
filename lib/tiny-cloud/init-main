@@ -1,7 +1,8 @@
 # Tiny Cloud - Main Phase Functions
 # vim:set ts=4 et ft=sh:
 
-source /lib/tiny-cloud/init-common
+: "${LIBDIR:=$PREFIX/lib}"
+. "$LIBDIR"/tiny-cloud/init-common
 
 # ensure existence of output directories
 [ ! -d "$TINY_CLOUD_LOGS" ] && mkdir -p "$TINY_CLOUD_LOGS"

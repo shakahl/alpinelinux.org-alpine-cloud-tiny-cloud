@@ -1,0 +1,52 @@
+#!/usr/bin/env atf-sh
+
+. $(atf_get_srcdir)/test_env.sh
+
+export PREFIX="$srcdir"
+
+init_tests \
+	imds_help \
+	imds_nocloud_cmdline_hostname \
+	imds_nocloud_cidata_hostname
+
+imds_help_body() {
+	atf_check -o match:"Usage: imds" imds -h
+}
+
+imds_nocloud_cmdline_hostname_body() {
+	atf_require_prog yx
+	mkdir proc
+	for key in h hostname; do
+		echo "BOOT_IMAGE=/boot/vmlinuz-lts ro ds=nocloud;$key=myhostname" > proc/cmdline
+		CLOUD=nocloud atf_check \
+			-o match:'^myhostname$' \
+			imds @hostname
+	done
+}
+
+imds_nocloud_cidata_hostname_body() {
+	atf_require_prog yx
+	fake_bin mount <<-EOF
+		#!/bin/sh
+		# find last arg which is the mount dir
+		while ! [ -d "\$1" ]; do
+			shift
+		done
+		printf "#cloud-config\nhostname: myhostname\n" \
+			> "\$1"/meta-data
+	EOF
+
+	fake_bin umount <<-EOF
+		#!/bin/sh
+		while ! [ -d "\$1" ]; do
+			shift
+		done
+		rm -f "\$1"/meta-data
+	EOF
+	mkdir -p mnt
+
+	CLOUD=nocloud atf_check \
+		-o match:'^myhostname$' \
+		imds @hostname
+}
+

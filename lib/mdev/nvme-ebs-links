@@ -1,7 +1,8 @@
 #!/bin/sh
 # vim:set ts=2 et:
 
-source /lib/tiny-cloud/common
+: "${LIBDIR:=$PREFIX/lib}"
+. "$LIBDIR"/tiny-cloud/common
 
 # nvme tool not installed?
 [ -x /usr/sbin/nvme ] || log crit "nvme cli not installed"

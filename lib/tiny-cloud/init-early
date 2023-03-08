@@ -1,7 +1,8 @@
 # Tiny Cloud - Early Phase Functions
 # vim:set ts=4 et ft=sh:
 
-source /lib/tiny-cloud/init-common
+: "${LIBDIR:=$PREFIX/lib}"
+. "$LIBDIR"/tiny-cloud/init-common
 
 expand_root() {
     skip_action expand_root && return
@@ -41,4 +42,7 @@ install_hotplugs() {
     done
 }
 
-[ -f /lib/tiny-cloud/"${HOTPLUG_TYPE:=mdev}" ] && source /lib/tiny-cloud/"$HOTPLUG_TYPE"
+: "${HOTPLUG_TYPE:=mdev}"
+if [ -f "$LIBDIR"/tiny-cloud/"$HOTPLUG_TYPE" ]; then
+	. "$LIBDIR"/tiny-cloud/"$HOTPLUG_TYPE"
+fi

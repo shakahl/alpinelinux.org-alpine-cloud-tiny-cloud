@@ -1,0 +1,35 @@
+#!/usr/bin/env atf-sh
+
+. $(atf_get_srcdir)/test_env.sh
+
+init_tests \
+	assemble_eth0 \
+	assemble_missing_interfaces_d
+
+assemble_eth0_body() {
+	mkdir -p etc/network/interfaces.d \
+		sys/class/net/eth0
+
+	cat > etc/network/interfaces.d/DEFAULT <<-EOF
+		auto %%
+		iface %% inet dhcp
+	EOF
+	atf_check assemble-interfaces
+
+	atf_check \
+		-o match:"# NOTE:" \
+		-o match:"auto eth0" \
+		-o match:"iface eth0 inet dhcp" \
+		cat etc/network/interfaces
+}
+
+# test what happens if etc/network/interfaces.d is missing
+assemble_missing_interfaces_d_body() {
+	atf_check -s not-exit:0 \
+		-e match:"([Nn]o such file or directory|can't cd to)" \
+		assemble-interfaces
+
+	if [ -f etc/network/interfaces ]; then
+		atf_fail "should not create etc/network/interfaces"
+	fi
+}
