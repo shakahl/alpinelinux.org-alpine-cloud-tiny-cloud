@@ -8,7 +8,9 @@ export MOCK=echo
 init_tests \
 	expand_root \
 	expand_root_partition \
-	expand_root_skip
+	expand_root_skip \
+	install_hotplugs_skip \
+	install_hotplugs_fail
 
 PROVIDERS="aws azure gcp nocloud oci"
 
@@ -62,5 +64,31 @@ expand_root_skip_body() {
 			-o match:'^ SKIPPING$' \
 			test-expand-root
 	done
+}
+
+install_hotplugs_skip_body() {
+	fake_bin test-install-hotplugs <<-EOF
+		#!/bin/sh
+		SKIP_INIT_ACTIONS=install_hotplugs
+		. "$srcdir"/lib/tiny-cloud/init-early
+		install_hotplugs
+	EOF
+	for provider in $PROVIDERS; do
+		CLOUD="$provider" atf_check \
+			-o match:'^ SKIPPING$' \
+			test-install-hotplugs
+	done
+}
+
+install_hotplugs_fail_body() {
+	fake_bin test-install-hotplugs <<-EOF
+		#!/bin/sh
+		HOTPLUG_MODULES="vnic_eth_hotplug"
+		. "$srcdir"/lib/tiny-cloud/init-early
+		install_hotplugs
+	EOF
+	CLOUD=aws atf_check -s not-exit:0 \
+		-o match:"^ vnic_eth_hotplug\(!\)$" \
+		test-install-hotplugs
 }
 

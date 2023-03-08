@@ -27,16 +27,17 @@ has_cloud_hotplugs() { [ -n "$HOTPLUG_MODULES" ]; }
 install_hotplugs() {
     skip_action install_hotplugs && return
 
-    local result
+    local result rc=0
 
     for module in $HOTPLUG_MODULES; do
         result='-'
         echo -n " $module"
         if type "mod__$module" | grep -q "is a function"; then
-            "mod__$module" && result='+' || result='!'
+            "mod__$module" && result='+' || { result='!'; rc=1; }
         fi
         echo -n "($result)"
     done
+    return $rc
 }
 
 : "${HOTPLUG_TYPE:=mdev}"
