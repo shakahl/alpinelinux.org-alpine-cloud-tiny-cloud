@@ -25,5 +25,5 @@ skip_action() {
 
     # action not in the skip list?
     echo "$SKIP_INIT_ACTIONS" | grep -Eq "\b$action\b" || return 1
-    echo -n " SKIPPING"
+    printf " SKIPPING"
 }

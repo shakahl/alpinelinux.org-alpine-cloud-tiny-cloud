@@ -7,7 +7,8 @@ export MOCK=echo
 
 init_tests \
 	expand_root \
-	expand_root_partition
+	expand_root_partition \
+	expand_root_skip
 
 PROVIDERS="aws azure gcp nocloud oci"
 
@@ -45,6 +46,20 @@ expand_root_partition_body() {
 			-o match:"sfdisk .*/dev/nvme0n1" \
 			-o match:"partx .*/dev/nvme0n1" \
 			-o match:"resize2fs /dev/nvme0n1p2" \
+			test-expand-root
+	done
+}
+
+expand_root_skip_body() {
+	fake_bin test-expand-root <<-EOF
+		#!/bin/sh
+		SKIP_INIT_ACTIONS=expand_root
+		. "$srcdir"/lib/tiny-cloud/init-early
+		expand_root
+	EOF
+	for provider in $PROVIDERS; do
+		CLOUD="$provider" atf_check \
+			-o match:'^ SKIPPING$' \
 			test-expand-root
 	done
 }
