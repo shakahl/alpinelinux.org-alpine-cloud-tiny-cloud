@@ -7,22 +7,19 @@
 expand_root() {
     skip_action expand_root && return
 
-    # explicitly use busybox, in case util-linux is also installed
-    local mountpoint=$(busybox mountpoint -n / | cut -d' ' -f1)
-    local volume=$(echo "$mountpoint" |
-        sed -Ee "s/(nvme\d+n\d|(xv|s)d[a-z])p?\d?$/\1/"
-    )
-    local partition
+    local dev=$(awk '$2 == "/" {print $1}' "$ROOT"/proc/mounts)
+    local partition=$(cat "$ROOT/sys/class/block/${dev#/dev/}/partition" 2>/dev/null)
 
-    if [ "$mountpoint" != "$volume" ]; then
+    if [ -n "$partition" ]; then
         # it's a partition, resize it
-        partition=$(echo "$mountpoint" | sed -Ee "s/.*(\d+)$/\1/")
-        echo ", +" | sfdisk -q --no-reread -N "$partition" "$volume"
-        partx -u "$volume"
+        local volume=$(readlink -f "$ROOT/sys/class/block/${dev#/dev/}/..")
+        volume="/dev/${volume##*/}"
+        echo ", +" | $MOCK sfdisk -q --no-reread -N "$partition" "$volume"
+        $MOCK partx -u "$volume"
     fi
     # resize filesystem
-    mount -orw,remount /
-    resize2fs "$mountpoint"
+    $MOCK mount -orw,remount /
+    $MOCK resize2fs "$dev"
 }
 
 has_cloud_hotplugs() { [ -n "$HOTPLUG_MODULES" ]; }
