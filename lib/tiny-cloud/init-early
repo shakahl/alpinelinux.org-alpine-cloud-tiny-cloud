@@ -32,7 +32,7 @@ install_hotplugs() {
     for module in $HOTPLUG_MODULES; do
         result='-'
         printf " $module"
-        if type "mod__$module" | grep -q "is a function"; then
+        if type "mod__$module" | grep -q -w "function"; then
             "mod__$module" && result='+' || { result='!'; rc=1; }
         fi
         printf "($result)"
