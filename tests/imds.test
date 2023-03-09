@@ -6,11 +6,51 @@ export PREFIX="$srcdir"
 
 init_tests \
 	imds_help \
+	imds_space \
+	imds_aws_hostname \
+	imds_aws_ssh_keys \
 	imds_nocloud_cmdline_hostname \
 	imds_nocloud_cidata_hostname
 
 imds_help_body() {
 	atf_check -o match:"Usage: imds" imds -h
+}
+
+imds_space_body() {
+	CLOUD=nocloud atf_check -o match:'^ $' imds +s
+	CLOUD=nocloud atf_check -o match:'^\t$' imds +t
+	CLOUD=nocloud atf_check -o match:'^$' imds +n
+}
+
+aws_set_fake_meta() {
+	local key="$1" value="$2"
+	echo "$value" > $(echo 169.254.169.254/latest/meta-data/"$key" \
+		| tr '/' '_')
+}
+
+aws_create_fake_nc() {
+	fake_bin nc <<-EOF
+		#!/bin/sh
+		input="\$(cat)"
+		case "\$input" in
+			-*) echo "nc: bad input: \$input" >&2; exit 1;;
+		esac
+		echo "token-foo"
+	EOF
+}
+
+imds_aws_hostname_body() {
+	aws_create_fake_nc
+	aws_set_fake_meta hostname myhostname
+	CLOUD=aws atf_check -o match:"myhostname" imds @hostname
+}
+
+imds_aws_ssh_keys_body() {
+	aws_create_fake_nc
+	aws_set_fake_meta public-keys 0=testuser
+	aws_set_fake_meta public-keys/0/openssh-key "ssh-ed25519 keydata"
+
+	CLOUD=aws atf_check -o match:"ssh-ed25519 keydata" imds @ssh-keys
 }
 
 imds_nocloud_cmdline_hostname_body() {

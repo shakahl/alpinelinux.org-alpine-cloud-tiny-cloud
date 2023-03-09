@@ -1,7 +1,8 @@
 # shellcheck shell=sh
 
-srcdir="$(atf_get_srcdir)/.."
-PATH="$srcdir/bin:$srcdir/sbin:$PATH"
+atf_srcdir="$(atf_get_srcdir)"
+srcdir="$atf_srcdir/.."
+PATH="$atf_srcdir/bin:$srcdir/bin:$srcdir/sbin:$PATH"
 
 export TINY_CLOUD_BASEDIR="$srcdir"
 export ROOT="$PWD"

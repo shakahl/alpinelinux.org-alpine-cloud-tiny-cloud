@@ -1,0 +1,112 @@
+#!/usr/bin/env atf-sh
+
+. $(atf_get_srcdir)/test_env.sh
+init_tests \
+	fake_wget_usage \
+	fake_wget_spider \
+	fake_wget_quiet \
+	fake_wget \
+	fake_wget_outfile \
+	fake_wget_stdout \
+	fake_wget_fail \
+	fake_wget_404 \
+	fake_wget_missing_url \
+	fake_wget_empty_url \
+	fake_wget_header \
+	fake_wget_content_from_path
+
+fake_wget_usage_body() {
+	atf_check -s exit:0 \
+		-o match:"^usage: $@" \
+		-e empty \
+		wget -h
+
+	atf_check -s exit:1 \
+		-o empty \
+		-e match:"^usage: $@" \
+		wget -INVALID
+}
+
+fake_wget_spider_body() {
+	atf_check -s exit:0 \
+		-o empty \
+		-e empty \
+		wget --spider https://example.com
+}
+
+fake_wget_quiet_body() {
+	atf_check -s exit:0 \
+		-o empty \
+		-e empty \
+		wget -q https://example.com
+}
+
+fake_wget_body() {
+	atf_check -s exit:0 \
+		-o empty \
+		-e match:"saving to 'index.html'" \
+		wget https://example.com
+		test -f index.html || atf_fail "index.html not created"
+}
+
+fake_wget_outfile_body() {
+	atf_check -s exit:0 \
+		-o empty \
+		-e match:"saving to 'foo'" \
+		wget -O foo https://example.com
+	test -f foo || atf_fail "foo not created"
+
+	atf_check -s exit:0 \
+		-o empty \
+		-e match:"saving to 'bar'" \
+		sh -x "$atf_srcdir"/bin/wget --output-document bar https://example.com
+	test -f bar || atf_fail "bar not created"
+}
+
+fake_wget_stdout_body() {
+	export WGETCONTENT="hello world"
+	atf_check -s exit:0 \
+		-o match:"hello world" \
+		-e match:"writing to stdout" \
+		wget -O - https://example.com
+		! test -f - || atf_fail "- was created"
+}
+
+fake_wget_fail_body() {
+	atf_check -s exit:1 \
+		-e match:"bad address" \
+		wget https://example.com/fail
+}
+
+fake_wget_404_body() {
+	atf_check -s exit:1 \
+		-e match:"404 Not Found" \
+		wget https://example.com/404
+}
+
+fake_wget_missing_url_body() {
+	atf_check -s exit:1 \
+		-e match:"usage:" \
+		wget -q -O -
+}
+
+fake_wget_empty_url_body() {
+	atf_check -s exit:1 \
+		-e match:"bad address" \
+		wget ""
+}
+
+fake_wget_header_body() {
+	atf_check -s exit:0 \
+		-e match:"saving to" \
+		wget --header 'key: value' https://example.com
+}
+
+fake_wget_content_from_path_body() {
+	mkdir -p example.com/foo
+	echo value > example.com_foo_key
+	atf_check -s exit:0 \
+		-o match:"^value$" \
+		wget --quiet -O - https://example.com/foo/key
+}
+

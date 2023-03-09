@@ -103,9 +103,9 @@ imds() {
             +e) err=1; continue ;;          # return
             # TODO: retry/deadline
             # output control
-            +n) echo; continue ;;           # insert newline
-            +s) echo -n " "; continue ;;    # insert space
-            +t) echo -en "\t"; continue ;;  # insert tab
+            +n) printf "\n"; continue ;;           # insert newline
+            +s) printf " "; continue ;;    # insert space
+            +t) printf "\t"; continue ;;  # insert tab
             # key aliasing
             @hostname)  args="$IMDS_HOSTNAME" ;;
             @ssh-keys)  cmd=_imds_ssh_keys ;;
