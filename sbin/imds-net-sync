@@ -49,15 +49,14 @@ iface_ip6s() {
 }
 
 imds_ip4s() {
-    local ip4=$(imds "@nic:$IFACE,@ipv4")
-    local ip4s=$(echo "$ip4" | tail +2)   # secondary IPv4s
+    local ip4s=$(imds "@nic:$IFACE,@ipv4")
     local ip4p ip4_cidr ip4_gw
 
     # non-eth0 interfaces need custom route tables
     #
     if [ "$IFACE" != eth0 ] && [ -n "$ip4s" ] &&
             [ -z $(ip +F -4 route show table "$RTABLE" 2>/dev/null) ]; then
-        ip4p=$(echo "$ip4" | head -1) # primary IPv4
+        ip4p=$(echo "$ip4s" | head -1) # primary IPv4
         ip4_cidr=$(imds "@nic:$IFACE,@ipv4-net")    # TODO: get from iface instead?
         # TODO: this may not hold true for non-AWS clouds
         ip4_gw=$(echo "$ip4_cidr" | cut -d/ -f1 |
@@ -91,6 +90,7 @@ imds_ip6s() {
             sleep 0.5
         done
         ip -6 route add default via "$gw" dev "$IFACE" table "$RTABLE"
+        # TODO? match ipds_ip4s() with ip -6 route add "ip6_cidr" dev "$IFACE" ...
     fi
     echo "$ip6s"
 }
@@ -110,6 +110,7 @@ ip_addr() {
 
     # non-eth0 interfaces get rules associating IPs with route tables
     ip -"$1" rule "$2" from "$3" lookup "$RTABLE"
+    ip -"$1" rule "$2" to "$3" lookup "$RTABLE"
 }
 
 # sync_ips {4|6} "<imds-ips>" "<iface-ips>"
