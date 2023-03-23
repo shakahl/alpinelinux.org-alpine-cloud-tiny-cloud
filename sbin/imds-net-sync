@@ -6,7 +6,7 @@
 [ -z "$VERBOSE" ] || set -x
 
 : "${LIBDIR:=$PREFIX/lib}"
-"$LIBDIR"/tiny-cloud/common
+. "$LIBDIR"/tiny-cloud/common
 
 [ -z "${IFACE}" ] && log -s crit "IFACE not set, aborting"
 
@@ -90,7 +90,7 @@ imds_ip6s() {
             sleep 0.5
         done
         ip -6 route add default via "$gw" dev "$IFACE" table "$RTABLE"
-        # TODO? match ipds_ip4s() with ip -6 route add "ip6_cidr" dev "$IFACE" ...
+        # TODO? match imds_ip4s() with ip -6 route add "ip6_cidr" dev "$IFACE" ...
     fi
     echo "$ip6s"
 }
@@ -105,10 +105,10 @@ ip_addr() {
     [ "$1" -eq 6 ] && mask=128  # IPv6 always /128
     ip -"$1" addr "$2" "$3/$mask" dev "$IFACE"
 
-    # TODO: only non eth0?  delegated ipv[46] prefixes?
-    [ "$IFACE" = eth0 ] && return
+    # TODO? delegated ipv[46] prefixes?
 
     # non-eth0 interfaces get rules associating IPs with route tables
+    [ "$IFACE" = eth0 ] && return
     ip -"$1" rule "$2" from "$3" lookup "$RTABLE"
     ip -"$1" rule "$2" to "$3" lookup "$RTABLE"
 }
@@ -121,6 +121,7 @@ sync_ips() {
         in_list "$i" "$2" || ip_addr "$1" del "$i"
     done
     # add missing IPs
+    # NOTE: this adds an extra <IPv4>/32 for the primary IP
     for i in $2; do
         in_list "$i" "$3" || ip_addr "$1" add "$i"
     done
