@@ -14,9 +14,10 @@ set_hostname() {
     local fqdn=$(imds @hostname)
     local host="${fqdn%%\.*}"
 
-    echo "$host" > /etc/hostname
-    hostname -F /etc/hostname
-    echo -e "127.0.1.1\t$fqdn $host" >> /etc/hosts
+    mkdir -p "$ROOT"/etc
+    echo "$host" > "$ROOT"/etc/hostname
+    $MOCK hostname -F "$ROOT"/etc/hostname
+    echo -e "127.0.1.1\t$fqdn $host" >> "$ROOT"/etc/hosts
 }
 
 set_ssh_keys() {

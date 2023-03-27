@@ -1,0 +1,53 @@
+#!/usr/bin/env atf-sh
+
+. $(atf_get_srcdir)/test_env.sh
+
+export PREFIX="$srcdir"
+export MOCK=echo
+lib="$srcdir"/lib/tiny-cloud/init-main
+
+init_tests \
+	set_hostname
+
+
+set_nocloud_meta() {
+	local metadata="$(cat)"
+	fake_bin mount <<-EOF
+		#!/bin/sh
+		# find last arg which is the mount dir
+		while ! [ -d "\$1" ]; do
+			shift
+		done
+		printf "%s" "$metadata" \
+			> "\$1"/meta-data
+	EOF
+
+	fake_bin umount <<-EOF
+		#!/bin/sh
+		while ! [ -d "\$1" ]; do
+			shift
+		done
+		rm -f "\$1"/meta-data
+	EOF
+	mkdir -p mnt
+}
+
+set_hostname_body() {
+	set_nocloud_meta <<-EOF
+		hostname: myhostname
+	EOF
+
+	CLOUD="nocloud" atf_check \
+		-o match:"hostname.*-F $PWD/etc/hostname" \
+		sh -c ". \"$lib\"; set_hostname"
+	atf_check -o match:"^myhostname$" cat etc/hostname
+
+	rm etc/hostname
+	CLOUD="nocloud" atf_check \
+		-o not-match:"hostname.*-F $PWD/etc/hostname" \
+		sh -c "SKIP_INIT_ACTIONS=set_hostname ; . \"$lib\"; set_hostname"
+	if test -f etc/hostname; then
+		atf_fail "etc/hostname should not exist"
+	fi
+}
+
