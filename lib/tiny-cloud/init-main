@@ -24,7 +24,7 @@ set_ssh_keys() {
     skip_action set_ssh_keys && return
 
     local user="$CLOUD_USER"
-    local pwent=$(getent passwd "$user")
+    local pwent="$(getent passwd "$user")"
     local group=$(echo "$pwent" | cut -d: -f4)
     local ssh_dir="${ROOT}$(echo "$pwent" | cut -d: -f6)/.ssh"
     local keys_file="$ssh_dir/authorized_keys"

@@ -88,7 +88,7 @@ load_nocloud() {
 _imds() {
     mkdir -p "$TINY_CLOUD_VAR"
     local file="$TINY_CLOUD_VAR"/$(echo "$1" | cut -d/ -f1)
-    local keypath=$(echo "$1" | cut -d/ -f2- | tr / ' ')
+    local keypath="$(echo "$1" | cut -d/ -f2- | tr / ' ')"
 
     is_nocloud_loaded || load_nocloud
 
