@@ -8,7 +8,9 @@ lib="$srcdir"/lib/tiny-cloud/init-main
 
 init_tests \
 	set_hostname \
-	set_ssh_keys
+	set_ssh_keys \
+	save_userdata_plain \
+	save_userdata_compressed
 
 
 set_nocloud_meta() {
@@ -29,6 +31,19 @@ set_nocloud_meta() {
 			shift
 		done
 		rm -f "\$1"/meta-data
+	EOF
+	mkdir -p mnt
+}
+
+set_nocloud_userdata_from_file() {
+	local file="$1"
+	fake_bin mount <<-EOF
+		#!/bin/sh
+		# find last arg which is the mount dir
+		while ! [ -d "\$1" ]; do
+			shift
+		done
+		cp "$file" "\$1"/user-data
 	EOF
 	mkdir -p mnt
 }
@@ -69,3 +84,23 @@ set_ssh_keys_body() {
 		-o match:"^ssh-rsa foobar" \
 		cat home/alpine/.ssh/authorized_keys
 }
+
+save_userdata_plain_body() {
+	printf "%s\n" "#cloud-config" > tmpfile
+	set_nocloud_userdata_from_file tmpfile
+	CLOUD="nocloud" atf_check \
+		sh -c ". \"$lib\"; save_userdata"
+	atf_check -o match:"^#cloud-config" cat var/lib/cloud/user-data
+}
+
+save_userdata_compressed_body() {
+	for comp in  gzip bzip2 xz lzma lzop lz4 zstd; do
+		printf "%s\n" "#cloud-config" | $comp -c > tmpfile
+		set_nocloud_userdata_from_file tmpfile
+		CLOUD="nocloud" atf_check \
+			sh -c ". \"$lib\"; save_userdata"
+		grep "^#cloud-config" var/lib/cloud/user-data \
+			|| atf_fail "$comp failed"
+	done
+}
+
