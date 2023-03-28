@@ -65,7 +65,7 @@ save_userdata() {
             cmd="lzma -dc"
         elif match_header '\211\114\132' "$tmpfile"; then
             cmd="lzop -dc"
-        elif match_header '\002!L\030' "$tmpfile"; then
+        elif match_header '\004\042\115\030' "$tmpfile"; then
             cmd="lz4 -dc"
         elif match_header '(\265/\375' "$tmpfile"; then
             cmd="zstd -dc"
