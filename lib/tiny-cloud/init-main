@@ -26,7 +26,7 @@ set_ssh_keys() {
     local user="$CLOUD_USER"
     local pwent=$(getent passwd "$user")
     local group=$(echo "$pwent" | cut -d: -f4)
-    local ssh_dir="$(echo "$pwent" | cut -d: -f6)/.ssh"
+    local ssh_dir="${ROOT}$(echo "$pwent" | cut -d: -f6)/.ssh"
     local keys_file="$ssh_dir/authorized_keys"
 
     if [ ! -d "$ssh_dir" ]; then
@@ -36,7 +36,7 @@ set_ssh_keys() {
 
     touch "$keys_file"
     chmod 600 "$keys_file"
-    chown -R "$user:$group" "$ssh_dir"
+    $MOCK chown -R "$user:$group" "$ssh_dir"
     imds @ssh-keys > "$keys_file"
 }
 
