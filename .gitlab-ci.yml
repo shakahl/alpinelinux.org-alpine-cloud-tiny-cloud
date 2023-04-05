@@ -2,7 +2,7 @@ test-default:
   image: alpine:latest
   stage: test
   script:
-    - apk add make kyua yx
+    - apk add make kyua yx xz lz4 zstd
     - make -j $(nproc) check
   tags:
     - docker-alpine

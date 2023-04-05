@@ -99,8 +99,9 @@ save_userdata_compressed_body() {
 		set_nocloud_userdata_from_file tmpfile
 		CLOUD="nocloud" atf_check \
 			sh -c ". \"$lib\"; save_userdata"
-		grep "^#cloud-config" var/lib/cloud/user-data \
-			|| atf_fail "$comp failed"
+		if ! grep "^#cloud-config" var/lib/cloud/user-data; then
+			atf_fail "$comp failed"
+		fi
 	done
 }
 
