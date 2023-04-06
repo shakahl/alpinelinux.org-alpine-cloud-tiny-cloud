@@ -35,19 +35,6 @@ set_nocloud_meta() {
 	mkdir -p mnt
 }
 
-set_nocloud_userdata_from_file() {
-	local file="$1"
-	fake_bin mount <<-EOF
-		#!/bin/sh
-		# find last arg which is the mount dir
-		while ! [ -d "\$1" ]; do
-			shift
-		done
-		cp "$file" "\$1"/user-data
-	EOF
-	mkdir -p mnt
-}
-
 set_hostname_body() {
 	set_nocloud_meta <<-EOF
 		hostname: myhostname
@@ -86,20 +73,24 @@ set_ssh_keys_body() {
 }
 
 save_userdata_plain_body() {
-	printf "%s\n" "#cloud-config" > tmpfile
-	set_nocloud_userdata_from_file tmpfile
+	fake_userdata_nocloud <<-EOF
+		#userdata
+	EOF
 	CLOUD="nocloud" atf_check \
 		sh -c ". \"$lib\"; save_userdata"
-	atf_check -o match:"^#cloud-config" cat var/lib/cloud/user-data
+	atf_check -o match:"^#userdata" cat var/lib/cloud/user-data
 }
 
 save_userdata_compressed_body() {
 	for comp in  gzip bzip2 xz lzma lzop lz4 zstd; do
-		printf "%s\n" "#cloud-config" | $comp -c > tmpfile
-		set_nocloud_userdata_from_file tmpfile
+		# fake_userdata_nocloud will set PATH so dont run it in a subshell
+		printf "%s\n" "#userdata" | $comp -c > tmpfile
+		fake_userdata_nocloud < tmpfile
+
 		CLOUD="nocloud" atf_check \
 			sh -c ". \"$lib\"; save_userdata"
-		if ! grep "^#cloud-config" var/lib/cloud/user-data; then
+
+		if ! grep "^#userdata" var/lib/cloud/user-data; then
 			atf_fail "$comp failed"
 		fi
 	done
