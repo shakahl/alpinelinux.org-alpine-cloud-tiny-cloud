@@ -1,0 +1,42 @@
+#!/usr/bin/env atf-sh
+
+. $(atf_get_srcdir)/test_env.sh
+
+export PREFIX="$srcdir"
+export MOCK=echo
+lib="$srcdir"/lib/tiny-cloud/init-final
+init_main="$srcdir"/lib/tiny-cloud/init-main
+PROVIDERS="aws azure gcp nocloud oci"
+
+init_tests \
+	is_userdata_script \
+	run_userdata
+
+
+is_userdata_script_body() {
+	mkdir -p var/lib/cloud
+	for c in $PROVIDERS; do
+		echo "#tiny-cloud-config" > var/lib/cloud/user-data
+		CLOUD="$c" atf_check -s not-exit:0 \
+			sh -c ". \"$lib\"; is_userdata_script"
+	
+		echo "#!/bin/sh" > var/lib/cloud/user-data
+		CLOUD="$c" atf_check -s exit:0 \
+			sh -c ". \"$lib\"; is_userdata_script"
+	done
+}
+
+run_userdata_body() {
+	fake_userdata_nocloud <<-EOF
+		#!/bin/sh
+		echo "hello from user-data"
+	EOF
+	CLOUD="nocloud" atf_check \
+		sh -c ". \"$init_main\"; save_userdata"
+	CLOUD="nocloud" atf_check \
+		-o match:"hello from user-data" \
+		sh -c ". \"$lib\"; run_userdata"
+	grep "hello from user-data" var/log/user-data.log || atf_fail "user-data.log failed"
+	grep -w "0" var/log/user-data.exit || atf_fail "user-data.exit failed"
+}
+
