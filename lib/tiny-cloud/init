@@ -31,7 +31,14 @@ INIT_ACTIONS_FINAL="
 
 init__expand_root() {
     local dev=$(awk '$2 == "/" {print $1}' "$ROOT"/proc/mounts)
+    local filesystem=$(awk '$2 == "/" {print $3}' "$ROOT"/proc/mounts)
     local partition=$(cat "$ROOT/sys/class/block/${dev#/dev/}/partition" 2>/dev/null)
+
+    # only support ext2/ext3/ext4 for now
+    case "$filesystem" in
+        ext*) ;;
+        *) return;;
+    esac
 
     if [ -n "$partition" ]; then
         # it's a partition, resize it
