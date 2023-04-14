@@ -18,7 +18,6 @@ expand_root() {
         $MOCK partx -u "$volume"
     fi
     # resize filesystem
-    $MOCK mount -orw,remount /
     $MOCK resize2fs "$dev"
 }
 

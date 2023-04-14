@@ -6,7 +6,8 @@ description="Tiny Cloud Bootstrap - early phase"
 : "${LIBDIR:=$PREFIX/lib}"
 
 depend() {
-	before mdev
+	after root
+	before net
 }
 
 start() {
