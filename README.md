@@ -81,7 +81,7 @@ rc-update add tiny-cloud-final default
 
 ## Configuration
 
-By default, Tiny Cloud expects configuration at `/etc/conf.d/tiny-cloud`,
+By default, Tiny Cloud expects configuration at `/etc/tiny-cloud.conf`,
 The stock [lib/tiny-cloud/tiny-cloud.conf`](lib/tiny-cloud/tiny-cloud.conf)
 file contains details of all tuneable settings.
 

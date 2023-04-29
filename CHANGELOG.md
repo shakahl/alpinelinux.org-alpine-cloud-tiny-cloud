@@ -4,5 +4,7 @@
 
   ***WARNING:*** The behavior of **mdev-conf** is slightly different -- only **/dev/sd** or **/dev/xvd** symlinks are created, *not both*!
 
+* Tiny Cloud configuration has moved to **/etc/tiny-cloud.conf**.
+
 ----
 _CHANGELOG begins 2023-04-29_

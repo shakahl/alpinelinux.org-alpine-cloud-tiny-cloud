@@ -15,7 +15,7 @@ core:
 		lib/tiny-cloud/mdev \
 		lib/tiny-cloud/tiny-cloud.conf
 	install -Dm644 lib/tiny-cloud/tiny-cloud.conf \
-		"$(PREFIX)"/etc/conf.d/tiny-cloud
+		"$(PREFIX)"/etc/tiny-cloud.conf
 
 network:
 	install -Dm644 -t "$(PREFIX)"/etc/network/interfaces.d \
@@ -69,4 +69,3 @@ Kyuafile:
 	echo "test_suite('tiny-cloud')" >> $@.tmp
 	echo "include('tests/Kyuafile')" >> $@.tmp
 	mv $@.tmp $@
-

@@ -2,7 +2,7 @@
 # vim: ts=4 et ft=sh:
 
 # set defaults
-[ -f "$ROOT"/etc/conf.d/tiny-cloud ] && . "$ROOT"/etc/conf.d/tiny-cloud
+[ -f "$ROOT"/etc/tiny-cloud.conf ] && . "$ROOT"/etc/tiny-cloud.conf
 : "${CLOUD:=unknown}"
 : "${CLOUD_USER:=alpine}"
 : "${TINY_CLOUD_LOGS:=$ROOT/var/log}"
