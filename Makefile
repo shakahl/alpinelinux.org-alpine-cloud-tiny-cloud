@@ -29,7 +29,7 @@ network:
 
 openrc:
 	install -Dm755 -t "$(PREFIX)"/etc/init.d \
-		etc/init.d/*
+		dist/openrc/*
 
 aws:
 	install -Dm755 -t "$(PREFIX)"/lib/mdev \
