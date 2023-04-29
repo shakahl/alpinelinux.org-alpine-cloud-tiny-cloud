@@ -29,10 +29,10 @@ instance:
   the end of the **default** runlevel
 
 Optional features, which may not be universally necessary:
-* manage symlinks from NVMe block devices to `/dev/xvd` and `/dev/sd` devices
-  (i.e. AWS Nitro instances)
 * manage hotpluggable network interfaces
 * sync IMDS-provided secondary IPv4 and IPv6 addresses network interfaces
+* manage symlinks from NVMe block devices to `/dev/xvd` and `/dev/sd` devices
+  (i.e. AWS Nitro instances)
 
 Also included is a handy `imds` client script for easy access to an instance's
 IMDS data.
@@ -167,6 +167,7 @@ configuration data.
 
 EBS volumes are attached to AWS EC2 Nitro instances using the NVMe driver.
 Unfortunately, the `/dev/nvme*` device names do not match the device name
-assigned to the attached EBS volume.  This hotplug module figures out what the
-assigned device name is, and sets up `/dev/xvd*` and `/dev/sd*` symlinks to
+assigned to the attached EBS volume.  This hotplug module figures out what the assigned device name is, and sets up `/dev/xvd*` and `/dev/sd*` symlinks to
 the right NVMe devices for EBS volumes and their partitions.
+
+_(deprecated, see [CHANGELOG.md](CHANGELOG.md))_
