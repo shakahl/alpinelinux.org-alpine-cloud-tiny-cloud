@@ -3,7 +3,7 @@
 
 set -e
 
-IFACE_CFG="$ROOT"/etc/network/interfaces
+IFACE_CFG="$ROOT/etc/network/interfaces"
 IFACE_DIR="${IFACE_CFG}.d"
 
 cd "$IFACE_DIR"

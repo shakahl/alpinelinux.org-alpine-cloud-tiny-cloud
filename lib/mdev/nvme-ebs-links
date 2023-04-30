@@ -2,13 +2,13 @@
 # vim:set ts=2 et:
 
 : "${LIBDIR:=$PREFIX/lib}"
-. "$LIBDIR"/tiny-cloud/common
+. "$LIBDIR/tiny-cloud/common"
 
 # nvme tool not installed?
 [ -x /usr/sbin/nvme ] || log crit "nvme cli not installed"
 
 raw_ebs_alias() {
-  /usr/sbin/nvme id-ctrl /dev/"$BASE" -b 2>/dev/null |
+  /usr/sbin/nvme id-ctrl "/dev/$BASE" -b 2>/dev/null |
     dd bs=32 skip=96 count=1 2>/dev/null
 }
 

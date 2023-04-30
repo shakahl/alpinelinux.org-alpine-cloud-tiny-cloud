@@ -1,15 +1,12 @@
 #!/bin/sh
 # vim:set ts=4 et ft=sh:
 
-# MacOS testing
-getopt=/opt/homebrew/Cellar/gnu-getopt/2.38.1/bin/getopt
-
 # Tiny Cloud
 
 set -e
 
 : "${LIBDIR:=$PREFIX/lib}"
-. "$LIBDIR"/tiny-cloud/common
+. "$LIBDIR/tiny-cloud/common"
 
 usage() {
     cat <<EOF
@@ -19,15 +16,15 @@ EOF
 
 bootstrap_complete() {
     echo "Marking Instance Bootstrap Complete"
-    touch "$TINY_CLOUD_VAR"/.bootstrap-complete
+    touch "$TINY_CLOUD_VAR/.bootstrap-complete"
 }
 
 bootstrap_incomplete() {
     echo "Marking Instance Bootstrap Incomplete"
-    rm -f "$TINY_CLOUD_VAR"/.bootstrap-complete
+    rm -f "$TINY_CLOUD_VAR/.bootstrap-complete"
 }
 
-args=$($getopt -o hb: --long help,bootstrap: -n ${0##*/} -- "$@")
+args=$(getopt -o hb: --long help,bootstrap: -n ${0##*/} -- "$@")
 if [ $? -ne 0 ]; then
     usage >&2
     exit 1
@@ -60,12 +57,14 @@ case "$phase" in
 esac
 
 # is initial bootstrap already done?
-if [ -f "$TINY_CLOUD_VAR"/.bootstrap-complete ]; then
+if [ -f "$TINY_CLOUD_VAR/.bootstrap-complete" ]; then
     log -s "Already bootstrapped"
     exit 0;
 fi
 
 ### default phase actions
+
+# TODO? represent as vars containing lists of funcs?
 
 early() {
     expand_root
@@ -84,6 +83,7 @@ final() {
 }
 
 # load init functions
-. "$LIBDIR"/tiny-cloud/init
+. "$LIBDIR/tiny-cloud/init"
 
+# TODO? for loop over list of funcs? -- better for ebegin/eend-ish output
 echo $phase "$@"

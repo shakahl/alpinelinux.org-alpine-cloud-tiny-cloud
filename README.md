@@ -65,7 +65,7 @@ Typically, Tiny Cloud is installed and configured when building a cloud image,
 and is available on Alpine Linux as the [`tiny-cloud`](
   https://pkgs.alpinelinux.org/packages?name=tiny-cloud*) APKs...
 ```
-apk install tiny-cloud-<cloud>
+apk add tiny-cloud-<cloud>
 ```
 This will install the necessary init scripts, libraries, etc. plus any missing
 dependencies for Tiny Cloud to support _`<cloud>`_.

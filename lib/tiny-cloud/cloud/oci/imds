@@ -5,6 +5,7 @@ IMDS_HEADER="Authorization"
 IMDS_URI="opc/v2"
 
 IMDS_HOSTNAME="instance/hostname"
+IMDS_LOCAL_HOSTNAME="$IMDS_HOSTNAME"
 IMDS_SSH_KEYS="instance/metadata/ssh_authorized_keys"
 IMDS_USERDATA="instance/metadata/userdata"
 IMDS_NICS="nics"
@@ -28,7 +29,7 @@ _imds_ssh_keys() { _imds "$IMDS_SSH_KEYS"; }
 _imds_nic_index() {
     local m n=0
     local mac=$(cat "/sys/class/net/$1/mac")
-    while m=$(imds $IMDS_NICS/$n/mac | tr A-F a-f); do
+    while m=$(imds "$IMDS_NICS/$n/mac" | tr A-F a-f); do
         [ "$m" = "$mac" ] && echo $n; return 0
     done
     return 1

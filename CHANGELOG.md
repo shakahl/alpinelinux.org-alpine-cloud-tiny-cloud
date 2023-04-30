@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## 2023-04-XX - Tiny Cloud v3.0.0
+## 2023-05-XX - Tiny Cloud v3.0.0
 
 * Tiny Cloud init functionality has been consolidated into **/sbin/tiny-cloud**
   and init scripts should use `tiny-cloud <phase>` to indicate whether `early`,
@@ -20,6 +20,10 @@
   **/dev/sd** or **/dev/xvd** symlinks are created as indicated in NVMe device
   metadata, *but NOT both*!
 
+* `imds` now supports `@local-hostname` alias.  For most clouds this is the
+  same as `@hostname`.
+
+* Fixed setting `local-hostname` metadata from **/proc/cmdline** for NoCloud.
 
 ----
 _CHANGELOG begins 2023-04-29_

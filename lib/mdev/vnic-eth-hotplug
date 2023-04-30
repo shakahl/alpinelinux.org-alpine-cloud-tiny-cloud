@@ -4,7 +4,7 @@
 set -e
 
 : "${LIBDIR:=$PREFIX/lib}"
-. "$LIBDIR"/tiny-cloud/common
+. "$LIBDIR/tiny-cloud/common"
 
 if [ -z "$MDEV" ] || [ -z "$ACTION" ]; then
     log crit "MDEV or ACTION undefined, aborting"

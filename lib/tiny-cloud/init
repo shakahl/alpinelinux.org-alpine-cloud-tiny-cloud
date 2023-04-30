@@ -3,7 +3,7 @@
 
 # set defaults
 : "${LIBDIR:=$PREFIX/lib}"
-. "$LIBDIR"/tiny-cloud/common
+. "$LIBDIR/tiny-cloud/common"
 
 : "${SKIP_INIT_ACTIONS:=}"
 : "${HOTPLUG_TYPE:=mdev}"
@@ -43,8 +43,8 @@ install_hotplugs() {
 
     local result rc=0
 
-    if [ -f "$LIBDIR"/tiny-cloud/"$HOTPLUG_TYPE" ]; then
-	    . "$LIBDIR"/tiny-cloud/"$HOTPLUG_TYPE"
+    if [ -f "$LIBDIR/tiny-cloud/$HOTPLUG_TYPE" ]; then
+	    . "$LIBDIR/tiny-cloud/$HOTPLUG_TYPE"
     fi
 
     for module in $HOTPLUG_MODULES; do
@@ -154,11 +154,11 @@ run_userdata() {
 }
 
 # load cloud-specific init functions / vars
-: "${LIBDIR:=$PREFIX/lib}"
-if [ -f "$LIBDIR"/tiny-cloud/cloud/"$CLOUD"/init ]; then
-	. "$LIBDIR"/tiny-cloud/cloud/"$CLOUD"/init
+if [ -f "$LIBDIR/tiny-cloud/cloud/$CLOUD/init" ]; then
+	. "$LIBDIR/tiny-cloud/cloud/$CLOUD/init"
 fi
 
+# TODO: load user-data type-specific init functions / vars
 
 ### non-overrideable functions
 

@@ -29,6 +29,16 @@ fake_bin() {
 	PATH="$PWD/bin:$PATH"
 }
 
+fake_umount() {
+	fake_bin umount <<-EOF
+		#!/bin/sh
+		while ! [ -d "\$1" ]; do
+			shift
+		done
+		rm -f "\$1"/meta-data "\$1"/user-data
+	EOF
+}
+
 fake_userdata_nocloud() {
 	local file="$(mktemp -p "$PWD")"
 	cat > "$file"
@@ -43,3 +53,17 @@ fake_userdata_nocloud() {
 	mkdir -p mnt
 }
 
+fake_metadata_nocloud() {
+	local file="$(mktemp -p "$PWD")"
+	cat > "$file"
+	fake_bin mount <<-EOF
+		#!/bin/sh
+		# find last arg which is the mount dir
+		while ! [ -d "\$1" ]; do
+			shift
+		done
+		cp "$file" "\$1"/meta-data
+	EOF
+	mkdir -p mnt
+	fake_umount
+}

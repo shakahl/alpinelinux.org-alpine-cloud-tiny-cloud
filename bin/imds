@@ -6,7 +6,7 @@
 ### configuration, common functions
 
 : "${LIBDIR:=$PREFIX/lib}"
-. "$LIBDIR"/tiny-cloud/common
+. "$LIBDIR/tiny-cloud/common"
 
 if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
     cat <<EOT
@@ -15,10 +15,11 @@ Usage: imds [-h] { -e | +e | +n | +s | +t | @<alias> | <imds-path> } ...
   -e / +e      : ignore / catch errors
   +n / +s / +t : insert newline / space / tab
   <alias> :-
-    hostname : instance hostname
-    ssh-keys : instance SSH keys
-    userdata : instance user data
-    nics     : instance NICs
+    hostname       : instance hostname
+    local-hostname : instance local hostname
+    ssh-keys       : instance SSH keys
+    userdata       : instance user data
+    nics           : instance NICs
     nic:<iface>[,<nic-key> ...] : specific NIC interface
       <iface>   : network interface (i.e. eth1)
       <nic-key> :- { -e | +e | +n | +s | +t | @<nic-alias> | <nic-path> }
@@ -53,6 +54,7 @@ IMDS_ENDPOINT="169.254.169.254"
 
 # Common to AWS and NoCloud(ish)
 IMDS_HOSTNAME="meta-data/hostname"
+IMDS_LOCAL_HOSTNAME="meta-data/local-hostname"
 IMDS_SSH_KEYS="meta-data/public-keys"
 IMDS_USERDATA="user-data"
 IMDS_NICS="meta-data/network/interfaces/macs"
@@ -84,10 +86,10 @@ _imds_nic_index() { cat "/sys/class/net/$1/address"; }
 
 ### load cloud-specific variables and functions
 
-if [ ! -d "$LIBDIR"/tiny-cloud/cloud/"$CLOUD" ]; then
+if [ ! -d "$LIBDIR/tiny-cloud/cloud/$CLOUD" ]; then
     echo "ERROR: Unknown Cloud '$CLOUD'" >&2
 fi
-. "$LIBDIR"/tiny-cloud/cloud/"$CLOUD"/imds
+. "$LIBDIR/tiny-cloud/cloud/$CLOUD/imds"
 
 ### non-overrideable functions
 
@@ -107,10 +109,11 @@ imds() {
             +s) printf " "; continue ;;    # insert space
             +t) printf "\t"; continue ;;  # insert tab
             # key aliasing
-            @hostname)  args="$IMDS_HOSTNAME" ;;
-            @ssh-keys)  cmd=_imds_ssh_keys ;;
-            @userdata)  cmd=_imds_userdata ;;
-            @nics)      args="$IMDS_NICS" ;;
+            @hostname)        args="$IMDS_HOSTNAME" ;;
+            @local-hostname)  args="$IMDS_LOCAL_HOSTNAME" ;;
+            @ssh-keys)        cmd=_imds_ssh_keys ;;
+            @userdata)        cmd=_imds_userdata ;;
+            @nics)            args="$IMDS_NICS" ;;
             @nic:*)
                 cmd=imds
                 args=$(_imds_nic_args $(echo "${key#@nic:}" | tr , ' '))

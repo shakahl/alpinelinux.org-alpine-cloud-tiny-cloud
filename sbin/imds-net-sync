@@ -6,7 +6,7 @@
 [ -z "$VERBOSE" ] || set -x
 
 : "${LIBDIR:=$PREFIX/lib}"
-. "$LIBDIR"/tiny-cloud/common
+. "$LIBDIR/tiny-cloud/common"
 
 [ -z "${IFACE}" ] && log -s crit "IFACE not set, aborting"
 
