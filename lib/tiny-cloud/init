@@ -1,0 +1,188 @@
+# Tiny Cloud - Init Functions
+# vim:set ts=4 et ft=sh:
+
+# set defaults
+: "${LIBDIR:=$PREFIX/lib}"
+. "$LIBDIR"/tiny-cloud/common
+
+: "${SKIP_INIT_ACTIONS:=}"
+: "${HOTPLUG_TYPE:=mdev}"
+
+# TODO: default phase actions
+
+# ensure existence of output directories
+[ ! -d "$TINY_CLOUD_LOGS" ] && mkdir -p "$TINY_CLOUD_LOGS"
+[ ! -d "$TINY_CLOUD_VAR" ] && mkdir -p "$TINY_CLOUD_VAR"
+
+### NOTE: init-early functions...
+
+expand_root() {
+    skip_action expand_root && return
+
+    echo "Expanding Root Volume/ Partition"
+
+    local dev=$(awk '$2 == "/" {print $1}' "$ROOT"/proc/mounts)
+    local partition=$(cat "$ROOT/sys/class/block/${dev#/dev/}/partition" 2>/dev/null)
+
+    if [ -n "$partition" ]; then
+        # it's a partition, resize it
+        local volume=$(readlink -f "$ROOT/sys/class/block/${dev#/dev/}/..")
+        volume="/dev/${volume##*/}"
+        echo ", +" | $MOCK sfdisk -q --no-reread -N "$partition" "$volume"
+        $MOCK partx -u "$volume"
+    fi
+    # resize filesystem
+    $MOCK resize2fs "$dev"
+}
+
+install_hotplugs() {
+    skip_action install_hotplugs && return
+    [ ! -n "$HOTPLUG_MODULES" ] && return
+
+    echo "Installing Cloud Hotplugs"
+
+    local result rc=0
+
+    if [ -f "$LIBDIR"/tiny-cloud/"$HOTPLUG_TYPE" ]; then
+	    . "$LIBDIR"/tiny-cloud/"$HOTPLUG_TYPE"
+    fi
+
+    for module in $HOTPLUG_MODULES; do
+        result='-'
+        printf " $module"
+        if type "mod__$module" | grep -q -w "function"; then
+            "mod__$module" && result='+' || { result='!'; rc=1; }
+        fi
+        printf "($result)"
+    done
+    return $rc
+}
+
+### NOTE: init-main functions
+
+set_hostname() {
+    skip_action set_hostname && return
+
+    echo "Setting Instance Hostname"
+
+    local fqdn=$(imds @hostname)
+    local host="${fqdn%%\.*}"
+
+    mkdir -p "$ROOT"/etc
+    echo "$host" > "$ROOT"/etc/hostname
+    $MOCK hostname -F "$ROOT"/etc/hostname
+    echo -e "127.0.1.1\t$fqdn $host" >> "$ROOT"/etc/hosts
+}
+
+set_ssh_keys() {
+    skip_action set_ssh_keys && return
+
+    echo "Installing SSH Keys for $CLOUD_USER User"
+
+    local user="$CLOUD_USER"
+    local pwent="$(getent passwd "$user")"
+    local group=$(echo "$pwent" | cut -d: -f4)
+    local ssh_dir="${ROOT}$(echo "$pwent" | cut -d: -f6)/.ssh"
+    local keys_file="$ssh_dir/authorized_keys"
+
+    if [ ! -d "$ssh_dir" ]; then
+        mkdir -p "$ssh_dir"
+        chmod 700 "$ssh_dir"
+    fi
+
+    touch "$keys_file"
+    chmod 600 "$keys_file"
+    $MOCK chown -R "$user:$group" "$ssh_dir"
+    imds @ssh-keys > "$keys_file"
+}
+
+save_userdata() {
+    skip_action save_userdata && return
+
+    # TODO: this trips save_userdata_* and run_userdata tests: "stdout not empty"
+    #echo "Saving Instance UserData"
+
+    local userdata="$TINY_CLOUD_VAR/user-data"
+    local tmpfile=$(mktemp "$userdata.XXXXXX")
+    local cmd
+
+    imds -e @userdata > "$tmpfile"
+    cmd="cat"
+    if ! skip_action decompress_userdata; then
+        if printf '\037\213\010' | cmp -s -n 3 "$tmpfile"; then
+            gzip -dc "$tmpfile" > "$userdata"
+        elif printf 'BZh' | cmp -s -n 3 "$tmpfile"; then
+            bzip2 -dc "$tmpfile" > "$userdata"
+        elif printf '\375\067\172\130\132\000' | cmp -s -n 6 "$tmpfile"; then
+            unxz -c "$tmpfile" > "$userdata"
+        elif printf '\135\000\000' | cmp -s -n 3 "$tmpfile"; then
+            lzma -dc "$tmpfile" > "$userdata"
+        elif printf '\211\114\132' | cmp -s -n 3 "$tmpfile"; then
+            lzop -dc "$tmpfile" > "$userdata"
+        elif printf '\004\042\115\030' | cmp -s -n 4 "$tmpfile"; then
+            lz4 -dc "$tmpfile" > "$userdata"
+        elif printf '(\265/\375' | cmp -s -n 4 "$tmpfile"; then
+            zstd -dc "$tmpfile" > "$userdata"
+        else
+            cp "$tmpfile" "$userdata"
+        fi
+    else
+        cp "$tmpfile" "$userdata"
+    fi
+    rm "$tmpfile"
+}
+
+### TODO: init-final functions
+
+run_userdata() {
+    skip_action run_userdata && return
+    if [ $(userdata_type) != "script" ]; then
+        echo "UserData is not executable"
+        return
+    fi
+
+    echo "Executing UserData Script"
+
+    local log="$TINY_CLOUD_LOGS/user-data.log"
+    local exit="$TINY_CLOUD_LOGS/user-data.exit"
+    local userdata="$TINY_CLOUD_VAR/user-data"
+
+    chmod +x "$userdata"
+    { "$userdata" 2>& 1; echo $? > "$exit"; } | tee "$log"
+
+    return $(cat "$exit")
+}
+
+# load cloud-specific init functions / vars
+: "${LIBDIR:=$PREFIX/lib}"
+if [ -f "$LIBDIR"/tiny-cloud/"$CLOUD"/init ]; then
+	. "$LIBDIR"/tiny-cloud/"$CLOUD"/init
+fi
+
+
+### non-overrideable functions
+
+# should we skip this action?
+skip_action() {
+    local action="$1"
+    for i in $SKIP_INIT_ACTIONS; do
+        if [ "$i" = "$action" ]; then
+            printf " SKIPPING"
+            return 0
+        fi
+    done
+    return 1
+}
+
+userdata_type() {
+    if [ -f "$TINY_CLOUD_VAR/user-data" ]; then
+        header=$(head -n1 "$TINY_CLOUD_VAR/user-data")
+        case "$header" in
+            '#cloud-config') echo cloud-config;;
+            '#!'*) echo script;;
+            *) echo unknown;;
+        esac
+    else
+        echo missing
+    fi
+}

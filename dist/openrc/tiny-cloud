@@ -4,31 +4,17 @@
 description="Tiny Cloud Bootstrap - main phase"
 extra_commands="complete incomplete"
 
-: "${LIBDIR:=$PREFIX/lib}"
-. "$LIBDIR"/tiny-cloud/init-main
-
 depend() {
 	need net
 	before sshd
 }
 
 start() {
-
-	is_bootstrapped && return 0
-
-	ebegin "Saving Instance UserData"
-	save_userdata
-	eend $?
-
-	ebegin "Setting Instance Hostname"
-	set_hostname
-	eend $?
-
-	ebegin "Installing SSH Keys for $CLOUD_USER User"
-	set_ssh_keys "$CLOUD_USER"
+	ebegin "Tiny Cloud - main phase"
+	tiny-cloud main
 	eend $?
 }
 
-# allow setting / unsetting of bootstrap state
-complete() { bootstrap_complete ; }
-incomplete() { bootstrap_incomplete ; }
+# allow setting / unsetting of bootstrapped state
+complete() { tiny-cloud --bootstrap complete ; }
+incomplete() { tiny-cloud --bootstrap incomplete ; }

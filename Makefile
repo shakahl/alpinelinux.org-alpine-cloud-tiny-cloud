@@ -11,11 +11,13 @@ core:
 		bin/imds
 	install -Dm644 -t "$(PREFIX)"/lib/tiny-cloud \
 		lib/tiny-cloud/common \
-		lib/tiny-cloud/init-* \
+		lib/tiny-cloud/init \
 		lib/tiny-cloud/mdev \
 		lib/tiny-cloud/tiny-cloud.conf
 	install -Dm644 lib/tiny-cloud/tiny-cloud.conf \
 		"$(PREFIX)"/etc/tiny-cloud.conf
+	install -Dm755 -t "$(PREFIX)"/sbin \
+		sbin/tiny-cloud
 
 network:
 	install -Dm644 -t "$(PREFIX)"/etc/network/interfaces.d \
@@ -23,7 +25,8 @@ network:
 	install -Dm755 -t "$(PREFIX)"/lib/mdev \
 		lib/mdev/vnic-eth-hotplug
 	install -Dm755 -t "$(PREFIX)"/sbin \
-		sbin/*
+		sbin/assemble-interfaces \
+		sbin/imds-net-sync
 	install -Dm755 -t "$(PREFIX)"/usr/libexec/ifupdown-ng \
 		usr/libexec/ifupdown-ng/imds
 

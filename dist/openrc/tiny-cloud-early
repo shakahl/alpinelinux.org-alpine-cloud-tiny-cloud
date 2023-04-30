@@ -3,25 +3,13 @@
 
 description="Tiny Cloud Bootstrap - early phase"
 
-: "${LIBDIR:=$PREFIX/lib}"
-
 depend() {
-	after root
+	after root logger
 	before net
 }
 
 start() {
-	. "$LIBDIR"/tiny-cloud/init-early
-
-	is_bootstrapped && return 0
-
-	ebegin "Expanding Root Volume/Partition"
-	expand_root
+	ebegin "Tiny Cloud - early phase"
+	tiny-cloud early
 	eend $?
-
-	if has_cloud_hotplugs; then
-		ebegin "Installing Cloud Hotplugs"
-		install_hotplugs
-		eend $?
-	fi
 }

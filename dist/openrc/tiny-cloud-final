@@ -3,25 +3,13 @@
 
 description="Tiny Cloud Bootstrap - final phase"
 
-: "${LIBDIR:=$PREFIX/lib}"
-
 depend() {
 	after *
 	provide cloud-final
 }
 
 start() {
-	. "$LIBDIR"/tiny-cloud/init-final
-
-	is_bootstrapped && return 0
-
-	if is_userdata_script; then
-		ebegin "Executing UserData Script"
-		run_userdata
-		eend $?
-	fi
-
-	ebegin "Marking Instance Bootstrap Complete"
-	bootstrap_complete
+	ebegin "Tiny Cloud - final phase"
+	tiny-cloud final
 	eend $?
 }

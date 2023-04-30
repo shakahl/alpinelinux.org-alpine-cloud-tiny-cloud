@@ -4,7 +4,7 @@
 
 export PREFIX="$srcdir"
 export MOCK=echo
-lib="$srcdir"/lib/tiny-cloud/init-main
+lib="$srcdir"/lib/tiny-cloud/init
 
 init_tests \
 	set_hostname \
@@ -95,4 +95,3 @@ save_userdata_compressed_body() {
 		fi
 	done
 }
-

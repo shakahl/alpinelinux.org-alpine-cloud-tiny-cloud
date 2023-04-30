@@ -4,25 +4,31 @@
 
 export PREFIX="$srcdir"
 export MOCK=echo
-lib="$srcdir"/lib/tiny-cloud/init-final
-init_main="$srcdir"/lib/tiny-cloud/init-main
+lib="$srcdir"/lib/tiny-cloud/init
 PROVIDERS="aws azure gcp nocloud oci"
 
 init_tests \
-	is_userdata_script \
+	userdata_type \
 	run_userdata
 
 
-is_userdata_script_body() {
+userdata_type_body() {
 	mkdir -p var/lib/cloud
 	for c in $PROVIDERS; do
+		rm -f var/lib/cloud/user-data
+		CLOUD="$c" atf_check \
+			-o match:"missing" \
+			sh -c ". \"$lib\"; userdata_type"
+
 		echo "#tiny-cloud-config" > var/lib/cloud/user-data
-		CLOUD="$c" atf_check -s not-exit:0 \
-			sh -c ". \"$lib\"; is_userdata_script"
-	
+		CLOUD="$c" atf_check \
+			-o match:"unknown" \
+			sh -c ". \"$lib\"; userdata_type"
+
 		echo "#!/bin/sh" > var/lib/cloud/user-data
 		CLOUD="$c" atf_check -s exit:0 \
-			sh -c ". \"$lib\"; is_userdata_script"
+			-o match:"script" \
+			sh -c ". \"$lib\"; userdata_type"
 	done
 }
 
@@ -32,11 +38,10 @@ run_userdata_body() {
 		echo "hello from user-data"
 	EOF
 	CLOUD="nocloud" atf_check \
-		sh -c ". \"$init_main\"; save_userdata"
+		sh -c ". \"$lib\"; save_userdata"
 	CLOUD="nocloud" atf_check \
 		-o match:"hello from user-data" \
 		sh -c ". \"$lib\"; run_userdata"
 	grep "hello from user-data" var/log/user-data.log || atf_fail "user-data.log failed"
 	grep -w "0" var/log/user-data.exit || atf_fail "user-data.exit failed"
 }
-

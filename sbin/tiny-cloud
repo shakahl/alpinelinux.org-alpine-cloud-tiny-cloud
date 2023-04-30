@@ -1,0 +1,89 @@
+#!/bin/sh
+# vim:set ts=4 et ft=sh:
+
+# MacOS testing
+getopt=/opt/homebrew/Cellar/gnu-getopt/2.38.1/bin/getopt
+
+# Tiny Cloud
+
+set -e
+
+: "${LIBDIR:=$PREFIX/lib}"
+. "$LIBDIR"/tiny-cloud/common
+
+usage() {
+    cat <<EOF
+Usage: ${0##*/} [-h | --help] { early | main | final | --bootstrap {complete|incomplete} }
+EOF
+}
+
+bootstrap_complete() {
+    echo "Marking Instance Bootstrap Complete"
+    touch "$TINY_CLOUD_VAR"/.bootstrap-complete
+}
+
+bootstrap_incomplete() {
+    echo "Marking Instance Bootstrap Incomplete"
+    rm -f "$TINY_CLOUD_VAR"/.bootstrap-complete
+}
+
+args=$($getopt -o hb: --long help,bootstrap: -n ${0##*/} -- "$@")
+if [ $? -ne 0 ]; then
+    usage >&2
+    exit 1
+fi
+eval set -- "$args"
+while true; do
+    case "$1" in
+        -h|--help) usage; exit 0;;
+        -b|--bootstrap) shift
+            case "$1" in
+                complete)   # indicate bootstrap is done
+                    bootstrap_complete;;
+                incomplete) # indicate bootstrap isn't done
+                    bootstrap_incomplete;;
+                *) usage >&2; exit 1;;
+            esac
+            exit 0;;
+        --) shift; break;;
+        *) usage >&2; exit 1;;
+    esac
+    shift
+done
+
+phase="$1"
+shift
+
+case "$phase" in
+    early|main|final) ;;
+    *) usage >&2; exit 1;;
+esac
+
+# is initial bootstrap already done?
+if [ -f "$TINY_CLOUD_VAR"/.bootstrap-complete ]; then
+    log -s "Already bootstrapped"
+    exit 0;
+fi
+
+### default phase actions
+
+early() {
+    expand_root
+    install_hotplugs
+}
+
+main() {
+    save_userdata
+    set_hostname
+    set_ssh_keys
+}
+
+final() {
+    run_userdata
+    bootstrap_complete
+}
+
+# load init functions
+. "$LIBDIR"/tiny-cloud/init
+
+echo $phase "$@"

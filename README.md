@@ -31,7 +31,7 @@ instance:
 Optional features, which may not be universally necessary:
 * manage hotpluggable network interfaces
 * sync IMDS-provided secondary IPv4 and IPv6 addresses network interfaces
-* manage symlinks from NVMe block devices to `/dev/xvd` and `/dev/sd` devices
+* manage symlinks from NVMe block devices to `/dev/xvd` or `/dev/sd` devices
   (i.e. AWS Nitro instances)
 
 Also included is a handy `imds` client script for easy access to an instance's

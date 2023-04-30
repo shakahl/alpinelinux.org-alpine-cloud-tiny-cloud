@@ -4,6 +4,7 @@
 
 export PREFIX="$srcdir"
 export MOCK=echo
+lib="$srcdir"/lib/tiny-cloud/init
 
 init_tests \
 	expand_root \
@@ -17,7 +18,7 @@ PROVIDERS="aws azure gcp nocloud oci"
 expand_root_body() {
 	fake_bin test-expand-root <<-EOF
 		#!/bin/sh
-		. "$srcdir"/lib/tiny-cloud/init-early
+		. "$lib"
 		expand_root
 	EOF
 	mkdir proc
@@ -32,7 +33,7 @@ expand_root_body() {
 expand_root_partition_body() {
 	fake_bin test-expand-root <<-EOF
 		#!/bin/sh
-		. "$srcdir"/lib/tiny-cloud/init-early
+		. "$lib"
 		expand_root
 	EOF
 	mkdir -p proc sys/class/block \
@@ -56,7 +57,7 @@ expand_root_skip_body() {
 	fake_bin test-expand-root <<-EOF
 		#!/bin/sh
 		SKIP_INIT_ACTIONS=expand_root
-		. "$srcdir"/lib/tiny-cloud/init-early
+		. "$lib"
 		expand_root
 	EOF
 	for provider in $PROVIDERS; do
@@ -70,7 +71,7 @@ install_hotplugs_skip_body() {
 	fake_bin test-install-hotplugs <<-EOF
 		#!/bin/sh
 		SKIP_INIT_ACTIONS=install_hotplugs
-		. "$srcdir"/lib/tiny-cloud/init-early
+		. "$lib"
 		install_hotplugs
 	EOF
 	for provider in $PROVIDERS; do
@@ -84,11 +85,10 @@ install_hotplugs_fail_body() {
 	fake_bin test-install-hotplugs <<-EOF
 		#!/bin/sh
 		HOTPLUG_MODULES="vnic_eth_hotplug"
-		. "$srcdir"/lib/tiny-cloud/init-early
+		. "$lib"
 		install_hotplugs
 	EOF
 	CLOUD=aws atf_check -s not-exit:0 \
 		-o match:"^ vnic_eth_hotplug\(!\)$" \
 		test-install-hotplugs
 }
-
