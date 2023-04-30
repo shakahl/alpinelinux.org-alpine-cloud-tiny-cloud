@@ -84,10 +84,10 @@ _imds_nic_index() { cat "/sys/class/net/$1/address"; }
 
 ### load cloud-specific variables and functions
 
-if [ ! -d "$LIBDIR"/tiny-cloud/"$CLOUD" ]; then
+if [ ! -d "$LIBDIR"/tiny-cloud/cloud/"$CLOUD" ]; then
     echo "ERROR: Unknown Cloud '$CLOUD'" >&2
 fi
-. "$LIBDIR"/tiny-cloud/"$CLOUD"/imds
+. "$LIBDIR"/tiny-cloud/cloud/"$CLOUD"/imds
 
 ### non-overrideable functions
 

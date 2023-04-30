@@ -11,6 +11,8 @@
 
 ## FUTURE
 
+* cloud auto-detection
+
 * `imds-net-sync` improvements
   * Feature parity with current [amazon-ec2-net-utils](
     https://github.com/amazonlinux/amazon-ec2-net-utils)

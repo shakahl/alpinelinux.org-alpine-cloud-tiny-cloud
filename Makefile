@@ -37,24 +37,24 @@ openrc:
 aws:
 	install -Dm755 -t "$(PREFIX)"/lib/mdev \
 		lib/mdev/nvme-ebs-links
-	install -Dm644 -t "$(PREFIX)"/lib/tiny-cloud/aws \
-		lib/tiny-cloud/aws/*
+	install -Dm644 -t "$(PREFIX)"/lib/tiny-cloud/cloud/aws \
+		lib/tiny-cloud/cloud/aws/*
 
 azure:
-	install -Dm644 -t $(PREFIX)/lib/tiny-cloud/azure \
-		lib/tiny-cloud/azure/*
+	install -Dm644 -t $(PREFIX)/lib/tiny-cloud/cloud/azure \
+		lib/tiny-cloud/cloud/azure/*
 
 gcp:
-	install -Dm644 -t $(PREFIX)/lib/tiny-cloud/gcp \
-		lib/tiny-cloud/gcp/*
+	install -Dm644 -t $(PREFIX)/lib/tiny-cloud/cloud/gcp \
+		lib/tiny-cloud/cloud/gcp/*
 
 oci:
-	install -Dm644 -t $(PREFIX)/lib/tiny-cloud/oci \
-		lib/tiny-cloud/oci/*
+	install -Dm644 -t $(PREFIX)/lib/tiny-cloud/cloud/oci \
+		lib/tiny-cloud/cloud/oci/*
 
 nocloud:
-	install -Dm644 -t $(PREFIX)/lib/tiny-cloud/nocloud \
-		lib/tiny-cloud/nocloud/*
+	install -Dm644 -t $(PREFIX)/lib/tiny-cloud/cloud/nocloud \
+		lib/tiny-cloud/cloud/nocloud/*
 
 check: tests/Kyuafile Kyuafile
 	kyua test || (kyua report --verbose && exit 1)

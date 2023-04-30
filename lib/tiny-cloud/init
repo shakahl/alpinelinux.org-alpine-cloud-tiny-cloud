@@ -155,8 +155,8 @@ run_userdata() {
 
 # load cloud-specific init functions / vars
 : "${LIBDIR:=$PREFIX/lib}"
-if [ -f "$LIBDIR"/tiny-cloud/"$CLOUD"/init ]; then
-	. "$LIBDIR"/tiny-cloud/"$CLOUD"/init
+if [ -f "$LIBDIR"/tiny-cloud/cloud/"$CLOUD"/init ]; then
+	. "$LIBDIR"/tiny-cloud/cloud/"$CLOUD"/init
 fi
 
 
