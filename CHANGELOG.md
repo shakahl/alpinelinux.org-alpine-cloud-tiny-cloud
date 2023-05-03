@@ -8,7 +8,10 @@
   for clouds to specify their own (or supercede the default) init functions
   and/or change which init phase they are executed in.
 
-  The example OpenRC init scripts been updated and moved to **dist/openrc/**.
+* The example OpenRC init scripts been updated and moved to **dist/openrc/**.
+
+  Use `tiny-cloud --setup` to add Tiny Cloud's init scripts into the right
+  runlevels
 
 * Tiny Cloud configuration has moved to **/etc/tiny-cloud.conf**.
 
