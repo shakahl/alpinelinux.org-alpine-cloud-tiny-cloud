@@ -8,19 +8,28 @@
 : "${SKIP_INIT_ACTIONS:=}"
 : "${HOTPLUG_TYPE:=mdev}"
 
-# TODO: default phase actions
+### default phase actions (without leading 'init__')
 
-# ensure existence of output directories
-[ ! -d "$TINY_CLOUD_LOGS" ] && mkdir -p "$TINY_CLOUD_LOGS"
-[ ! -d "$TINY_CLOUD_VAR" ] && mkdir -p "$TINY_CLOUD_VAR"
+INIT_ACTIONS_EARLY="
+    expand_root
+    install_hotplugs
+"
+INIT_ACTIONS_MAIN="
+    save_userdata
+    set_hostname
+    set_ssh_keys
+"
+INIT_ACTIONS_FINAL="
+    run_userdata
+"
 
-### NOTE: init-early functions...
+# try to ensure existence of output directories, but otherwise don't panic
+[ ! -d "$TINY_CLOUD_LOGS" ] && mkdir -p "$TINY_CLOUD_LOGS" || true
+[ ! -d "$TINY_CLOUD_VAR" ] && mkdir -p "$TINY_CLOUD_VAR" || true
 
-expand_root() {
-    skip_action expand_root && return
+### init-early functions...
 
-    echo "Expanding Root Volume/ Partition"
-
+init__expand_root() {
     local dev=$(awk '$2 == "/" {print $1}' "$ROOT"/proc/mounts)
     local partition=$(cat "$ROOT/sys/class/block/${dev#/dev/}/partition" 2>/dev/null)
 
@@ -35,36 +44,38 @@ expand_root() {
     $MOCK resize2fs "$dev"
 }
 
-install_hotplugs() {
-    skip_action install_hotplugs && return
+init__install_hotplugs() {
+    local level result rc=0
+
     [ ! -n "$HOTPLUG_MODULES" ] && return
-
-    echo "Installing Cloud Hotplugs"
-
-    local result rc=0
-
     if [ -f "$LIBDIR/tiny-cloud/$HOTPLUG_TYPE" ]; then
-	    . "$LIBDIR/tiny-cloud/$HOTPLUG_TYPE"
+        . "$LIBDIR/tiny-cloud/$HOTPLUG_TYPE"
     fi
 
+    printf ' :' >&2
     for module in $HOTPLUG_MODULES; do
-        result='-'
-        printf " $module"
+        result='?'
+        level='err'
+        printf "$module" >&2
+        log info "$phase $ACTION $module"
         if type "mod__$module" | grep -q -w "function"; then
-            "mod__$module" && result='+' || { result='!'; rc=1; }
+            if "mod__$module"; then
+                result='+'
+                level='info'
+            else
+                result='!'
+                rc=1
+            fi
         fi
-        printf "($result)"
+        printf '(%s) ' $result >&2
+        log "$level" "$phase $ACTION $module ($result)"
     done
     return $rc
 }
 
-### NOTE: init-main functions
+### init-main functions
 
-set_hostname() {
-    skip_action set_hostname && return
-
-    echo "Setting Instance Hostname"
-
+init__set_hostname() {
     local fqdn=$(imds @hostname)
     local host="${fqdn%%\.*}"
 
@@ -74,11 +85,7 @@ set_hostname() {
     echo -e "127.0.1.1\t$fqdn $host" >> "$ROOT"/etc/hosts
 }
 
-set_ssh_keys() {
-    skip_action set_ssh_keys && return
-
-    echo "Installing SSH Keys for $CLOUD_USER User"
-
+init__set_ssh_keys() {
     local user="$CLOUD_USER"
     local pwent="$(getent passwd "$user")"
     local group=$(echo "$pwent" | cut -d: -f4)
@@ -96,56 +103,43 @@ set_ssh_keys() {
     imds @ssh-keys > "$keys_file"
 }
 
-save_userdata() {
-    skip_action save_userdata && return
-
-    # TODO: this trips save_userdata_* and run_userdata tests: "stdout not empty"
-    #echo "Saving Instance UserData"
-
+init__save_userdata() {
     local userdata="$TINY_CLOUD_VAR/user-data"
     local tmpfile=$(mktemp "$userdata.XXXXXX")
-    local cmd
 
     imds -e @userdata > "$tmpfile"
-    cmd="cat"
-    if ! skip_action decompress_userdata; then
-        if printf '\037\213\010' | cmp -s -n 3 "$tmpfile"; then
-            gzip -dc "$tmpfile" > "$userdata"
-        elif printf 'BZh' | cmp -s -n 3 "$tmpfile"; then
-            bzip2 -dc "$tmpfile" > "$userdata"
-        elif printf '\375\067\172\130\132\000' | cmp -s -n 6 "$tmpfile"; then
-            unxz -c "$tmpfile" > "$userdata"
-        elif printf '\135\000\000' | cmp -s -n 3 "$tmpfile"; then
-            lzma -dc "$tmpfile" > "$userdata"
-        elif printf '\211\114\132' | cmp -s -n 3 "$tmpfile"; then
-            lzop -dc "$tmpfile" > "$userdata"
-        elif printf '\004\042\115\030' | cmp -s -n 4 "$tmpfile"; then
-            lz4 -dc "$tmpfile" > "$userdata"
-        elif printf '(\265/\375' | cmp -s -n 4 "$tmpfile"; then
-            zstd -dc "$tmpfile" > "$userdata"
-        else
-            cp "$tmpfile" "$userdata"
-        fi
+    if printf '\037\213\010' | cmp -s -n 3 "$tmpfile"; then
+        gzip -dc "$tmpfile" > "$userdata"
+    elif printf 'BZh' | cmp -s -n 3 "$tmpfile"; then
+        bzip2 -dc "$tmpfile" > "$userdata"
+    elif printf '\375\067\172\130\132\000' | cmp -s -n 6 "$tmpfile"; then
+        unxz -c "$tmpfile" > "$userdata"
+    elif printf '\135\000\000' | cmp -s -n 3 "$tmpfile"; then
+        lzma -dc "$tmpfile" > "$userdata"
+    elif printf '\211\114\132' | cmp -s -n 3 "$tmpfile"; then
+        lzop -dc "$tmpfile" > "$userdata"
+    elif printf '\004\042\115\030' | cmp -s -n 4 "$tmpfile"; then
+        lz4 -dc "$tmpfile" > "$userdata"
+    elif printf '(\265/\375' | cmp -s -n 4 "$tmpfile"; then
+        zstd -dc "$tmpfile" > "$userdata"
     else
         cp "$tmpfile" "$userdata"
     fi
     rm "$tmpfile"
 }
 
-### TODO: init-final functions
+### init-final functions
 
-run_userdata() {
-    skip_action run_userdata && return
-    if [ $(userdata_type) != "script" ]; then
-        echo "UserData is not executable"
-        return
-    fi
-
-    echo "Executing UserData Script"
-
+init__run_userdata() {
     local log="$TINY_CLOUD_LOGS/user-data.log"
     local exit="$TINY_CLOUD_LOGS/user-data.exit"
     local userdata="$TINY_CLOUD_VAR/user-data"
+
+    if [ $(userdata_type) != "script" ]; then
+        printf '(Not Executable) ' >&2
+        log info "$phase $ACTION - not exectutable"
+        return
+    fi
 
     chmod +x "$userdata"
     { "$userdata" 2>& 1; echo $? > "$exit"; } | tee "$log"
@@ -153,30 +147,18 @@ run_userdata() {
     return $(cat "$exit")
 }
 
+### potentially override the above, per cloud
+
 # load cloud-specific init functions / vars
 if [ -f "$LIBDIR/tiny-cloud/cloud/$CLOUD/init" ]; then
-	. "$LIBDIR/tiny-cloud/cloud/$CLOUD/init"
+    . "$LIBDIR/tiny-cloud/cloud/$CLOUD/init"
 fi
 
-# TODO: load user-data type-specific init functions / vars
 
-### non-overrideable functions
-
-# should we skip this action?
-skip_action() {
-    local action="$1"
-    for i in $SKIP_INIT_ACTIONS; do
-        if [ "$i" = "$action" ]; then
-            printf " SKIPPING"
-            return 0
-        fi
-    done
-    return 1
-}
-
+# this should be non-overrideable, but need this before we...
 userdata_type() {
     if [ -f "$TINY_CLOUD_VAR/user-data" ]; then
-        header=$(head -n1 "$TINY_CLOUD_VAR/user-data")
+        header=$(head -n1 "$TINY_CLOUD_VAR/user-data" | sed -e 's/[[:space:]].*//g')
         case "$header" in
             '#cloud-config') echo cloud-config;;
             '#!'*) echo script;;
@@ -186,3 +168,6 @@ userdata_type() {
         echo missing
     fi
 }
+
+# ...load user-data type-specific init functions / vars
+# TODO

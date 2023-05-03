@@ -9,7 +9,7 @@
 : "${TINY_CLOUD_VAR:=$ROOT/var/lib/cloud}"
 
 log() {
-    local facility="kern"
+    local facility="local7"
     local stderr
     local tag=$(basename "$0")
     while [ "${1#-}" != "$1" ]; do

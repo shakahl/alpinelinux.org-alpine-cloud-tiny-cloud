@@ -38,10 +38,10 @@ run_userdata_body() {
 		echo "hello from user-data"
 	EOF
 	CLOUD="nocloud" atf_check \
-		sh -c ". \"$lib\"; save_userdata"
+		sh -c ". \"$lib\"; init__save_userdata"
 	CLOUD="nocloud" atf_check \
 		-o match:"hello from user-data" \
-		sh -c ". \"$lib\"; run_userdata"
+		sh -c ". \"$lib\"; init__run_userdata"
 	grep "hello from user-data" var/log/user-data.log || atf_fail "user-data.log failed"
 	grep -w "0" var/log/user-data.exit || atf_fail "user-data.exit failed"
 }

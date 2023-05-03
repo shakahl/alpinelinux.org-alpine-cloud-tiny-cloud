@@ -10,22 +10,19 @@ set -e
 
 usage() {
     cat <<EOF
-Usage: ${0##*/} [-h | --help] { early | main | final | --bootstrap {complete|incomplete} }
+Usage: ${0##*/} [-h | --help] { early | main | final | --bootstrap {complete|incomplete} | --setup }
 EOF
 }
 
-bootstrap_complete() {
-    echo "Marking Instance Bootstrap Complete"
+init__bootstrap_complete() {
     touch "$TINY_CLOUD_VAR/.bootstrap-complete"
 }
-
 bootstrap_incomplete() {
-    echo "Marking Instance Bootstrap Incomplete"
     rm -f "$TINY_CLOUD_VAR/.bootstrap-complete"
 }
 
-args=$(getopt -o hb: --long help,bootstrap: -n ${0##*/} -- "$@")
-if [ $? -ne 0 ]; then
+args=$(getopt -o hsb: --long help,setup,bootstrap: -n ${0##*/} -- "$@")
+if [ $? -ne 0 ] || [ $# -eq 0 ]; then
     usage >&2
     exit 1
 fi
@@ -36,11 +33,22 @@ while true; do
         -b|--bootstrap) shift
             case "$1" in
                 complete)   # indicate bootstrap is done
-                    bootstrap_complete;;
+                    init__bootstrap_complete
+                    log warn 'bootstrap marked complete';;
                 incomplete) # indicate bootstrap isn't done
-                    bootstrap_incomplete;;
+                    bootstrap_incomplete
+                    log warn 'bootstrap marked incomplete';;
                 *) usage >&2; exit 1;;
             esac
+            printf ' bootstrap marked "%s"\n' "$1" >&2
+            exit 0;;
+        -s|--setup) # just openrc for now
+            for phase in -early '' -final; do
+                rc-update -a del "tiny-cloud$phase" || true
+            done
+            rc-update add tiny-cloud-early boot
+            rc-update add tiny-cloud default
+            rc-update add tiny-cloud-final default
             exit 0;;
         --) shift; break;;
         *) usage >&2; exit 1;;
@@ -58,32 +66,56 @@ esac
 
 # is initial bootstrap already done?
 if [ -f "$TINY_CLOUD_VAR/.bootstrap-complete" ]; then
-    log -s "Already bootstrapped"
+    printf ' already bootstrapped\n' >&2
+    log info "$phase - already bootstrapped"
     exit 0;
 fi
-
-### default phase actions
-
-# TODO? represent as vars containing lists of funcs?
-
-early() {
-    expand_root
-    install_hotplugs
-}
-
-main() {
-    save_userdata
-    set_hostname
-    set_ssh_keys
-}
-
-final() {
-    run_userdata
-    bootstrap_complete
-}
 
 # load init functions
 . "$LIBDIR/tiny-cloud/init"
 
-# TODO? for loop over list of funcs? -- better for ebegin/eend-ish output
-echo $phase "$@"
+### non-overrideable stuff
+
+# should we skip this action?
+skip_action() {
+    local action="$1"
+    for i in $SKIP_INIT_ACTIONS; do
+        [ "$i" = "$action" ] && return 0
+    done
+    return 1
+}
+
+# mandatory final action...
+INIT_ACTIONS_FINAL="${INIT_ACTIONS_FINAL} bootstrap_complete"
+
+### let's do stuff!
+
+case "$phase" in
+    early)  INIT_ACTIONS="$INIT_ACTIONS_EARLY";;
+    main)   INIT_ACTIONS="$INIT_ACTIONS_MAIN";;
+    final)  INIT_ACTIONS="$INIT_ACTIONS_FINAL";;
+    *)      usage >&2; exit 1
+esac
+
+for ACTION in $INIT_ACTIONS; do
+    if skip_action "$ACTION"; then
+        printf '\n  -- %s : [SKIP]' $ACTION >&2
+        log warn "$phase - $ACTION - SKIPPED"
+        continue
+    fi
+    printf '\n  ++ %s ' $ACTION >&2
+    log info "$phase - $ACTION - START"
+    RESULT="UNKNOWN"
+    LEVEL="err"
+    if type "init__$ACTION" | grep -q -w "function"; then
+        if "init__$ACTION" "$@"; then
+            RESULT="DONE"
+            LEVEL="info"
+        else
+            RESULT="FAIL"
+        fi
+    fi
+    printf ': [%s]' $RESULT >&2
+    log "$LEVEL" "$phase - $ACTION - $RESULT"
+done
+echo >&2

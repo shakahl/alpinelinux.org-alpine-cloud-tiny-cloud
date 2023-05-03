@@ -42,16 +42,8 @@ set_hostname_body() {
 
 	CLOUD="nocloud" atf_check \
 		-o match:"hostname.*-F $PWD/etc/hostname" \
-		sh -c ". \"$lib\"; set_hostname"
+		sh -c ". \"$lib\"; init__set_hostname"
 	atf_check -o match:"^myhostname$" cat etc/hostname
-
-	rm etc/hostname
-	CLOUD="nocloud" atf_check \
-		-o not-match:"hostname.*-F $PWD/etc/hostname" \
-		sh -c "SKIP_INIT_ACTIONS=set_hostname ; . \"$lib\"; set_hostname"
-	if test -f etc/hostname; then
-		atf_fail "etc/hostname should not exist"
-	fi
 }
 
 set_ssh_keys_body() {
@@ -66,7 +58,7 @@ set_ssh_keys_body() {
 	EOF
 	CLOUD="nocloud" atf_check \
 		-o match:"chown.*/\.ssh" \
-		sh -c ". \"$lib\"; set_ssh_keys"
+		sh -c ". \"$lib\"; init__set_ssh_keys"
 	atf_check  -o match:"^ssh-ed25519 keydata" \
 		-o match:"^ssh-rsa foobar" \
 		cat home/alpine/.ssh/authorized_keys
@@ -77,7 +69,7 @@ save_userdata_plain_body() {
 		#userdata
 	EOF
 	CLOUD="nocloud" atf_check \
-		sh -c ". \"$lib\"; save_userdata"
+		sh -c ". \"$lib\"; init__save_userdata"
 	atf_check -o match:"^#userdata" cat var/lib/cloud/user-data
 }
 
@@ -88,7 +80,7 @@ save_userdata_compressed_body() {
 		fake_userdata_nocloud < tmpfile
 
 		CLOUD="nocloud" atf_check \
-			sh -c ". \"$lib\"; save_userdata"
+			sh -c ". \"$lib\"; init__save_userdata"
 
 		if ! grep "^#userdata" var/lib/cloud/user-data; then
 			atf_fail "$comp failed"

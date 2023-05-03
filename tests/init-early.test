@@ -9,33 +9,21 @@ lib="$srcdir"/lib/tiny-cloud/init
 init_tests \
 	expand_root \
 	expand_root_partition \
-	expand_root_skip \
-	install_hotplugs_skip \
 	install_hotplugs_fail
 
 PROVIDERS="aws azure gcp nocloud oci"
 
 expand_root_body() {
-	fake_bin test-expand-root <<-EOF
-		#!/bin/sh
-		. "$lib"
-		expand_root
-	EOF
 	mkdir proc
 	echo "/dev/xvda / ext4 rw,noatime 0 0" > proc/mounts
 	for provider in $PROVIDERS; do
 		CLOUD="$provider" atf_check \
 			-o match:"resize2fs /dev/xvda" \
-			test-expand-root
+			sh -c ". $lib; init__expand_root"
 	done
 }
 
 expand_root_partition_body() {
-	fake_bin test-expand-root <<-EOF
-		#!/bin/sh
-		. "$lib"
-		expand_root
-	EOF
 	mkdir -p proc sys/class/block \
 		sys/devices/pci0000:00/0000:00:1b.0/0000:01:00.0/nvme/nvme0/nvme0n1/nvme0n1p2 \
 		sys/devices/pci0000:00/0000:00:1b.0/0000:01:00.0/nvme/nvme0/nvme0n1/device
@@ -49,46 +37,12 @@ expand_root_partition_body() {
 			-o match:"sfdisk .*/dev/nvme0n1" \
 			-o match:"partx .*/dev/nvme0n1" \
 			-o match:"resize2fs /dev/nvme0n1p2" \
-			test-expand-root
-	done
-}
-
-expand_root_skip_body() {
-	fake_bin test-expand-root <<-EOF
-		#!/bin/sh
-		SKIP_INIT_ACTIONS=expand_root
-		. "$lib"
-		expand_root
-	EOF
-	for provider in $PROVIDERS; do
-		CLOUD="$provider" atf_check \
-			-o match:'^ SKIPPING$' \
-			test-expand-root
-	done
-}
-
-install_hotplugs_skip_body() {
-	fake_bin test-install-hotplugs <<-EOF
-		#!/bin/sh
-		SKIP_INIT_ACTIONS=install_hotplugs
-		. "$lib"
-		install_hotplugs
-	EOF
-	for provider in $PROVIDERS; do
-		CLOUD="$provider" atf_check \
-			-o match:'^ SKIPPING$' \
-			test-install-hotplugs
+			sh -c ". $lib; init__expand_root"
 	done
 }
 
 install_hotplugs_fail_body() {
-	fake_bin test-install-hotplugs <<-EOF
-		#!/bin/sh
-		HOTPLUG_MODULES="vnic_eth_hotplug"
-		. "$lib"
-		install_hotplugs
-	EOF
 	CLOUD=aws atf_check -s not-exit:0 \
-		-o match:"^ vnic_eth_hotplug\(!\)$" \
-		test-install-hotplugs
+		-e match:"vnic_eth_hotplug\(!\)" \
+		sh -c ". $lib; HOTPLUG_MODULES='vnic_eth_hotplug'; init__install_hotplugs"
 }
