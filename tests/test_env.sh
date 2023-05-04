@@ -39,7 +39,8 @@ fake_umount() {
 	EOF
 }
 
-fake_userdata_nocloud() {
+fake_data_nocloud() {
+	local datafile="$1"
 	local file="$(mktemp -p "$PWD")"
 	cat > "$file"
 	fake_bin mount <<-EOF
@@ -48,24 +49,18 @@ fake_userdata_nocloud() {
 		while ! [ -d "\$1" ]; do
 			shift
 		done
-		cp "$file" "\$1"/user-data
-	EOF
-	mkdir -p mnt
-}
-
-fake_metadata_nocloud() {
-	local file="$(mktemp -p "$PWD")"
-	cat > "$file"
-	fake_bin mount <<-EOF
-		#!/bin/sh
-		# find last arg which is the mount dir
-		while ! [ -d "\$1" ]; do
-			shift
-		done
-		cp "$file" "\$1"/meta-data
+		cp "$file" "\$1"/$datafile
 	EOF
 	mkdir -p mnt
 	fake_umount
+}
+
+fake_metadata_nocloud() {
+	fake_data_nocloud meta-data
+}
+
+fake_userdata_nocloud() {
+	fake_data_nocloud user-data
 }
 
 fake_interfaces() {
