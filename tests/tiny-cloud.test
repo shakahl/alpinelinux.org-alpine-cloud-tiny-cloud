@@ -1,0 +1,19 @@
+#!/usr/bin/env atf-sh
+
+. $(atf_get_srcdir)/test_env.sh
+
+export PREFIX="$srcdir"
+export MOCK=echo
+
+init_tests \
+	tiny_cloud_help
+
+tiny_cloud_help_body() {
+	CLOUD=nocloud atf_check -s not-exit:0 \
+		-e match:"Usage" \
+		tiny-cloud --invalid
+
+	CLOUD=nocloud atf_check -s exit:0 \
+		-o match:"Usage" \
+		tiny-cloud --help
+}
