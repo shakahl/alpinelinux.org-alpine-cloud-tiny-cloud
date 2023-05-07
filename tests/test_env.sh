@@ -67,3 +67,13 @@ fake_metadata_nocloud() {
 	mkdir -p mnt
 	fake_umount
 }
+
+fake_interfaces() {
+	local n=1
+	for i; do
+		mkdir -p sys/class/net/$i
+		echo $n > sys/class/net/$i/ifindex
+		echo down >sys/class/net/$i/operstate
+		n=$((n+1))
+	done
+}

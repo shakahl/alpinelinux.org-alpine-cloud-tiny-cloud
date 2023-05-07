@@ -13,6 +13,7 @@
 INIT_ACTIONS_EARLY="
     expand_root
     install_hotplugs
+    set_interfaces_default
 "
 INIT_ACTIONS_MAIN="
     save_userdata
@@ -59,7 +60,7 @@ init__install_hotplugs() {
         . "$LIBDIR/tiny-cloud/$HOTPLUG_TYPE"
     fi
 
-    printf ' :' >&2
+    printf ': ' >&2
     for module in $HOTPLUG_MODULES; do
         result='?'
         level='err'
@@ -79,6 +80,85 @@ init__install_hotplugs() {
     done
     return $rc
 }
+
+# collect ethernet interfaces, sorted by index
+ethernets() {
+    for i in "$ROOT/sys/class/net/"*; do
+        local iface="${i##*/}"
+        case "$iface" in
+            eth*) echo "$(cat "$i/ifindex") $iface";;
+        esac
+    done | sort -n | awk '{print $2}'
+}
+
+# find the interface that is has operstate up
+find_first_interface_up() {
+    local n=0
+    [ $# -eq 0 ] && return
+    while [ $n -le ${TINY_CLOUD_LINK_WAIT_MAX:-10} ]; do
+        for i in "$@"; do
+            if [ "$(cat "$ROOT/sys/class/net/$i/operstate")" = "up" ]; then
+                echo "$i"
+                return
+            fi
+        done
+        sleep 0.1
+        n=$((n+1))
+    done
+}
+
+# auto detect which network interface to auto configure
+# check which is connected or fallback to first
+# This will set link to down to all eth* except the found
+auto_detect_ethernet_interface() {
+    local ifaces="$(ethernets)"
+    [ -z "$ifaces" ] && return
+
+    # find first connected interface
+    for i in $ifaces; do
+        $MOCK ip link set dev $i up >/dev/null
+    done
+    local iface="$(find_first_interface_up $ifaces)"
+
+    # use first if all are disconnected
+    if [ -z "$iface" ]; then
+        set -- $ifaces
+        iface="$1"
+    fi
+
+    # we will use the found interface later so lets keep it up
+    for i in $ifaces; do
+        if [ "$i" != "$iface" ]; then
+            $MOCK ip link set dev $i down >/dev/null
+        fi
+    done
+    echo "$iface"
+}
+
+init__set_interfaces_default() {
+    if [ -f "$ROOT"/etc/network/interfaces ]; then
+        echo "already set up" >&2
+        log info "$phase $ACTION - already set up"
+        return
+    fi
+
+    mkdir -p "$ROOT/etc/network"
+    printf "%s\n%s\n\n" \
+        "auto lo" \
+        "iface lo inet loopback" \
+        > "$ROOT/etc/network/interfaces"
+
+    local iface="$(auto_detect_ethernet_interface)"
+    if [ -z "$iface" ]; then
+        # TODO: message/log?
+        return
+    fi
+    printf "%s\n%s\n\t%s\n\n" \
+        "auto $iface" \
+        "iface $iface" \
+        "use dhcp"  >> "$ROOT/etc/network/interfaces"
+}
+
 
 ### init-main functions
 
