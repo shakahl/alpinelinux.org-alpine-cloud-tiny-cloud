@@ -13,7 +13,8 @@
 INIT_ACTIONS_EARLY="
     expand_root
     install_hotplugs
-    set_interfaces_default
+    set_default_interfaces
+    create_default_user
 "
 INIT_ACTIONS_MAIN="
     save_userdata
@@ -135,7 +136,7 @@ auto_detect_ethernet_interface() {
     echo "$iface"
 }
 
-init__set_interfaces_default() {
+init__set_default_interfaces() {
     if [ -f "$ROOT"/etc/network/interfaces ]; then
         echo "already set up" >&2
         log info "$phase $ACTION - already set up"
@@ -157,6 +158,27 @@ init__set_interfaces_default() {
         "auto $iface" \
         "iface $iface" \
         "use dhcp"  >> "$ROOT/etc/network/interfaces"
+}
+
+init__create_default_user() {
+    local user="$CLOUD_USER"
+    # don't do anything if it already exists
+    if getent passwd "$user" >/dev/null; then
+        echo "already exists" >&2
+        log info "$phase $ACTION - already exists"
+        return
+    fi
+
+    addgroup "$user"
+    adduser -h "/home/$user" -s /bin/sh -G "$user" -D "$user"
+    addgroup "$user" wheel
+    echo "$user:*" | chpasswd -e
+
+    # setup sudo and/or doas
+    [ -d "$ROOT/etc/sudoers.d" ] &&
+        echo '%wheel ALL=(ALL) NOPASSWD: ALL' > "$ROOT/etc/sudoers.d/wheel"
+    [ -d "$ROOT/etc/doas.d" ] &&
+        echo 'permit nopass :wheel' > "$TARGET/etc/doas.d/wheel.conf"
 }
 
 

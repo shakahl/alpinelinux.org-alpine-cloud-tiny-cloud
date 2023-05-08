@@ -13,7 +13,7 @@ init_tests \
 	ethernets \
 	find_first_interface_up \
 	auto_detect_ethernet_interface \
-	set_interfaces_default
+	set_default_interfaces
 
 PROVIDERS="aws azure gcp nocloud oci"
 
@@ -87,12 +87,12 @@ auto_detect_ethernet_interface_body() {
 		sh -c ". $lib; TINY_CLOUD_LINK_WAIT_MAX=1; auto_detect_ethernet_interface"
 }
 
-set_interfaces_default_body() {
+set_default_interfaces_body() {
 	fake_interfaces eth0 eth1
 	echo up > sys/class/net/eth1/operstate
 
 	atf_check \
-		sh -c ". $lib; init__set_interfaces_default"
+		sh -c ". $lib; init__set_default_interfaces"
 	atf_check \
 		-o match:"auto lo" \
 		-o match:"iface eth1" \
