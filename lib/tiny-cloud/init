@@ -218,6 +218,10 @@ init__set_hostname() {
 init__set_ssh_keys() {
     local user="$CLOUD_USER"
     local pwent="$(getent passwd "$user")"
+    if [ -z "$pwent" ]; then
+        log err "Failed to find user $user"
+        return 1
+    fi
     local group=$(echo "$pwent" | cut -d: -f4)
     local ssh_dir="${ROOT}$(echo "$pwent" | cut -d: -f6)/.ssh"
     local keys_file="$ssh_dir/authorized_keys"
