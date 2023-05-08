@@ -30,31 +30,20 @@ aws_set_fake_meta() {
 		| tr '/' '_')
 }
 
-aws_create_fake_nc() {
-	fake_bin nc <<-EOF
-		#!/bin/sh
-		input="\$(cat)"
-		case "\$input" in
-			-*) echo "nc: bad input: \$input" >&2; exit 1;;
-		esac
-		echo "token-foo"
-	EOF
-}
-
 imds_aws_hostname_body() {
-	aws_create_fake_nc
+	fake_netcat
 	aws_set_fake_meta hostname myhostname
 	CLOUD=aws atf_check -o match:"myhostname" imds @hostname
 }
 
 imds_aws_local_hostname_body() {
-	aws_create_fake_nc
+	fake_netcat
 	aws_set_fake_meta local-hostname myhostname
 	CLOUD=aws atf_check -o match:"myhostname" imds @local-hostname
 }
 
 imds_aws_ssh_keys_body() {
-	aws_create_fake_nc
+	fake_netcat
 	aws_set_fake_meta public-keys 0=testuser
 	aws_set_fake_meta public-keys/0/openssh-key "ssh-ed25519 keydata"
 

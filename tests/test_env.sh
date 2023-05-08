@@ -72,3 +72,14 @@ fake_interfaces() {
 		n=$((n+1))
 	done
 }
+
+fake_netcat() {
+	fake_bin nc <<-EOF
+		#!/bin/sh
+		input="\$(cat)"
+		case "\$input" in
+			-*) echo "nc: bad input: \$input" >&2; exit 1;;
+		esac
+		echo "token-foo"
+	EOF
+}
