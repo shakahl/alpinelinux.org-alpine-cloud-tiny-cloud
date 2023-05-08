@@ -36,8 +36,8 @@ DEFAULT_ACTIONS_FINAL=""
 ### standard init-early functions...
 
 init__expand_root() {
-    local dev=$(awk '$2 == "/" {print $1}' "$ROOT"/proc/mounts)
-    local filesystem=$(awk '$2 == "/" {print $3}' "$ROOT"/proc/mounts)
+    local dev=$(awk '$2 == "/" {print $1}' "$ROOT"/proc/mounts 2>/dev/null)
+    local filesystem=$(awk '$2 == "/" {print $3}' "$ROOT"/proc/mounts 2>/dev/null)
     local partition=$(cat "$ROOT/sys/class/block/${dev#/dev/}/partition" 2>/dev/null)
 
     # only support ext2/ext3/ext4 for now
