@@ -13,7 +13,8 @@ init_tests \
 	ethernets \
 	find_first_interface_up \
 	auto_detect_ethernet_interface \
-	set_default_interfaces
+	set_default_interfaces \
+	enable_sshd
 
 PROVIDERS="aws azure gcp nocloud oci"
 
@@ -98,4 +99,13 @@ set_default_interfaces_body() {
 		-o match:"iface eth1" \
 		-o match:"use dhcp" \
 		cat etc/network/interfaces
+}
+
+enable_sshd_body() {
+	for provider in $PROVIDERS; do
+		CLOUD="$provider" atf_check \
+			-o match:"rc-update.* add sshd default" \
+			-o match:"rc-update.* --update" \
+			sh -c ". $lib; init__enable_sshd"
+	done
 }

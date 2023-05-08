@@ -22,6 +22,11 @@ userdata_type_body() {
 
 		echo "#tiny-cloud-config" > var/lib/cloud/user-data
 		CLOUD="$c" atf_check \
+			-o match:"tiny-cloud-config" \
+			sh -c ". \"$lib\"; userdata_type"
+
+		echo "no-content-type" > var/lib/cloud/user-data
+		CLOUD="$c" atf_check \
 			-o match:"unknown" \
 			sh -c ". \"$lib\"; userdata_type"
 

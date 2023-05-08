@@ -15,21 +15,21 @@ INIT_ACTIONS_EARLY="
     install_hotplugs
     set_default_interfaces
     create_default_user
+    enable_sshd
 "
 INIT_ACTIONS_MAIN="
     save_userdata
     set_hostname
     set_ssh_keys
 "
-INIT_ACTIONS_FINAL="
-    run_userdata
-"
+INIT_ACTIONS_FINAL=""
 
 # try to ensure existence of output directories, but otherwise don't panic
 [ ! -d "$TINY_CLOUD_LOGS" ] && mkdir -p "$TINY_CLOUD_LOGS" || true
 [ ! -d "$TINY_CLOUD_VAR" ] && mkdir -p "$TINY_CLOUD_VAR" || true
 
-### init-early functions...
+
+### standard init-early functions...
 
 init__expand_root() {
     local dev=$(awk '$2 == "/" {print $1}' "$ROOT"/proc/mounts)
@@ -181,8 +181,14 @@ init__create_default_user() {
         echo 'permit nopass :wheel' > "$TARGET/etc/doas.d/wheel.conf"
 }
 
+init__enable_sshd() {
+    $MOCK rc-update add sshd default
+    # in case something else has enabled/disabled dservices
+    $MOCK rc-update --update
+}
 
-### init-main functions
+
+### standard init-main functions
 
 init__set_hostname() {
     local fqdn=$(imds @hostname)
@@ -237,46 +243,35 @@ init__save_userdata() {
     rm "$tmpfile"
 }
 
-### init-final functions
 
-init__run_userdata() {
-    local log="$TINY_CLOUD_LOGS/user-data.log"
-    local exit="$TINY_CLOUD_LOGS/user-data.exit"
-    local userdata="$TINY_CLOUD_VAR/user-data"
+### standard init-final functions would be here, if there were any
 
-    if [ $(userdata_type) != "script" ]; then
-        printf '(Not Executable) ' >&2
-        log info "$phase $ACTION - not exectutable"
-        return
-    fi
 
-    chmod +x "$userdata"
-    { "$userdata" 2>& 1; echo $? > "$exit"; } | tee "$log"
+### load cloud-specific init functions / vars (potentially overriding)
 
-    return $(cat "$exit")
-}
-
-### potentially override the above, per cloud
-
-# load cloud-specific init functions / vars
 if [ -f "$LIBDIR/tiny-cloud/cloud/$CLOUD/init" ]; then
     . "$LIBDIR/tiny-cloud/cloud/$CLOUD/init"
 fi
 
 
+### load user-data type-specific init functions / vars (potentially overriding)
+
 # this should be non-overrideable, but need this before we...
 userdata_type() {
-    if [ -f "$TINY_CLOUD_VAR/user-data" ]; then
-        header=$(head -n1 "$TINY_CLOUD_VAR/user-data" | sed -e 's/[[:space:]].*//g')
-        case "$header" in
-            '#cloud-config') echo cloud-config;;
-            '#!'*) echo script;;
-            *) echo unknown;;
-        esac
-    else
+    if [ ! -f "$TINY_CLOUD_VAR/user-data" ]; then
         echo missing
+        return
     fi
+    header=$(head -n1 "$TINY_CLOUD_VAR/user-data" | sed -e 's/[[:space:]].*//g')
+    case "$header" in
+        '#!'*)  echo script;;
+        '#'*)   echo ${header#\#};;
+        *)      echo unknown;;
+    esac
 }
 
-# ...load user-data type-specific init functions / vars
-# TODO
+USERDATA_TYPE="$(userdata_type)"
+if [ -f "$LIBDIR/tiny-cloud/user-data/$USERDATA_TYPE" ]; then
+    . "$LIBDIR/tiny-cloud/user-data/$USERDATA_TYPE"
+fi
+# TODO: some indication that the user-data type is unsupported?
