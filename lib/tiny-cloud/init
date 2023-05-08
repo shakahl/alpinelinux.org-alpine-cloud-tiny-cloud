@@ -10,19 +10,23 @@
 
 ### default phase actions (without leading 'init__')
 
-INIT_ACTIONS_EARLY="
+DEFAULT_ACTIONS_EARLY="
     expand_root
     install_hotplugs
     set_default_interfaces
     create_default_user
     enable_sshd
 "
-INIT_ACTIONS_MAIN="
+DEFAULT_ACTIONS_MAIN="
     save_userdata
     set_hostname
     set_ssh_keys
 "
-INIT_ACTIONS_FINAL=""
+DEFAULT_ACTIONS_FINAL=""
+
+: "${INIT_ACTIONS_EARLY=$DEFAULT_ACTIONS_EARLY}"
+: "${INIT_ACTIONS_MAIN=$DEFAULT_ACTIONS_MAIN}"
+: "${INIT_ACTIONS_FINAL=$DEFAULT_ACTIONS_FINAL}"
 
 # try to ensure existence of output directories, but otherwise don't panic
 [ ! -d "$TINY_CLOUD_LOGS" ] && mkdir -p "$TINY_CLOUD_LOGS" || true
