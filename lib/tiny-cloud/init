@@ -169,16 +169,18 @@ init__create_default_user() {
         return
     fi
 
-    addgroup "$user"
-    adduser -h "/home/$user" -s /bin/sh -G "$user" -D "$user"
-    addgroup "$user" wheel
-    echo "$user:*" | chpasswd -e
+    $MOCK addgroup "$user"
+    $MOCK adduser -h "/home/$user" -s /bin/sh -G "$user" -D "$user"
+    $MOCK addgroup "$user" wheel
+    echo "$user:*" | $MOCK chpasswd -e
 
     # setup sudo and/or doas
-    [ -d "$ROOT/etc/sudoers.d" ] &&
+    if [ -d "$ROOT/etc/sudoers.d" ]; then
         echo '%wheel ALL=(ALL) NOPASSWD: ALL' > "$ROOT/etc/sudoers.d/wheel"
-    [ -d "$ROOT/etc/doas.d" ] &&
+    fi
+    if [ -d "$ROOT/etc/doas.d" ]; then
         echo 'permit nopass :wheel' > "$TARGET/etc/doas.d/wheel.conf"
+    fi
 }
 
 init__enable_sshd() {

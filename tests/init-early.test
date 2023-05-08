@@ -14,7 +14,8 @@ init_tests \
 	find_first_interface_up \
 	auto_detect_ethernet_interface \
 	set_default_interfaces \
-	enable_sshd
+	enable_sshd \
+	create_default_user
 
 PROVIDERS="aws azure gcp nocloud oci"
 
@@ -108,4 +109,13 @@ enable_sshd_body() {
 			-o match:"rc-update.* --update" \
 			sh -c ". $lib; init__enable_sshd"
 	done
+}
+
+create_default_user_body() {
+	atf_check \
+		-o match:"addgroup alpine" \
+		-o match:"adduser.*alpine" \
+		-o match:"addgroup alpine wheel" \
+		-o match:"chpasswd -e" \
+		sh -c ". $lib; init__create_default_user"
 }
