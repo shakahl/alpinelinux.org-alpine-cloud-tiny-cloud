@@ -198,7 +198,16 @@ init__enable_sshd() {
 
 init__set_hostname() {
     local fqdn=$(imds @hostname)
+    if [ -z "$fqdn" ]; then
+        log info "No hostname set"
+        return
+    fi
+
     local host="${fqdn%%\.*}"
+    if [ -z "$host" ]; then
+        log err "$fqdn is not a valid hostname"
+        return 1
+    fi
 
     mkdir -p "$ROOT"/etc
     echo "$host" > "$ROOT"/etc/hostname
