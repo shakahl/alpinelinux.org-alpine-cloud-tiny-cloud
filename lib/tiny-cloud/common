@@ -29,3 +29,40 @@ log() {
         crit|alert|emerg) exit 1 ;;
     esac
 }
+
+# usage: replace_word <search> <replace> <list>...
+replace_word() {
+    local search="$1" replace="$2"
+    shift 2
+    for word in "$@"; do
+        if [ "$word" = "$search" ]; then
+            echo "$replace"
+        else
+            echo "$word"
+        fi
+    done
+}
+
+# usage: insert_after <where> <what> <list>...
+insert_after() {
+    local search="$1" addition="$2"
+    shift 2
+    for i in "$@"; do
+        echo "$i"
+        if [ "$i" = "$search" ]; then
+            echo "$addition"
+        fi
+    done
+}
+
+# usage: add_once <file> <line-to-add>...
+add_once() {
+    local file="$1"
+    shift
+    for line; do
+        if ! grep -x -F "$line" "$file" 2>/dev/null; then
+            mkdir -p "${file%/*}"
+            printf "%s\n" "$line" >> "$file"
+        fi
+    done
+}

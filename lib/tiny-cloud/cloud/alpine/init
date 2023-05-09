@@ -1,0 +1,26 @@
+# Tiny Cloud - Init Functions
+# vim:set ts=4 et ft=sh:
+
+INIT_ACTIONS_EARLY="$(replace_word set_default_interfaces set_network_interfaces $INIT_ACTIONS_EARLY)"
+
+set_resolv_conf() {
+    # resolv.conf
+    local nameservers="$(imds meta-data/resolv_conf/nameservers)"
+    for i in $nameservers; do
+        local server="$(imds meta-data/resolv_conf/nameservers/$i)"
+        add_once "$ROOT"/etc/resolv.conf "nameserver $server"
+    done
+}
+
+init__set_network_interfaces() {
+    local interfaces="$(imds meta-data/network-interfaces)"
+    mkdir -p "$ROOT"/etc/network
+    if [ -n "$interfaces" ]; then
+        printf "%s\n" "$interfaces" > "$ROOT"/etc/network/interfaces
+    elif ! [ -f "$ROOT"/etc/network/interfaces ]; then
+        init__set_default_interfaces
+    fi
+    if ! grep -q dhcp "$ROOT"/etc/network/interfaces; then
+        set_resolv_conf
+    fi
+}

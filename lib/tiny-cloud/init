@@ -17,14 +17,17 @@ DEFAULT_ACTIONS_EARLY="
     create_default_user
     enable_sshd
 "
-DEFAULT_ACTIONS_MAIN="
+DEFAULT_ACTIONS_NET="
     save_userdata
+"
+DEFAULT_ACTIONS_MAIN="
     set_hostname
     set_ssh_keys
 "
 DEFAULT_ACTIONS_FINAL=""
 
 : "${INIT_ACTIONS_EARLY=$DEFAULT_ACTIONS_EARLY}"
+: "${INIT_ACTIONS_NET=$DEFAULT_ACTIONS_NET}"
 : "${INIT_ACTIONS_MAIN=$DEFAULT_ACTIONS_MAIN}"
 : "${INIT_ACTIONS_FINAL=$DEFAULT_ACTIONS_FINAL}"
 
@@ -242,6 +245,10 @@ init__set_ssh_keys() {
 
 init__save_userdata() {
     local userdata="$TINY_CLOUD_VAR/user-data"
+    if [ -f "$userdata" ]; then
+        log info "user-data already saved"
+        return
+    fi
     local tmpfile=$(mktemp "$userdata.XXXXXX")
 
     imds -e @userdata > "$tmpfile"

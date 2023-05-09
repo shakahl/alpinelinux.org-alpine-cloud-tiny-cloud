@@ -1,6 +1,6 @@
 PREFIX?=/
 
-SUBPACKAGES = core network openrc aws azure gcp oci nocloud
+SUBPACKAGES = core network openrc aws azure gcp oci nocloud alpine
 
 .PHONY: check install $(SUBPACKAGES)
 
@@ -55,6 +55,11 @@ oci:
 nocloud:
 	install -Dm644 -t $(PREFIX)/lib/tiny-cloud/cloud/nocloud \
 		lib/tiny-cloud/cloud/nocloud/*
+
+alpine:
+	install -Dm644 -t $(PREFIX)/lib/tiny-cloud/cloud/alpine \
+		lib/tiny-cloud/cloud/alpine/init
+	ln -s ../nocloud/imds $(PREFIX)/lib/tiny-cloud/cloud/alpine/imds
 
 check: tests/Kyuafile Kyuafile
 	kyua test || (kyua report --verbose && exit 1)

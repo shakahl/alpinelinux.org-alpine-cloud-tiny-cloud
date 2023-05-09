@@ -1,0 +1,116 @@
+# Script UserData Functions
+# vim:set ts=4 et ft=sh:
+
+INIT_ACTIONS_MAIN="$(insert_after set_hostname \
+    "userdata_bootcmd userdata_ntp userdata_apk_cache userdata_apk_repositories userdata_packages" \
+    $INIT_ACTIONS_MAIN)"
+INIT_ACTIONS_FINAL="$INIT_ACTIONS_FINAL userdata_runcmd"
+
+init__userdata_bootcmd() {
+    # run bootcmd
+    local bootcmds="$(imds user-data/bootcmd)"
+    for i in $bootcmds; do
+        local cmd="$(imds user-data/bootcmd/"$i")"
+        sh -c "$cmd"
+    done
+}
+
+init__userdata_ntp() {
+    local ntp_enabled="$(imds user-data/ntp/enabled)"
+    if [ "$ntp_enabled" != "yes" ] && [ "$ntp_enabled" != "true" ]; then
+        return
+    fi
+    local ntp_client="$(imds user-data/ntp/ntp_client)"
+    local svc= pkg=
+    case "$ntp_client" in
+        busybox)
+            svc=ntpd
+            ;;
+        chrony|"")
+            pkg=chrony
+            svc=chronyd
+            ;;
+        openntpd)
+            pkg=openntpd
+            svc=openntpd
+            ;;
+    esac
+    if [ -n "$pkg" ]; then
+        $MOCK apk add "$pkg"
+    fi
+    if [ -n "$svc" ]; then
+        $MOCK rc-update add "$svc" default
+        $MOCK rc-service "$svc" start
+    fi
+}
+
+init__userdata_apk_cache() {
+    local cache="$(imds user-data/apk/cache)"
+    if [ -z "$cache" ]; then
+        return
+    fi
+    mkdir -p "$ROOT/$cache"
+    # make link relative
+    case "$cache" in
+        /*) cache="../..$cache";;
+    esac
+    mkdir -p "$ROOT"/etc/apk
+    ln -sf "$cache" "$ROOT"/etc/apk/cache
+}
+
+init__userdata_apk_cache() {
+    local cache="$(imds user-data/apk/cache)"
+    if [ -z "$cache" ]; then
+        return
+    fi
+    mkdir -p "$ROOT/$cache"
+    # make link relative
+    case "$cache" in
+        /*) cache="../..$cache";;
+    esac
+    mkdir -p "$ROOT"/etc/apk
+    ln -sf "$cache" "$ROOT"/etc/apk/cache
+}
+
+init__userdata_apk_repositories() {
+    local repositories="$(imds user-data/apk/repositories)"
+    mkdir -p "$ROOT"/etc/apk
+    for r in $repositories; do
+        local baseurl="$(imds user-data/apk/repositories/$r/base_url)"
+        local repos="$(imds user-data/apk/repositories/$r/repos)"
+        local version="$(imds user-data/apk/repositories/$r/version)"
+        if [ -z "$version" ]; then
+            local version_id=$( . "$ROOT"/etc/os-release 2>/dev/null && echo "$VERSION_ID")
+            case "$version_id" in
+                edge*|*_alpha*) version="edge";;
+                [0-9]*.[0-9]*.[0-9]*) version="v${version_id%.*}";;
+            esac
+        fi
+        if [ -n "$version" ] && [ "$version" != "." ] && [ "$version" != "/" ]; then
+            baseurl="${baseurl%/}/$version"
+        fi
+        for repo in $repos; do
+            local uri="${baseurl%/}/$(imds user-data/apk/repositories/$r/repos/$repo)"
+            add_once "$ROOT"/etc/apk/repositories "$uri"
+        done
+    done
+}
+
+init__userdata_packages() {
+    local packages="$(imds user-data/packages)"
+    local pkgs=
+    for i in $packages; do
+        pkgs="$pkgs $(imds user-data/packages/$i)"
+    done
+    if [ -n "$pkgs" ]; then
+        $MOCK apk add $pkgs
+    fi
+}
+
+init__userdata_runcmd() {
+	local runcmds="$(imds user-data/runcmd)"
+	for i in $runcmds; do
+		local cmd="$(imds user-data/runcmd/$i)"
+		sh -c "$cmd"
+	done
+}

@@ -10,7 +10,7 @@ set -e
 
 usage() {
     cat <<EOF
-Usage: ${0##*/} [-h | --help] { early | main | final | --bootstrap {complete|incomplete} | --setup }
+Usage: ${0##*/} [-h | --help] { early | net | main | final | --bootstrap {complete|incomplete} | --setup }
 EOF
 }
 
@@ -60,7 +60,7 @@ phase="$1"
 shift
 
 case "$phase" in
-    early|main|final) ;;
+    early|net|main|final) ;;
     *) usage >&2; exit 1;;
 esac
 
@@ -92,6 +92,7 @@ INIT_ACTIONS_FINAL="${INIT_ACTIONS_FINAL} bootstrap_complete"
 
 case "$phase" in
     early)  INIT_ACTIONS="$INIT_ACTIONS_EARLY";;
+    net) INIT_ACTIONS="$INIT_ACTIONS_NET";;
     main)   INIT_ACTIONS="$INIT_ACTIONS_MAIN";;
     final)  INIT_ACTIONS="$INIT_ACTIONS_FINAL";;
     *)      usage >&2; exit 1

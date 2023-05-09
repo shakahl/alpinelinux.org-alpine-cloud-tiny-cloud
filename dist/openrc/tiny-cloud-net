@@ -1,0 +1,14 @@
+#!/sbin/openrc-run
+# vim:set ts=8 noet ft=sh:
+
+description="Tiny Cloud Bootstrap - net phase"
+depend() {
+	need net
+	before *
+}
+
+start() {
+	ebegin "Tiny Cloud - net"
+	tiny-cloud net
+	eend $?
+}

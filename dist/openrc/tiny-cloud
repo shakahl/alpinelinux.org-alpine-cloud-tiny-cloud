@@ -5,7 +5,7 @@ description="Tiny Cloud Bootstrap - main phase"
 extra_commands="complete incomplete"
 
 depend() {
-	need net
+	need net tiny-cloud-net
 	before sshd
 }
 

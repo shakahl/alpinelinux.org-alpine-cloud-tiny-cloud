@@ -1,0 +1,241 @@
+#!/usr/bin/env atf-sh
+
+. $(atf_get_srcdir)/test_env.sh
+
+export PREFIX="$srcdir"
+export MOCK=echo
+export CLOUD=alpine
+lib="$srcdir"/lib/tiny-cloud/cloud/alpine/init
+
+init_tests \
+	set_network_config_network_interfaces \
+	set_network_config_auto \
+	userdata_bootcmd \
+	userdata_ntp \
+	userdata_ntp_busybox \
+	userdata_ntp_openntpd \
+	userdata_apk_cache \
+	userdata_apk_repositories \
+	userdata_apk_repositories_version \
+	userdata_apk_repositories_version_auto_edge \
+	userdata_packages \
+	userdata_runcmd
+
+
+set_network_config_network_interfaces_body() {
+	fake_metadata_nocloud <<-EOF
+		network-interfaces: |
+		  auto eth1
+		  iface eth1
+		    address 192.168.100.1
+		    netmask 255.255.255.0
+
+		resolv_conf:
+		  nameservers:
+		    - 8.8.8.8
+		    - 8.8.4.4
+	EOF
+
+	atf_check \
+		-o match:"rc-update" \
+		-e match:"set_network_interfaces .*DONE" \
+		tiny-cloud early
+	atf_check \
+		-o match:"auto eth1" \
+		-o match:"iface eth1" \
+		-o match:"address 192.168.100.1" \
+		cat etc/network/interfaces
+
+	atf_check \
+		-o match:"^nameserver 8.8.8.8$" \
+		-o match:"^nameserver 8.8.4.4$" \
+		cat etc/resolv.conf
+}
+
+set_network_config_auto_body() {
+	fake_metadata_nocloud <<-EOF
+		resolv_conf:
+		  nameservers:
+		    - 8.8.8.8
+		    - 8.8.4.4
+	EOF
+	fake_interfaces eth0 eth1 eth2
+	echo up > sys/class/net/eth1/operstate
+
+	atf_check \
+		-o match:"rc-update" \
+		-e match:"set_network_interfaces .*DONE" \
+		tiny-cloud early
+	atf_check \
+		-o match:"auto eth1" \
+		-o match:"iface eth1" \
+		-o match:"use dhcp" \
+		cat etc/network/interfaces
+	# resolv.conf should be ignored with dhcp
+	if [ -e etc/resolv.conf ]; then
+		atf_fail "etc/resolv.conf should not been created with DHCP"
+	fi
+}
+
+userdata_bootcmd_body() {
+	fake_userdata_nocloud <<-EOF
+		#alpine-config
+		bootcmd:
+		  - echo foo
+		  - echo bar
+	EOF
+	atf_check -e ignore -o ignore tiny-cloud net
+	atf_check \
+		-e match:"userdata_bootcmd .*DONE" \
+		-o match:"^foo$" -o match:"^bar$" \
+		tiny-cloud main
+}
+
+userdata_ntp_body() {
+	fake_userdata_nocloud <<-EOF
+		#alpine-config
+		ntp:
+		  enabled: true
+	EOF
+	atf_check -e ignore -o ignore tiny-cloud net
+	atf_check \
+		-e match:"userdata_ntp .*DONE" \
+		-o match:"apk add.*chrony" \
+		-o match:"rc-update .*chronyd" \
+		-o match:"rc-service .*chronyd" \
+		tiny-cloud main
+}
+
+userdata_ntp_busybox_body() {
+	fake_userdata_nocloud <<-EOF
+		#alpine-config
+		ntp:
+		  enabled: true
+		  ntp_client: busybox
+	EOF
+	atf_check -e ignore -o ignore tiny-cloud net
+	atf_check \
+		-e match:"userdata_ntp .*DONE" \
+		-o not-match:"apk add" \
+		-o match:"rc-update .*ntpd" \
+		-o match:"rc-service .*ntpd" \
+		tiny-cloud main
+}
+
+userdata_ntp_openntpd_body() {
+	fake_userdata_nocloud <<-EOF
+		#alpine-config
+		ntp:
+		  enabled: true
+		  ntp_client: openntpd
+	EOF
+	atf_check -e ignore -o ignore tiny-cloud net
+	atf_check \
+		-e match:"userdata_ntp .*DONE" \
+		-o match:"apk add.*openntpd" \
+		-o match:"rc-update .*openntpd" \
+		-o match:"rc-service .*openntpd" \
+		tiny-cloud main
+}
+
+userdata_apk_cache_body() {
+	fake_userdata_nocloud <<-EOF
+		#alpine-config
+		apk:
+		  cache: /var/cache/apk
+	EOF
+	atf_check -e ignore -o ignore tiny-cloud net
+	atf_check \
+		-e match:"userdata_apk_cache .*DONE" \
+		-o ignore \
+		tiny-cloud main
+	atf_check -o match:"$PWD/var/cache/apk" readlink -f etc/apk/cache
+}
+
+userdata_apk_repositories_body() {
+	fake_userdata_nocloud <<-EOF
+		#alpine-config
+		apk:
+		  repositories:
+		    - base_url: /srv/packages
+		      repos: [ "main", "community" ]
+	EOF
+	atf_check -e ignore -o ignore tiny-cloud net
+	atf_check \
+		-e match:"userdata_apk_repositories .*DONE" \
+		-o ignore \
+		tiny-cloud main
+	atf_check -o match:"^/srv/packages/main$" \
+		-o match:"^/srv/packages/community$" \
+		cat etc/apk/repositories
+}
+
+userdata_apk_repositories_version_body() {
+	fake_userdata_nocloud <<-EOF
+		#alpine-config
+		apk:
+		  repositories:
+		    - base_url: https://cdn.alpinelinux.org/
+		      version: edge
+		      repos: [ "main", "community" ]
+	EOF
+	atf_check -e ignore -o ignore tiny-cloud net
+	atf_check \
+		-e match:"userdata_apk_repositories .*DONE" \
+		-o ignore \
+		tiny-cloud main
+	atf_check -o match:"^https://cdn.alpinelinux.org/edge/main$" \
+		-o match:"^https://cdn.alpinelinux.org/edge/community$" \
+		cat etc/apk/repositories
+}
+
+userdata_apk_repositories_version_auto_edge_body() {
+	fake_userdata_nocloud <<-EOF
+		#alpine-config
+		apk:
+		  repositories:
+		    - base_url: https://cdn.alpinelinux.org/
+		      repos: [ "main", "community" ]
+	EOF
+	mkdir -p etc
+	echo "VERSION_ID=3.18_alpha20230329" > etc/os-release
+
+	atf_check -e ignore -o ignore tiny-cloud net
+	atf_check \
+		-e match:"userdata_apk_repositories .*DONE" \
+		-o ignore \
+		tiny-cloud main
+	atf_check -o match:"^https://cdn.alpinelinux.org/edge/main$" \
+		-o match:"^https://cdn.alpinelinux.org/edge/community$" \
+		cat etc/apk/repositories
+}
+
+userdata_packages_body() {
+	fake_userdata_nocloud <<-EOF
+		#alpine-config
+		packages:
+		  - tmux
+		  - vim
+	EOF
+	atf_check -e ignore -o ignore tiny-cloud net
+	atf_check \
+		-e match:"userdata_packages .*DONE" \
+		-o match:"apk add .*tmux" \
+		-o match:"apk add .*vim" \
+		tiny-cloud main
+}
+
+userdata_runcmd_body() {
+	fake_userdata_nocloud <<-EOF
+		#alpine-config
+		runcmd:
+		  - echo foo
+		  - echo bar
+	EOF
+	# run net phase to extract the user data
+	atf_check -e ignore -o ignore tiny-cloud net
+	atf_check \
+		-e match:"userdata_runcmd .*DONE" \
+		-o match:"^foo$" -o match:"^bar$" \
+		tiny-cloud final
+}

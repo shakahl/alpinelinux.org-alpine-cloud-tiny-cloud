@@ -9,6 +9,7 @@ PROVIDERS="alpine aws azure gcp nocloud oci"
 init_tests \
 	tiny_cloud_help \
 	no_metadata_early \
+	no_userdata_net \
 	no_userdata_main \
 	no_userdata_final
 
@@ -27,12 +28,22 @@ tiny_cloud_help_body() {
 no_metadata_early_body() {
 	fake_netcat
 	for provider in $PROVIDERS; do
-		# TODO:	-e not-match:"UNKNOWN" \
 		CLOUD="$provider" atf_check \
+			-e not-match:"UNKNOWN" \
 			-e not-match:"not found" \
 			-e not-match:"o such file" \
 			-o match:"rc-update add.*sshd" \
 			tiny-cloud early
+	done
+}
+
+no_userdata_net_body() {
+	fake_netcat
+	for provider in $PROVIDERS; do
+		CLOUD="$provider" atf_check \
+			-e not-match:"UNKNOWN" \
+			-e match:"save_userdata.*DONE" \
+			tiny-cloud net
 	done
 }
 
@@ -41,9 +52,8 @@ no_userdata_main_body() {
 	for provider in $PROVIDERS; do
 		# we should not set empty hostname
 		# we should not create .ssh dir for non-existing user
-		# TODO:	-e not-match:"UNKNOWN" \
 		CLOUD="$provider" atf_check \
-			-e ignore \
+			-e not-match:"UNKNOWN" \
 			-o not-match:"hostname.*-F" \
 			-o not-match:"chown.*/\.ssh" \
 			tiny-cloud main
@@ -58,8 +68,8 @@ no_userdata_main_body() {
 no_userdata_final_body() {
 	fake_netcat
 	for provider in $PROVIDERS; do
-		# TODO:	-e not-match:"UNKNOWN" \
 		CLOUD="$provider" atf_check \
+			-e not-match:"UNKNOWN" \
 			-e match:"bootstrap_complete .*" \
 			tiny-cloud final
 		CLOUD="$provider" atf_check \
