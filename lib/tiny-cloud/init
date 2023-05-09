@@ -221,6 +221,7 @@ init__set_ssh_keys() {
     local user="$CLOUD_USER"
     local pwent="$(getent passwd "$user")"
     if [ -z "$pwent" ]; then
+        echo "failed to find $user" >&2
         log err "Failed to find user $user"
         return 1
     fi
