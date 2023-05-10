@@ -43,10 +43,11 @@ while true; do
             printf ' bootstrap marked "%s"\n' "$1" >&2
             exit 0;;
         -s|--setup) # just openrc for now
-            for phase in -early '' -final; do
+            for phase in -early -net '' -final; do
                 rc-update -a del "tiny-cloud$phase" || true
             done
             rc-update add tiny-cloud-early boot
+            rc-update add tiny-cloud-net default
             rc-update add tiny-cloud default
             rc-update add tiny-cloud-final default
             exit 0;;
