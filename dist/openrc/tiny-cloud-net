@@ -4,7 +4,7 @@
 description="Tiny Cloud Bootstrap - net phase"
 depend() {
 	need net
-	before *
+	before tiny-cloud
 }
 
 start() {
