@@ -14,7 +14,7 @@ core:
 		lib/tiny-cloud/init \
 		lib/tiny-cloud/mdev \
 		lib/tiny-cloud/tiny-cloud.conf
-	install -Dm644 -t "$(PREFIX)"/lib/tiny-cloud/user-data" \
+	install -Dm644 -t "$(PREFIX)"/lib/tiny-cloud/user-data \
 		lib/tiny-cloud/user-data/missing \
 		lib/tiny-cloud/user-data/script \
 		lib/tiny-cloud/user-data/unknown
