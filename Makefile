@@ -64,7 +64,7 @@ alpine:
 	install -Dm644 -t $(PREFIX)/lib/tiny-cloud/cloud/alpine \
 		lib/tiny-cloud/cloud/alpine/init
 	ln -s ../nocloud/imds $(PREFIX)/lib/tiny-cloud/cloud/alpine/imds
-	install -Dm644 -t "$(PREFIX)"/lib/tiny-cloud/user-data" \
+	install -Dm644 -t "$(PREFIX)"/lib/tiny-cloud/user-data \
 		lib/tiny-cloud/user-data/alpine-config
 
 check: tests/Kyuafile Kyuafile
