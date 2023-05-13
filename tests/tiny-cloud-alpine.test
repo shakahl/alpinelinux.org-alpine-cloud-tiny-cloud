@@ -38,7 +38,7 @@ set_network_config_network_interfaces_body() {
 
 	atf_check \
 		-o match:"rc-update" \
-		-e match:"set_network_interfaces .*DONE" \
+		-e match:"set_network_interfaces: done" \
 		tiny-cloud early
 	atf_check \
 		-o match:"auto eth1" \
@@ -64,7 +64,7 @@ set_network_config_auto_body() {
 
 	atf_check \
 		-o match:"rc-update" \
-		-e match:"set_network_interfaces .*DONE" \
+		-e match:"set_network_interfaces: done" \
 		tiny-cloud early
 	atf_check \
 		-o match:"auto eth1" \
@@ -86,7 +86,7 @@ userdata_bootcmd_body() {
 	EOF
 	atf_check -e ignore -o ignore tiny-cloud net
 	atf_check \
-		-e match:"userdata_bootcmd .*DONE" \
+		-e match:"userdata_bootcmd: done" \
 		-o match:"^foo$" -o match:"^bar$" \
 		tiny-cloud main
 }
@@ -99,7 +99,7 @@ userdata_ntp_body() {
 	EOF
 	atf_check -e ignore -o ignore tiny-cloud net
 	atf_check \
-		-e match:"userdata_ntp .*DONE" \
+		-e match:"userdata_ntp: done" \
 		-o match:"apk add.*chrony" \
 		-o match:"rc-update .*chronyd" \
 		-o match:"rc-service .*chronyd" \
@@ -115,7 +115,7 @@ userdata_ntp_busybox_body() {
 	EOF
 	atf_check -e ignore -o ignore tiny-cloud net
 	atf_check \
-		-e match:"userdata_ntp .*DONE" \
+		-e match:"userdata_ntp: done" \
 		-o not-match:"apk add" \
 		-o match:"rc-update .*ntpd" \
 		-o match:"rc-service .*ntpd" \
@@ -131,7 +131,7 @@ userdata_ntp_openntpd_body() {
 	EOF
 	atf_check -e ignore -o ignore tiny-cloud net
 	atf_check \
-		-e match:"userdata_ntp .*DONE" \
+		-e match:"userdata_ntp: done" \
 		-o match:"apk add.*openntpd" \
 		-o match:"rc-update .*openntpd" \
 		-o match:"rc-service .*openntpd" \
@@ -146,7 +146,7 @@ userdata_apk_cache_body() {
 	EOF
 	atf_check -e ignore -o ignore tiny-cloud net
 	atf_check \
-		-e match:"userdata_apk_cache .*DONE" \
+		-e match:"userdata_apk_cache: done" \
 		-o ignore \
 		tiny-cloud main
 	atf_check -o match:"$PWD/var/cache/apk" readlink -f etc/apk/cache
@@ -162,7 +162,7 @@ userdata_apk_repositories_body() {
 	EOF
 	atf_check -e ignore -o ignore tiny-cloud net
 	atf_check \
-		-e match:"userdata_apk_repositories .*DONE" \
+		-e match:"userdata_apk_repositories: done" \
 		-o ignore \
 		tiny-cloud main
 	atf_check -o match:"^/srv/packages/main$" \
@@ -181,7 +181,7 @@ userdata_apk_repositories_version_body() {
 	EOF
 	atf_check -e ignore -o ignore tiny-cloud net
 	atf_check \
-		-e match:"userdata_apk_repositories .*DONE" \
+		-e match:"userdata_apk_repositories: done" \
 		-o ignore \
 		tiny-cloud main
 	atf_check -o match:"^https://cdn.alpinelinux.org/edge/main$" \
@@ -202,7 +202,7 @@ userdata_apk_repositories_version_auto_edge_body() {
 
 	atf_check -e ignore -o ignore tiny-cloud net
 	atf_check \
-		-e match:"userdata_apk_repositories .*DONE" \
+		-e match:"userdata_apk_repositories: done" \
 		-o ignore \
 		tiny-cloud main
 	atf_check -o match:"^https://cdn.alpinelinux.org/edge/main$" \
@@ -219,7 +219,7 @@ userdata_packages_body() {
 	EOF
 	atf_check -e ignore -o ignore tiny-cloud net
 	atf_check \
-		-e match:"userdata_packages .*DONE" \
+		-e match:"userdata_packages: done" \
 		-o match:"apk add .*tmux" \
 		-o match:"apk add .*vim" \
 		tiny-cloud main
@@ -235,7 +235,7 @@ userdata_runcmd_body() {
 	# run net phase to extract the user data
 	atf_check -e ignore -o ignore tiny-cloud net
 	atf_check \
-		-e match:"userdata_runcmd .*DONE" \
+		-e match:"userdata_runcmd: done" \
 		-o match:"^foo$" -o match:"^bar$" \
 		tiny-cloud final
 }

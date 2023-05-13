@@ -14,6 +14,10 @@ core:
 		lib/tiny-cloud/init \
 		lib/tiny-cloud/mdev \
 		lib/tiny-cloud/tiny-cloud.conf
+	install -Dm644 -t "$(PREFIX)"/lib/tiny-cloud/user-data" \
+		lib/tiny-cloud/user-data/missing \
+		lib/tiny-cloud/user-data/script \
+		lib/tiny-cloud/user-data/unknown
 	install -Dm644 lib/tiny-cloud/tiny-cloud.conf \
 		"$(PREFIX)"/etc/tiny-cloud.conf
 	install -Dm755 -t "$(PREFIX)"/sbin \
@@ -60,6 +64,8 @@ alpine:
 	install -Dm644 -t $(PREFIX)/lib/tiny-cloud/cloud/alpine \
 		lib/tiny-cloud/cloud/alpine/init
 	ln -s ../nocloud/imds $(PREFIX)/lib/tiny-cloud/cloud/alpine/imds
+	install -Dm644 -t "$(PREFIX)"/lib/tiny-cloud/user-data" \
+		lib/tiny-cloud/user-data/alpine-config
 
 check: tests/Kyuafile Kyuafile
 	kyua test || (kyua report --verbose && exit 1)

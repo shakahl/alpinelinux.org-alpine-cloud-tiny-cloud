@@ -1,6 +1,9 @@
 #!/bin/sh
 # vim:set ts=2 et:
 
+# NOTE: The mdev-conf APK handles this now, but only for xvd or sd links (not
+#   both)
+
 : "${LIBDIR:=$PREFIX/lib}"
 . "$LIBDIR/tiny-cloud/common"
 

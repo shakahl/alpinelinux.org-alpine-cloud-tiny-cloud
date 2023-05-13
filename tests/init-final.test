@@ -30,6 +30,11 @@ userdata_type_body() {
 			-o match:"unknown" \
 			sh -c ". \"$lib\"; userdata_type"
 
+		echo "#alpine-config" > var/lib/cloud/user-data
+		CLOUD="$c" atf_check \
+			-o match:"alpine-config" \
+			sh -c ". \"$lib\"; userdata_type"
+
 		echo "#!/bin/sh" > var/lib/cloud/user-data
 		CLOUD="$c" atf_check -s exit:0 \
 			-o match:"script" \

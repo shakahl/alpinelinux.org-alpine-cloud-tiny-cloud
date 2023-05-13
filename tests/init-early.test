@@ -49,7 +49,7 @@ expand_root_partition_body() {
 
 install_hotplugs_fail_body() {
 	CLOUD=aws atf_check -s not-exit:0 \
-		-e match:"vnic_eth_hotplug\(!\)" \
+		-e match:"vnic_eth_hotplug: failed" \
 		sh -c ". $lib; HOTPLUG_MODULES='vnic_eth_hotplug'; init__install_hotplugs"
 }
 

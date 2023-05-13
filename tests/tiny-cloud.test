@@ -29,7 +29,7 @@ no_metadata_early_body() {
 	fake_netcat
 	for provider in $PROVIDERS; do
 		CLOUD="$provider" atf_check \
-			-e not-match:"UNKNOWN" \
+			-e not-match:"unknown" \
 			-e not-match:"not found" \
 			-e not-match:"o such file" \
 			-o match:"rc-update add.*sshd" \
@@ -41,8 +41,8 @@ no_userdata_net_body() {
 	fake_netcat
 	for provider in $PROVIDERS; do
 		CLOUD="$provider" atf_check \
-			-e not-match:"UNKNOWN" \
-			-e match:"save_userdata.*DONE" \
+			-e not-match:"unknown" \
+			-e match:"save_userdata.*done" \
 			tiny-cloud net
 	done
 }
@@ -53,7 +53,7 @@ no_userdata_main_body() {
 		# we should not set empty hostname
 		# we should not create .ssh dir for non-existing user
 		CLOUD="$provider" atf_check \
-			-e not-match:"UNKNOWN" \
+			-e not-match:"unknown" \
 			-o not-match:"hostname.*-F" \
 			-o not-match:"chown.*/\.ssh" \
 			tiny-cloud main
@@ -69,11 +69,11 @@ no_userdata_final_body() {
 	fake_netcat
 	for provider in $PROVIDERS; do
 		CLOUD="$provider" atf_check \
-			-e not-match:"UNKNOWN" \
-			-e match:"bootstrap_complete .*" \
+			-e not-match:"unknown" \
+			-e match:"bootstrap_complete: done" \
 			tiny-cloud final
 		CLOUD="$provider" atf_check \
-			-e match:"bootstrap marked.*incomplete" \
+			-e match:"bootstrap marked incomplete" \
 			tiny-cloud --bootstrap incomplete
 	done
 }

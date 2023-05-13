@@ -34,13 +34,12 @@ while true; do
             case "$1" in
                 complete)   # indicate bootstrap is done
                     init__bootstrap_complete
-                    log warn 'bootstrap marked complete';;
+                    log -i notice 'bootstrap marked complete';;
                 incomplete) # indicate bootstrap isn't done
                     bootstrap_incomplete
-                    log warn 'bootstrap marked incomplete';;
+                    log -i warn 'bootstrap marked incomplete';;
                 *) usage >&2; exit 1;;
             esac
-            printf ' bootstrap marked "%s"\n' "$1" >&2
             exit 0;;
         -s|--setup) # just openrc for now
             for phase in -early -net '' -final; do
@@ -67,8 +66,7 @@ esac
 
 # is initial bootstrap already done?
 if [ -f "$TINY_CLOUD_VAR/.bootstrap-complete" ]; then
-    printf ' already bootstrapped\n' >&2
-    log info "$phase - already bootstrapped"
+    log -i -t "$phase" info "already bootstrapped"
     exit 0;
 fi
 
@@ -93,7 +91,7 @@ INIT_ACTIONS_FINAL="${INIT_ACTIONS_FINAL} bootstrap_complete"
 
 case "$phase" in
     early)  INIT_ACTIONS="$INIT_ACTIONS_EARLY";;
-    net) INIT_ACTIONS="$INIT_ACTIONS_NET";;
+    net)    INIT_ACTIONS="$INIT_ACTIONS_NET";;
     main)   INIT_ACTIONS="$INIT_ACTIONS_MAIN";;
     final)  INIT_ACTIONS="$INIT_ACTIONS_FINAL";;
     *)      usage >&2; exit 1
@@ -101,23 +99,23 @@ esac
 
 for ACTION in $INIT_ACTIONS; do
     if skip_action "$ACTION"; then
-        printf '\n  -- %s : [SKIP]' $ACTION >&2
-        log warn "$phase - $ACTION - SKIPPED"
+        printf '\n   -- ' >&2
+        log -i -t "$phase" notice "$ACTION: skipped"
         continue
     fi
-    printf '\n  ++ %s ' $ACTION >&2
-    log info "$phase - $ACTION - START"
-    RESULT="UNKNOWN"
+    printf '\n   ++ ' >&2
+    log -i -t "$phase" info "$ACTION"
+    RESULT="unknown"
     LEVEL="err"
     if type "init__$ACTION" | grep -q -w "function"; then
         if "init__$ACTION" "$@"; then
-            RESULT="DONE"
+            RESULT="done"
             LEVEL="info"
         else
-            RESULT="FAIL"
+            RESULT="failed"
         fi
     fi
-    printf ': [%s]' $RESULT >&2
-    log "$LEVEL" "$phase - $ACTION - $RESULT"
+    printf '   ++ ' >&2
+    log -i -t "$phase" "$LEVEL" "$ACTION: $RESULT"
 done
 echo >&2

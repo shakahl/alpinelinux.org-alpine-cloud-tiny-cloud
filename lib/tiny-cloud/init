@@ -68,23 +68,22 @@ init__install_hotplugs() {
         . "$LIBDIR/tiny-cloud/$HOTPLUG_TYPE"
     fi
 
-    printf ': ' >&2
     for module in $HOTPLUG_MODULES; do
-        result='?'
+        result='unknown'
         level='err'
-        printf "$module" >&2
-        log info "$phase $ACTION $module"
+        printf "      >> " >&2
+        log -i -t "$phase/$ACTION" info "$module: installing"
         if type "mod__$module" | grep -q -w "function"; then
             if "mod__$module"; then
-                result='+'
+                result='installed'
                 level='info'
             else
-                result='!'
+                result='failed'
                 rc=1
             fi
         fi
-        printf '(%s) ' $result >&2
-        log "$level" "$phase $ACTION $module ($result)"
+        printf "      >> " >&2
+        log -i -t "$phase/$ACTION" info "$module: $result"
     done
     return $rc
 }
@@ -145,8 +144,7 @@ auto_detect_ethernet_interface() {
 
 init__set_default_interfaces() {
     if [ -f "$ROOT"/etc/network/interfaces ]; then
-        echo "already set up" >&2
-        log info "$phase $ACTION - already set up"
+        log -i -t "$phase" info "$ACTION: already set up"
         return
     fi
 
@@ -171,8 +169,7 @@ init__create_default_user() {
     local user="$CLOUD_USER"
     # don't do anything if it already exists
     if getent passwd "$user" >/dev/null; then
-        echo "already exists" >&2
-        log info "$phase $ACTION - already exists"
+        log -i -t "$phase" info "$ACTION: already exists"
         return
     fi
 
@@ -202,15 +199,13 @@ init__enable_sshd() {
 init__set_hostname() {
     local fqdn=$(imds @hostname)
     if [ -z "$fqdn" ]; then
-        echo "no hostname set" >&2
-        log info "No hostname set"
+        log -i -t "$phase" info "$ACTION: no hostname set"
         return
     fi
 
     local host="${fqdn%%\.*}"
     if [ -z "$host" ]; then
-        echo "$hostname is not a valid FQDN" >&2
-        log err "$fqdn is not a valid FQDN"
+        log -i -t "$phase" warn "$ACTION: invalid hostname '$fqdn'"
         return 1
     fi
 
@@ -224,8 +219,7 @@ init__set_ssh_keys() {
     local user="$CLOUD_USER"
     local pwent="$(getent passwd "$user")"
     if [ -z "$pwent" ]; then
-        echo "failed to find $user" >&2
-        log err "Failed to find user $user"
+        log -i -t "$phase" err "$ACTION: failed to find user $user"
         return 1
     fi
     local group=$(echo "$pwent" | cut -d: -f4)
@@ -246,7 +240,7 @@ init__set_ssh_keys() {
 init__save_userdata() {
     local userdata="$TINY_CLOUD_VAR/user-data"
     if [ -f "$userdata" ]; then
-        log info "user-data already saved"
+        log -i -t "$phase" info "$ACTION: user-data already saved"
         return
     fi
     local tmpfile=$(mktemp "$userdata.XXXXXX")
@@ -285,7 +279,6 @@ fi
 
 ### load user-data type-specific init functions / vars (potentially overriding)
 
-# this should be non-overrideable, but need this before we...
 userdata_type() {
     if [ ! -f "$TINY_CLOUD_VAR/user-data" ]; then
         echo missing
@@ -303,4 +296,3 @@ USERDATA_TYPE="$(userdata_type)"
 if [ -f "$LIBDIR/tiny-cloud/user-data/$USERDATA_TYPE" ]; then
     . "$LIBDIR/tiny-cloud/user-data/$USERDATA_TYPE"
 fi
-# TODO: some indication that the user-data type is unsupported?

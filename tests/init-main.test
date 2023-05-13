@@ -80,6 +80,7 @@ save_userdata_compressed_body() {
 		fake_userdata_nocloud < tmpfile
 
 		CLOUD="nocloud" atf_check \
+			-e 'ignore' \
 			sh -c ". \"$lib\"; init__save_userdata"
 
 		if ! grep "^#userdata" var/lib/cloud/user-data; then
