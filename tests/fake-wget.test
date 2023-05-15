@@ -1,4 +1,5 @@
 #!/usr/bin/env atf-sh
+# shellcheck shell=sh
 
 . $(atf_get_srcdir)/test_env.sh
 init_tests \
@@ -17,13 +18,13 @@ init_tests \
 
 fake_wget_usage_body() {
 	atf_check -s exit:0 \
-		-o match:"^usage: $@" \
+		-o match:"^usage: $*" \
 		-e empty \
 		wget -h
 
 	atf_check -s exit:1 \
 		-o empty \
-		-e match:"^usage: $@" \
+		-e match:"^usage: $*" \
 		wget -INVALID
 }
 
@@ -109,4 +110,3 @@ fake_wget_content_from_path_body() {
 		-o match:"^value$" \
 		wget --quiet -O - https://example.com/foo/key
 }
-

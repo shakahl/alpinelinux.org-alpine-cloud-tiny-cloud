@@ -1,5 +1,6 @@
 # AWS Instance MetaData Service variables and functions
 # vim:set ts=4 et ft=sh:
+# shellcheck shell=sh
 
 IMDS_HEADER="X-aws-ec2-metadata-token"
 IMDS_TOKEN_TTL_HEADER="X-aws-ec2-metadata-token-ttl-seconds"

@@ -1,5 +1,6 @@
 # Tiny Cloud - common script functions
 # vim: ts=4 et ft=sh:
+# shellcheck shell=sh
 
 # set defaults
 [ -f "$ROOT/etc/tiny-cloud.conf" ] && . "$ROOT/etc/tiny-cloud.conf"
@@ -26,7 +27,7 @@ log() {
     shift
 
     [ -n "$init" ] && echo "$@" >&2
-    logger $stderr -p "$facility.$level" -t "$tag[$$]" "$@"
+    logger $stderr -p "$facility.$level" -t "${tag}[$$]" "$@"
     case "$level" in
         crit|alert|emerg) exit 1 ;;
     esac

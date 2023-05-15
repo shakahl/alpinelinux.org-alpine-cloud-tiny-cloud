@@ -1,12 +1,13 @@
 # Script UserData Functions
 # vim:set ts=4 et ft=sh:
+# shellcheck shell=sh
 
 init__run_userdata() {
     local log="$TINY_CLOUD_LOGS/user-data.log"
     local exit="$TINY_CLOUD_LOGS/user-data.exit"
     local userdata="$TINY_CLOUD_VAR/user-data"
 
-    chmod +x "$userdata"
+    chmod u+x "$userdata"
     { "$userdata" 2>& 1; echo $? > "$exit"; } | tee "$log"
 
     return $(cat "$exit")

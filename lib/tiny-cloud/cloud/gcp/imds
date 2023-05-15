@@ -1,5 +1,6 @@
 # Google Cloud Instance MetaData Service variables and functions
 # vim:set ts=4 et ft=sh:
+# shellcheck shell=sh
 
 IMDS_HEADER="Metadata-Flavor"
 IMDS_URI="computeMetadata/v1"

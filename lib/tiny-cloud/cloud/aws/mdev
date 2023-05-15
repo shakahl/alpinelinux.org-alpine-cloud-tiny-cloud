@@ -1,5 +1,6 @@
 # AWS mdev Hotplug Modules
 # vim:set ts=4 et ft=sh:
+# shellcheck shell=sh
 
 # makes symlinks for NVMe devices that correlate to AWS EBS sd/xvd devices
 mod__nvme_ebs_links() {

@@ -1,5 +1,6 @@
 # OCI Instance MetaData Service variables and functions
 # vim:set ts=4 et ft=sh:
+# shellcheck shell=sh
 
 IMDS_HEADER="Authorization"
 IMDS_URI="opc/v2"

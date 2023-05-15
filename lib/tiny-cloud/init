@@ -1,5 +1,6 @@
 # Tiny Cloud - Init Functions
 # vim:set ts=4 et ft=sh:
+# shellcheck shell=sh
 
 # set defaults
 : "${LIBDIR:=$PREFIX/lib}"

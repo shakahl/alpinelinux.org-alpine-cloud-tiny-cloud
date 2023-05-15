@@ -1,5 +1,6 @@
 # Script UserData Functions
 # vim:set ts=4 et ft=sh:
+# shellcheck shell=sh
 
 INIT_ACTIONS_MAIN="$(insert_after set_hostname \
     "userdata_bootcmd userdata_ntp userdata_apk_cache userdata_apk_repositories userdata_packages" \

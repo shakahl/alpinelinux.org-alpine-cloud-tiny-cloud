@@ -10,15 +10,18 @@ set -e
 
 usage() {
     cat <<EOF
-Usage: ${0##*/} [-h | --help] { early | net | main | final | --bootstrap {complete|incomplete} | --setup }
+Usage: ${0##*/} [-h | --help] { early | net | main | final | --bootstrap [complete|incomplete|status] | --setup }
 EOF
 }
 
-init__bootstrap_complete() {
+bootstrap_complete() {
     touch "$TINY_CLOUD_VAR/.bootstrap-complete"
 }
 bootstrap_incomplete() {
     rm -f "$TINY_CLOUD_VAR/.bootstrap-complete"
+}
+is_bootstrap_complete() {
+    [ -f "$TINY_CLOUD_VAR/.bootstrap-complete" ]
 }
 
 args=$(getopt -o hsb: --long help,setup,bootstrap: -n ${0##*/} -- "$@") || {  usage >&2; exit 1; }
@@ -33,11 +36,12 @@ while true; do
         -b|--bootstrap) shift
             case "$1" in
                 complete)   # indicate bootstrap is done
-                    init__bootstrap_complete
+                    bootstrap_complete
                     log -i notice 'bootstrap marked complete';;
                 incomplete) # indicate bootstrap isn't done
                     bootstrap_incomplete
                     log -i warn 'bootstrap marked incomplete';;
+                status) is_bootstrap_complete && echo 'complete' || echo 'incomplete' ;;
                 *) usage >&2; exit 1;;
             esac
             exit 0;;
@@ -65,7 +69,7 @@ case "$phase" in
 esac
 
 # is initial bootstrap already done?
-if [ -f "$TINY_CLOUD_VAR/.bootstrap-complete" ]; then
+if is_bootstrap_complete; then
     log -i -t "$phase" info "already bootstrapped"
     exit 0;
 fi
@@ -85,6 +89,9 @@ skip_action() {
 }
 
 # mandatory final action...
+init__bootstrap_complete() {
+    bootstrap_complete
+}
 INIT_ACTIONS_FINAL="${INIT_ACTIONS_FINAL} bootstrap_complete"
 
 ### let's do stuff!
@@ -97,14 +104,15 @@ case "$phase" in
     *)      usage >&2; exit 1
 esac
 
+printf '\n' >&2
 for ACTION in $INIT_ACTIONS; do
     if skip_action "$ACTION"; then
-        printf '\n   -- ' >&2
+        printf '   -- ' >&2
         log -i -t "$phase" notice "$ACTION: skipped"
         continue
     fi
-    printf '\n   ++ ' >&2
-    log -i -t "$phase" info "$ACTION"
+    printf '   ++ ' >&2
+    log -i -t "$phase" info "$ACTION: starting"
     RESULT="unknown"
     LEVEL="err"
     if type "init__$ACTION" | grep -q -w "function"; then
@@ -118,4 +126,3 @@ for ACTION in $INIT_ACTIONS; do
     printf '   ++ ' >&2
     log -i -t "$phase" "$LEVEL" "$ACTION: $RESULT"
 done
-echo >&2

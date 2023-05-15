@@ -1,5 +1,6 @@
 # Tiny Cloud - mdev hotplug functions
 # vim:set ts=4 et ft=sh:
+# shellcheck shell=sh
 
 # generic helper function to install mdev rules
 install_before() {
