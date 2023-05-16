@@ -217,6 +217,11 @@ init__set_hostname() {
 }
 
 init__set_ssh_keys() {
+    local sshkeys="$(imds @ssh-keys)"
+    if [ -z "$sshkeys" ]; then
+        log -i -t "$phase" info "$ACTION: no ssh key found"
+        return
+    fi
     local user="$CLOUD_USER"
     local pwent="$(getent passwd "$user")"
     if [ -z "$pwent" ]; then
@@ -235,7 +240,7 @@ init__set_ssh_keys() {
     touch "$keys_file"
     chmod 600 "$keys_file"
     $MOCK chown -R "$user:$group" "$ssh_dir"
-    imds @ssh-keys > "$keys_file"
+    echo "$sshkeys" > "$keys_file"
 }
 
 init__save_userdata() {

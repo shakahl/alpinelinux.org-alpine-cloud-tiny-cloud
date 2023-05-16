@@ -54,6 +54,7 @@ no_userdata_main_body() {
 		# we should not set empty hostname
 		# we should not create .ssh dir for non-existing user
 		CLOUD="$provider" atf_check \
+			-e not-match:"failed" \
 			-e not-match:"unknown" \
 			-o not-match:"hostname.*-F" \
 			-o not-match:"chown.*/\.ssh" \
