@@ -47,7 +47,8 @@ _load_nocloud_cmdline() {
 }
 
 _load_nocloud_volume() {
-    local mntdir=$(mktemp -d "$ROOT/mnt/cidata-XXXXXX")
+    mkdir -p "$ROOT"/run/tiny-cloud
+    local mntdir=$(mktemp -d "$ROOT/run/tiny-cloud/cidata-XXXXXX")
     local data mounted
 
     mkdir -p "$mntdir"
