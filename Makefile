@@ -68,7 +68,7 @@ alpine:
 		lib/tiny-cloud/user-data/alpine-config
 
 check: tests/Kyuafile Kyuafile
-	kyua test || (kyua report --verbose && exit 1)
+	kyua --variable parallelism=$(shell nproc) test || (kyua report --verbose && exit 1)
 
 tests/Kyuafile: $(wildcard tests/*.test)
 	echo "syntax(2)" > $@.tmp
