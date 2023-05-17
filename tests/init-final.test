@@ -48,7 +48,7 @@ run_userdata_body() {
 		#!/bin/sh
 		echo "hello from user-data"
 	EOF
-	CLOUD="nocloud" atf_check \
+	CLOUD="nocloud" atf_check -e match:"NoCloud 'meta-data' is empty" \
 		sh -c ". \"$lib\"; init__save_userdata"
 	CLOUD="nocloud" atf_check \
 		-o match:"hello from user-data" \

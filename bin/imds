@@ -122,7 +122,7 @@ imds() {
             *) args="$key" ;;
         esac
         # TODO: retry/deadline
-        "$cmd" $args 2>/dev/null
+        "$cmd" $args
         rv=$?
         [ $err -eq 0 ] && continue
         [ $rv = "0" ] || return $rv

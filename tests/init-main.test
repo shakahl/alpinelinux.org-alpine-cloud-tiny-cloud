@@ -69,7 +69,7 @@ save_userdata_plain_body() {
 	fake_userdata_nocloud <<-EOF
 		#userdata
 	EOF
-	CLOUD="nocloud" atf_check \
+	CLOUD="nocloud" atf_check -e match:"NoCloud 'meta-data' is empty" \
 		sh -c ". \"$lib\"; init__save_userdata"
 	atf_check -o match:"^#userdata" cat var/lib/cloud/user-data
 }
