@@ -25,29 +25,27 @@ imds_space_body() {
 	CLOUD=nocloud atf_check -o match:'^$' imds +n
 }
 
-aws_set_fake_meta() {
-	local key="$1" value="$2"
-	echo "$value" > $(echo 169.254.169.254/latest/meta-data/"$key" \
-		| tr '/' '_')
-}
-
 imds_aws_hostname_body() {
-	fake_netcat
-	aws_set_fake_meta hostname myhostname
+	fake_metadata_aws <<-EOF
+		hostname: myhostname
+	EOF
 	CLOUD=aws atf_check -o match:"myhostname" imds @hostname
 }
 
 imds_aws_local_hostname_body() {
-	fake_netcat
-	aws_set_fake_meta local-hostname myhostname
+	fake_metadata_aws <<-EOF
+		local-hostname: myhostname
+	EOF
 	CLOUD=aws atf_check -o match:"myhostname" imds @local-hostname
 }
 
 imds_aws_ssh_keys_body() {
-	fake_netcat
-	aws_set_fake_meta public-keys 0=testuser
-	aws_set_fake_meta public-keys/0/openssh-key "ssh-ed25519 keydata"
-
+	fake_metadata_aws <<-EOF
+		public-keys:
+		  0=testuser:
+		  0:
+		    openssh-key: ssh-ed25519 keydata
+	EOF
 	CLOUD=aws atf_check -o match:"ssh-ed25519 keydata" imds @ssh-keys
 }
 

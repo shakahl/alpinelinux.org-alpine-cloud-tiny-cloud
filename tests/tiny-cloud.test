@@ -27,7 +27,6 @@ tiny_cloud_help_body() {
 }
 
 no_metadata_early_body() {
-	fake_netcat
 	for provider in $PROVIDERS; do
 		CLOUD="$provider" atf_check \
 			-e not-match:"unknown" \
@@ -39,7 +38,6 @@ no_metadata_early_body() {
 }
 
 no_userdata_net_body() {
-	fake_netcat
 	for provider in $PROVIDERS; do
 		CLOUD="$provider" atf_check \
 			-e not-match:"unknown" \
@@ -49,7 +47,6 @@ no_userdata_net_body() {
 }
 
 no_userdata_main_body() {
-	fake_netcat
 	for provider in $PROVIDERS; do
 		# we should not set empty hostname
 		# we should not create .ssh dir for non-existing user
@@ -68,7 +65,6 @@ no_userdata_main_body() {
 }
 
 no_userdata_final_body() {
-	fake_netcat
 	for provider in $PROVIDERS; do
 		CLOUD="$provider" atf_check \
 			-e not-match:"unknown" \

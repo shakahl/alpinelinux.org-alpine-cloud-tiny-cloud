@@ -14,7 +14,8 @@ init_tests \
 	fake_wget_missing_url \
 	fake_wget_empty_url \
 	fake_wget_header \
-	fake_wget_content_from_path
+	fake_wget_content_from_path \
+	fake_wget_content_from_path_strip_prefix
 
 fake_wget_usage_body() {
 	atf_check -s exit:0 \
@@ -70,7 +71,9 @@ fake_wget_stdout_body() {
 		-o match:"hello world" \
 		-e match:"writing to stdout" \
 		wget -O - https://example.com
-		! test -f - || atf_fail "- was created"
+	if [ -f - ]; then
+		atf_fail "- was created"
+	fi
 }
 
 fake_wget_fail_body() {
@@ -104,9 +107,22 @@ fake_wget_header_body() {
 }
 
 fake_wget_content_from_path_body() {
-	mkdir -p example.com/foo
-	echo value > example.com_foo_key
+	cat > example.com.yaml <<-EOF
+		foo:
+		  key: value
+	EOF
 	atf_check -s exit:0 \
 		-o match:"^value$" \
 		wget --quiet -O - https://example.com/foo/key
+}
+
+fake_wget_content_from_path_strip_prefix_body() {
+	cat > 169.254.169.254.yaml <<-EOF
+		foo:
+		  key: value
+	EOF
+	export WGET_STRIP_PREFIX="/latest/meta-data"
+	atf_check -s exit:0 \
+		-o match:"^value$" \
+		wget --quiet -O - https://169.254.169.254/latest/meta-data/foo/key
 }

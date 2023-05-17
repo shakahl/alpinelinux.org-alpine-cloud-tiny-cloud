@@ -63,6 +63,11 @@ fake_userdata_nocloud() {
 	fake_data_nocloud user-data
 }
 
+fake_metadata_aws() {
+	cat > "169.254.169.254.yaml"
+	export WGET_STRIP_PREFIX="/latest/meta-data"
+}
+
 fake_interfaces() {
 	local n=1
 	for i; do
@@ -71,15 +76,4 @@ fake_interfaces() {
 		echo down >sys/class/net/$i/operstate
 		n=$((n+1))
 	done
-}
-
-fake_netcat() {
-	fake_bin nc <<-EOF
-		#!/bin/sh
-		input="\$(cat)"
-		case "\$input" in
-			-*) echo "nc: bad input: \$input" >&2; exit 1;;
-		esac
-		echo "token-foo"
-	EOF
 }
