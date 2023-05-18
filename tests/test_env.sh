@@ -68,6 +68,32 @@ fake_metadata_aws() {
 	export WGET_STRIP_PREFIX="/latest/meta-data"
 }
 
+fake_metadata_azure() {
+	cat > "169.254.169.254.yaml"
+	export WGET_STRIP_PREFIX="/metadata/instance"
+}
+
+fake_metadata_gcp() {
+	cat > "169.254.169.254.yaml"
+	export WGET_STRIP_PREFIX="/computeMetadata/v1"
+}
+
+fake_metadata_oci() {
+	cat > "169.254.169.254.yaml"
+	export WGET_STRIP_PREFIX="/opc/v2"
+}
+
+fake_metadata() {
+	case "${1:-$CLOUD}" in
+		alpine|nocloud) fake_metadata_nocloud;;
+		aws) fake_metadata_aws;;
+		azure) fake_metadata_azure;;
+		gcp) fake_metadata_gcp;;
+		oci) fake_metadata_oci;;
+		*) echo "TODO: fake_metadata_$CLOUD" >&2;;
+	esac
+}
+
 fake_interfaces() {
 	local n=1
 	for i; do

@@ -6,7 +6,7 @@
 export PREFIX="$srcdir"
 export MOCK=echo
 lib="$srcdir"/lib/tiny-cloud/init
-PROVIDERS="aws azure gcp nocloud oci"
+PROVIDERS="alpine aws azure gcp nocloud oci"
 
 init_tests \
 	userdata_type \

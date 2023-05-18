@@ -82,6 +82,7 @@ host="${url#http*://}"
 host="${host%%/*}"
 path="${url#http*://$host}"
 path="${path#${WGET_STRIP_PREFIX:-/}}"
+path="${path%\?*}"
 
 if [ -z "$WGETCONTENT" ]; then
 	(

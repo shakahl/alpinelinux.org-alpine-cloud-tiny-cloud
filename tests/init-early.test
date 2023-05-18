@@ -18,7 +18,7 @@ init_tests \
 	enable_sshd \
 	create_default_user
 
-PROVIDERS="aws azure gcp nocloud oci"
+PROVIDERS="alpine aws azure gcp nocloud oci"
 
 expand_root_body() {
 	mkdir proc

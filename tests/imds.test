@@ -4,50 +4,115 @@
 . $(atf_get_srcdir)/test_env.sh
 
 export PREFIX="$srcdir"
+PROVIDERS="alpine aws azure gcp nocloud"
 
 init_tests \
 	imds_help \
 	imds_space \
-	imds_aws_hostname \
-	imds_aws_local_hostname \
-	imds_aws_ssh_keys \
-	imds_nocloud_cmdline_local_hostname \
-	imds_nocloud_cidata_hostname \
-	imds_nocloud_cidata_local_hostname
+	\
+	imds_hostname_alpine \
+	imds_hostname_aws \
+	imds_hostname_azure \
+	imds_hostname_gcp \
+	imds_hostname_nocloud \
+	imds_hostname_oci \
+	\
+	imds_local_hostname_alpine \
+	imds_local_hostname_aws \
+	imds_local_hostname_azure \
+	imds_local_hostname_gcp \
+	imds_local_hostname_nocloud \
+	imds_local_hostname_oci \
+	\
+	imds_ssh_keys_alpine \
+	imds_ssh_keys_aws \
+	imds_ssh_keys_azure \
+	imds_ssh_keys_gcp \
+	imds_ssh_keys_nocloud \
+	imds_ssh_keys_oci \
+	\
+	imds_nocloud_cmdline_local_hostname
 
 imds_help_body() {
 	atf_check -o match:"Usage: imds" imds -h
 }
 
 imds_space_body() {
-	CLOUD=nocloud atf_check -o match:'^ $' imds +s
-	CLOUD=nocloud atf_check -o match:'^\t$' imds +t
-	CLOUD=nocloud atf_check -o match:'^$' imds +n
+	for provider in $PROVIDERS; do
+		CLOUD="$provider" atf_check -o match:'^ $' imds +s
+		CLOUD="$provider" atf_check -o match:'^\t$' imds +t
+		CLOUD="$provider" atf_check -o match:'^$' imds +n
+	done
 }
 
-imds_aws_hostname_body() {
-	fake_metadata_aws <<-EOF
+check_hostname() {
+	fake_metadata "$1" <<-EOF
+		# nocloud, alpine, aws
 		hostname: myhostname
+		# azure
+		compute:
+		  name: myhostname
+		# gcp, oci
+		instance:
+		  hostname: myhostname
 	EOF
-	CLOUD=aws atf_check -o match:"myhostname" imds @hostname
+	CLOUD="$1" atf_check -o match:"myhostname" imds @hostname
 }
+imds_hostname_alpine_body()	{ check_hostname alpine; }
+imds_hostname_aws_body()	{ check_hostname aws; }
+imds_hostname_azure_body()	{ check_hostname azure; }
+imds_hostname_gcp_body()	{ check_hostname gcp; }
+imds_hostname_nocloud_body()	{ check_hostname nocloud; }
+imds_hostname_oci_body()	{ check_hostname oci; }
 
-imds_aws_local_hostname_body() {
-	fake_metadata_aws <<-EOF
+check_local_hostname() {
+	fake_metadata "$1" <<-EOF
+		# nocloud, alpine, aws
 		local-hostname: myhostname
+		# azure
+		compute:
+		  name: myhostname
+		# gcp, oci
+		instance:
+		  hostname: myhostname
 	EOF
-	CLOUD=aws atf_check -o match:"myhostname" imds @local-hostname
+	CLOUD="$1" atf_check -o match:"myhostname" imds @local-hostname
 }
+imds_local_hostname_alpine_body()	{ check_local_hostname alpine; }
+imds_local_hostname_aws_body()		{ check_local_hostname aws; }
+imds_local_hostname_azure_body()	{ check_local_hostname azure; }
+imds_local_hostname_gcp_body()		{ check_local_hostname gcp; }
+imds_local_hostname_nocloud_body()	{ check_local_hostname nocloud; }
+imds_local_hostname_oci_body()	{ check_local_hostname oci; }
 
-imds_aws_ssh_keys_body() {
-	fake_metadata_aws <<-EOF
+check_ssh_keys() {
+	local key="ssh-ed25519 keydata"
+	fake_metadata "$1" <<-EOF
+		# aws, alpine, nocloud
 		public-keys:
 		  0=testuser:
 		  0:
-		    openssh-key: ssh-ed25519 keydata
+		    openssh-key: $key
+		# azure
+		compute:
+		  publicKeys:
+		    - keyData: $key
+		# gcp
+		instance:
+		  attributes:
+		    ssh-keys: user1:$key
+		  # oci
+		  metadata:
+		    ssh_authorized_keys: $key
 	EOF
-	CLOUD=aws atf_check -o match:"ssh-ed25519 keydata" imds @ssh-keys
+	CLOUD="$1" atf_check -o match:"$key" imds @ssh-keys
 }
+imds_ssh_keys_alpine_body()	{ check_ssh_keys alpine; }
+imds_ssh_keys_aws_body()	{ check_ssh_keys aws; }
+imds_ssh_keys_azure_body()	{ check_ssh_keys azure; }
+imds_ssh_keys_gcp_body()	{ check_ssh_keys gcp; }
+imds_ssh_keys_nocloud_body()	{ check_ssh_keys nocloud; }
+imds_ssh_keys_oci_body()	{ check_ssh_keys oci; }
 
 imds_nocloud_cmdline_local_hostname_body() {
 	atf_require_prog yx
@@ -58,25 +123,4 @@ imds_nocloud_cmdline_local_hostname_body() {
 			-o match:'^myhostname$' \
 			imds @local-hostname
 	done
-}
-
-imds_nocloud_cidata_hostname_body() {
-	atf_require_prog yx
-	fake_metadata_nocloud <<-EOF
-		hostname: myhostname
-	EOF
-	CLOUD=nocloud atf_check \
-		-o match:'^myhostname$' \
-		imds @hostname
-}
-
-imds_nocloud_cidata_local_hostname_body() {
-	atf_require_prog yx
-	fake_metadata_nocloud <<-EOF
-		local-hostname: my-local-hostname
-	EOF
-
-	CLOUD=nocloud atf_check \
-		-o match:'^my-local-hostname$' \
-		imds @local-hostname
 }
