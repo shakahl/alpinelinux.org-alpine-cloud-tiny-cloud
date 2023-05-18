@@ -12,6 +12,7 @@ init_tests \
 	set_network_config_network_interfaces \
 	set_network_config_auto \
 	userdata_bootcmd \
+	userdata_write_files \
 	userdata_ntp \
 	userdata_ntp_busybox \
 	userdata_ntp_openntpd \
@@ -239,4 +240,69 @@ userdata_runcmd_body() {
 		-e match:"userdata_runcmd: done" \
 		-o match:"^foo$" -o match:"^bar$" \
 		tiny-cloud final
+}
+
+userdata_write_files_body() {
+	fake_userdata_nocloud <<-EOF
+		#alpine-config
+		write_files:
+		- path: /etc/motd
+		  content: |
+		    Hello world
+		- path: /etc/foo
+		  encoding: text/plain
+		  permissions: '0755'
+		  content: |
+		    Hello world
+		- path: /etc/bar
+		  owner: foo:bar
+		  content: |
+		    Hello world
+		- path: /etc/gzipped
+		  encoding: gzip
+		  content: !!binary |
+		    H4sIAAAAAAAAA/NIzcnJVyjPL8pJ4QIA1eA5twwAAAA=
+		- path: /foo/bar/hello
+		  content: |
+		    Hello world
+		- path: /foo/bar/appended
+		  content: |
+		    Hello
+		- path: /foo/bar/appended
+		  append: true
+		  content: |
+		    world
+	EOF
+	# fetch user-data
+	atf_check -e ignore -o ignore tiny-cloud net
+
+	atf_check \
+		-e match:"userdata_write_files: done" \
+		-o match:"chown foo:bar.*etc/bar" \
+		-o match:"chown root:root.*etc/motd" \
+		tiny-cloud main
+
+	if [ "$(cat etc/motd)" != "Hello world" ]; then
+		atf_fail "content of etc/motd was not 'Hello world'"
+	fi
+	# check that etc/motd permissions are the defaults
+	atf_check -o match:"644" stat -c %a etc/motd
+
+	if [ "$(cat etc/foo)" != "Hello world" ]; then
+		atf_fail "content of etc/foo was not 'Hello world'"
+	fi
+	atf_check -o match:"755" stat -c %a etc/foo
+
+	if [ "$(cat etc/gzipped)" != "Hello world" ]; then
+		atf_fail "content of etc/foo was not 'Hello world'"
+	fi
+
+	if [ "$(cat foo/bar/hello)" != "Hello world" ]; then
+		atf_fail "content of foo/bar/hello was not 'Hello world'"
+	fi
+
+	atf_check diff -u foo/bar/appended - <<-EOF
+		Hello
+		world
+	EOF
 }
