@@ -22,6 +22,66 @@ init__userdata_bootcmd() {
 	done
 }
 
+# write_file <path> <mode> <owner> <encoding> <append>
+write_file() {
+	# Defaults used are the same as for full cloud-init "spec":
+	# https://cloudinit.readthedocs.io/en/latest/reference/modules.html#write-files
+	local path="$1"
+	local mode="${2:-0644}"
+	local owner="${3:-root:root}"
+	local encoding="${4:-text/plain}"
+	local append="${5:-false}"
+
+	if [ "$append" != "true" ] && [ "$append" != "false" ]; then
+		log err "append must be true or false"
+		return
+	fi
+
+	local tmpfile="$(mktemp $TINY_CLOUD_VAR/user-data.write_files.XXXXXX)"
+
+	case "$encoding" in
+		gzip|gz|gz+base64|gzip+base64|gz+b64|gzip+b64)
+			base64 -d | gzip -d > "$tmpfile"
+			;;
+		base64|b64)
+			base64 -d > "$tmpfile"
+			;;
+		text/plain)
+			cat > "$tmpfile"
+			;;
+	esac
+
+	if [ "$append" = "true" ]; then
+		cat "$tmpfile" >> "$path"
+	else
+		cat "$tmpfile" > "$path"
+	fi
+	rm -f "$tmpfile"
+
+	chmod "$mode" "$path"
+	# mocked as we do not know which users we could use in testing
+	# this way we can check the proper invocation at least
+	$MOCK chown "$owner" "$path"
+}
+
+init__userdata_write_files() {
+	local files="$(get_userdata write_files)"
+
+	for i in $files; do
+		local path="$(get_userdata write_files/$i/path)"
+		if [ -z "$path" ]; then
+			continue
+		fi
+
+		mkdir -p "$(dirname "$ROOT/$path")"
+		get_userdata write_files/$i/content | write_file "$ROOT/$path" \
+			"$(get_userdata write_files/$i/permissions)" \
+			"$(get_userdata write_files/$i/owner)" \
+			"$(get_userdata write_files/$i/encoding)" \
+			"$(get_userdata write_files/$i/append)"
+	done
+}
+
 init__userdata_ntp() {
 	local ntp_enabled="$(get_userdata ntp/enabled)"
 	if [ "$ntp_enabled" != "yes" ] && [ "$ntp_enabled" != "true" ]; then
@@ -119,65 +179,5 @@ init__userdata_runcmd() {
 	for i in $runcmds; do
 		local cmd="$(get_userdata runcmd/$i)"
 		sh -c "$cmd"
-	done
-}
-
-# write_file <path> <mode> <owner> <encoding> <append>
-write_file() {
-	# Defaults used are the same as for full cloud-init "spec":
-	# https://cloudinit.readthedocs.io/en/latest/reference/modules.html#write-files
-	local path="$1"
-	local mode="${2:-0644}"
-	local owner="${3:-root:root}"
-	local encoding="${4:-text/plain}"
-	local append="${5:-false}"
-
-	if [ "$append" != "true" ] && [ "$append" != "false" ]; then
-		log err "append must be true or false"
-		return
-	fi
-
-	local tmpfile="$(mktemp $TINY_CLOUD_VAR/user-data.write_files.XXXXXX)"
-
-	case "$encoding" in
-		gzip|gz|gz+base64|gzip+base64|gz+b64|gzip+b64)
-			base64 -d | gzip -d > "$tmpfile"
-			;;
-		base64|b64)
-			base64 -d > "$tmpfile"
-			;;
-		text/plain)
-			cat > "$tmpfile"
-			;;
-	esac
-
-	if [ "$append" = "true" ]; then
-		cat "$tmpfile" >> "$path"
-	else
-		cat "$tmpfile" > "$path"
-	fi
-	rm -f "$tmpfile"
-
-	chmod "$mode" "$path"
-	# mocked as we do not know which users we could use in testing
-	# this way we can check the proper invocation at least
-	$MOCK chown "$owner" "$path"
-}
-
-init__userdata_write_files() {
-	local files="$(get_userdata write_files)"
-
-	for i in $files; do
-		local path="$(get_userdata write_files/$i/path)"
-		if [ -z "$path" ]; then
-			continue
-		fi
-
-		mkdir -p "$(dirname "$ROOT/$path")"
-		get_userdata write_files/$i/content | write_file "$ROOT/$path" \
-			"$(get_userdata write_files/$i/permissions)" \
-			"$(get_userdata write_files/$i/owner)" \
-			"$(get_userdata write_files/$i/encoding)" \
-			"$(get_userdata write_files/$i/append)"
 	done
 }
