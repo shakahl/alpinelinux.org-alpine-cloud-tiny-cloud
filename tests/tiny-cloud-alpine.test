@@ -21,6 +21,8 @@ init_tests \
 	userdata_apk_repositories \
 	userdata_apk_repositories_version \
 	userdata_apk_repositories_version_auto_edge \
+	userdata_package_update \
+	userdata_package_upgrade \
 	userdata_packages \
 	userdata_runcmd
 
@@ -211,6 +213,30 @@ userdata_apk_repositories_version_auto_edge_body() {
 	atf_check -o match:"^https://cdn.alpinelinux.org/edge/main$" \
 		-o match:"^https://cdn.alpinelinux.org/edge/community$" \
 		cat etc/apk/repositories
+}
+
+userdata_package_update_body() {
+	fake_userdata_nocloud <<-EOF
+		#alpine-config
+		package_update: true
+	EOF
+	atf_check -e ignore -o ignore tiny-cloud net
+	atf_check \
+		-e match:"userdata_package_update: done" \
+		-o match:"apk update" \
+		tiny-cloud main
+}
+
+userdata_package_upgrade_body() {
+	fake_userdata_nocloud <<-EOF
+		#alpine-config
+		package_upgrade: true
+	EOF
+	atf_check -e ignore -o ignore tiny-cloud net
+	atf_check \
+		-e match:"userdata_package_upgrade: done" \
+		-o match:"apk upgrade" \
+		tiny-cloud main
 }
 
 userdata_packages_body() {

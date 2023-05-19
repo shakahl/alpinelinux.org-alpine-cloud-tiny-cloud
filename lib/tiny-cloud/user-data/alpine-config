@@ -3,7 +3,7 @@
 # shellcheck shell=sh
 
 INIT_ACTIONS_MAIN="$(insert_after set_hostname \
-	"userdata_bootcmd userdata_write_files userdata_ntp userdata_apk_cache userdata_apk_repositories userdata_packages" \
+	"userdata_bootcmd userdata_write_files userdata_ntp userdata_apk_cache userdata_apk_repositories userdata_package_update userdata_package_upgrade userdata_packages" \
 	$INIT_ACTIONS_MAIN)"
 INIT_ACTIONS_FINAL="$INIT_ACTIONS_FINAL userdata_runcmd"
 
@@ -161,6 +161,20 @@ init__userdata_apk_repositories() {
 			add_once "$ROOT"/etc/apk/repositories "$uri"
 		done
 	done
+}
+
+init__userdata_package_update() {
+	local update="$(get_userdata package_update)"
+	if [ "$update" = "true" ]; then
+		$MOCK apk update
+	fi
+}
+
+init__userdata_package_upgrade() {
+	local upgrade="$(get_userdata package_upgrade)"
+	if [ "$upgrade" = "true" ]; then
+		$MOCK apk upgrade
+	fi
 }
 
 init__userdata_packages() {
