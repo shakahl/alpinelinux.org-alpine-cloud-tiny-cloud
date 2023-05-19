@@ -1,10 +1,10 @@
 # Unknown UserData Functions
-# vim:set ts=4 et ft=sh:
+# vim:set ft=sh:
 # shellcheck shell=sh
 
 init__unknown_userdata() {
-    local type="$(userdata_type)"
-    log -i -t "$phase" warn "$ACTION: unable to process '$type' user-data"
+	local type="$(userdata_type)"
+	log -i -t "$phase" warn "$ACTION: unable to process '$type' user-data"
 }
 
 INIT_ACTIONS_MAIN="unknown_userdata ${INIT_ACTIONS_MAIN}"

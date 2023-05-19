@@ -1,5 +1,5 @@
 #!/bin/sh
-# vim:set ts=4 et:
+# vim:set ft=sh:
 
 set -e
 
@@ -7,52 +7,52 @@ set -e
 . "$LIBDIR/tiny-cloud/common"
 
 if [ -z "$MDEV" ] || [ -z "$ACTION" ]; then
-    log crit "MDEV or ACTION undefined, aborting"
+	log crit "MDEV or ACTION undefined, aborting"
 fi
 
 IFACE_CFG=/etc/network/interfaces
 
 ip() {
-    local v=-4 lev=info
-    if [ "$1" = '-4' ] || [ "$1" = '-6' ]; then
-        v="$1"
-        shift
-    fi
-    local op="$2"
+	local v=-4 lev=info
+	if [ "$1" = '-4' ] || [ "$1" = '-6' ]; then
+		v="$1"
+		shift
+	fi
+	local op="$2"
 
-    [ "$op" = show ] && lev=debug
-    if /sbin/ip "$v" "$@" || [ -n "$FAIL_OK" ]; then
-        log "$lev" "OK: ip $v $*"
-    else
-        log err "FAIL: ip $v $*"
-    fi
+	[ "$op" = show ] && lev=debug
+	if /sbin/ip "$v" "$@" || [ -n "$FAIL_OK" ]; then
+		log "$lev" "OK: ip $v $*"
+	else
+		log err "FAIL: ip $v $*"
+	fi
 }
 
 interface_up() {
-    log info "Bringing up $MDEV"
-    # umask so udhcpc PID file isn't non-owner writeable
-    (umask 0022 && ifup "$MDEV")
+	log info "Bringing up $MDEV"
+	# umask so udhcpc PID file isn't non-owner writeable
+	(umask 0022 && ifup "$MDEV")
 }
 
 cleanup_interface() {
-    local v pref rtable="${MDEV#eth}"
-    let rtable+=10000
+	local v pref rtable="${MDEV#eth}"
+	let rtable+=10000
 
-    log info "Cleaning up $MDEV"
+	log info "Cleaning up $MDEV"
 
-    # kill related udhcpc, don't panic if it's not there
-    kill "$(cat "/run/udhcpc.$MDEV.pid")" || true
+	# kill related udhcpc, don't panic if it's not there
+	kill "$(cat "/run/udhcpc.$MDEV.pid")" || true
 
-    # tidy up /run/ifstate, if it exists
-    [ -f /run/ifstate ] && sed -i -e "/^$MDEV=/d" /run/ifstate
-    rm -f /run/ifstate."$MDEV".lock
+	# tidy up /run/ifstate, if it exists
+	[ -f /run/ifstate ] && sed -i -e "/^$MDEV=/d" /run/ifstate
+	rm -f /run/ifstate."$MDEV".lock
 
-    # remove related rules
-    for v in 4 6; do
-        for pref in $(ip -"$v" rule show table "$rtable" | cut -d: -f1); do
-            ip -"$v" rule del pref "$pref"
-        done
-    done
+	# remove related rules
+	for v in 4 6; do
+		for pref in $(ip -"$v" rule show table "$rtable" | cut -d: -f1); do
+			ip -"$v" rule del pref "$pref"
+		done
+	done
 }
 
 is_networking_started() { service networking status -q 2>/dev/null; }
@@ -60,28 +60,28 @@ is_networking_started() { service networking status -q 2>/dev/null; }
 log info "STARTING: $ACTION $MDEV"
 
 if exec 200>>"$IFACE_CFG"; then
-    if flock 200; then
-        case $ACTION in
-            add|"")
-                assemble-interfaces
-                is_networking_started && interface_up
-                ;;
-            remove)
-                assemble-interfaces
-                is_networking_started && cleanup_interface
-                ;;
-            *)
-                log err "Unknown action '$ACTION'"
-                exit 1
-                ;;
-        esac
-    else
-        log err "Unable to flock $IFACE_CFG"
-        exit 1
-    fi
+	if flock 200; then
+		case $ACTION in
+			add|"")
+				assemble-interfaces
+				is_networking_started && interface_up
+				;;
+			remove)
+				assemble-interfaces
+				is_networking_started && cleanup_interface
+				;;
+			*)
+				log err "Unknown action '$ACTION'"
+				exit 1
+				;;
+		esac
+	else
+		log err "Unable to flock $IFACE_CFG"
+		exit 1
+	fi
 else
-    log err "Unable to assign fd 200 to flock $IFACE_CFG"
-    exit 1
+	log err "Unable to assign fd 200 to flock $IFACE_CFG"
+	exit 1
 fi
 
 log info "FINISHED: $ACTION $MDEV"

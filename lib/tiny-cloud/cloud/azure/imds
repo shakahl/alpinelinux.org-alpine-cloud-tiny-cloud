@@ -1,5 +1,5 @@
 # Azure Instance MetaData Service variables and functions
-# vim:set ts=4 et ft=sh:
+# vim:set ft=sh:
 # shellcheck shell=sh
 
 IMDS_HEADER="Metadata"
@@ -14,28 +14,28 @@ IMDS_NICS="network/interface"
 
 # TODO: flesh out networking
 unset \
-    IMDS_MAC \
-    IMDS_IPV4 \
-    IMDS_IPV6 \
-    IMDS_IPV4_NET \
-    IMDS_IPV6_NET \
-    IMDS_IPV4_PREFIX \
-    IMDS_IPV6_PREFIX
+	IMDS_MAC \
+	IMDS_IPV4 \
+	IMDS_IPV6 \
+	IMDS_IPV4_NET \
+	IMDS_IPV6_NET \
+	IMDS_IPV4_PREFIX \
+	IMDS_IPV6_PREFIX
 
 _imds_header() {
-    echo "$IMDS_HEADER: true"
+	echo "$IMDS_HEADER: true"
 }
 
 # dig deeper than default
 _imds_ssh_keys() {
-    local key
+	local key
 
-    for key in $(imds "$IMDS_SSH_KEYS"); do
-        imds "$IMDS_SSH_KEYS/${key}/keyData"
-    done | sort -u
+	for key in $(imds "$IMDS_SSH_KEYS"); do
+		imds "$IMDS_SSH_KEYS/${key}/keyData"
+	done | sort -u
 }
 
 # decode userdata value
 _imds_userdata() {
-    imds "$IMDS_USERDATA" | base64 -d
+	imds "$IMDS_USERDATA" | base64 -d
 }

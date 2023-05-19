@@ -1,9 +1,9 @@
 # Missing UserData Functions
-# vim:set ts=4 et ft=sh:
+# vim:set ft=sh:
 # shellcheck shell=sh
 
 init__missing_userdata() {
-    log -i -t "$phase" notice "$ACTION: no user-data found"
+	log -i -t "$phase" notice "$ACTION: no user-data found"
 }
 
 INIT_ACTIONS_MAIN="missing_userdata ${INIT_ACTIONS_MAIN}"

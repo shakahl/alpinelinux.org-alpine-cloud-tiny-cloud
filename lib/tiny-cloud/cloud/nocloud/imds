@@ -1,5 +1,5 @@
 # NoCloud Instance Metadata
-# vim: ts=4 et ft=sh:
+# vim:set ft=sh:
 # shellcheck shell=sh
 
 NOCLOUD_FILES="meta-data user-data vendor-data network-config"
@@ -7,100 +7,100 @@ NOCLOUD_FILES="meta-data user-data vendor-data network-config"
 is_nocloud_loaded() { [ -f "$TINY_CLOUD_VAR/.nocloud_loaded" ]; }
 
 _load_nocloud_cmdline() {
-    local kopt kv k v data
+	local kopt kv k v data
 
-    for kopt in $(cat "$ROOT/proc/cmdline" 2>/dev/null); do
-        echo "$kopt" | grep -qE '(^|=)ds=nocloud(-net)?;' || continue
-        for kv in $(echo "${kopt#*;}" | tr \; ' '); do
-            k=$(echo "$kv" | cut -d= -f1)
-            v=$(echo "$kv" | cut -d= -f2-)
-            case "$k" in
-                h|local-hostname)
-                    printf "\nlocal-hostname: %s" "$v" >> "$TINY_CLOUD_VAR/meta-data"
-                    ;;
-                i|instance-id)
-                    printf "\ninstance-id: %s" "$v" >> "$TINY_CLOUD_VAR/meta-data"
-                    ;;
-                s|seedfrom)
-                    for data in $NOCLOUD_FILES; do
-                        case "${v#file:/}" in
-                            /*)
-                                cat "$v/$data" >> "$TINY_CLOUD_VAR/$data" || continue
-                                echo >> "$TINY_CLOUD_VAR/$data"
-                                ;;
-                            http://*|https://*)
-                                wget -qO - "$v/$data" >> "$TINY_CLOUD_VAR/$data" || continue
-                                echo >> "$TINY_CLOUD_VAR/$data"
-                                ;;
-                            *) log -s warning "Unknown NoCloud seedfrom value '$v'"
-                                ;;
-                        esac
-                    done
-                    ;;
-                *)  log -s warning "Unknown NoCloud kernel cmdline key '$k'"
-                    ;;
-            esac
-        done
-        return
-    done
-    return 1
+	for kopt in $(cat "$ROOT/proc/cmdline" 2>/dev/null); do
+		echo "$kopt" | grep -qE '(^|=)ds=nocloud(-net)?;' || continue
+		for kv in $(echo "${kopt#*;}" | tr \; ' '); do
+			k=$(echo "$kv" | cut -d= -f1)
+			v=$(echo "$kv" | cut -d= -f2-)
+			case "$k" in
+				h|local-hostname)
+					printf "\nlocal-hostname: %s" "$v" >> "$TINY_CLOUD_VAR/meta-data"
+					;;
+				i|instance-id)
+					printf "\ninstance-id: %s" "$v" >> "$TINY_CLOUD_VAR/meta-data"
+					;;
+				s|seedfrom)
+					for data in $NOCLOUD_FILES; do
+						case "${v#file:/}" in
+							/*)
+								cat "$v/$data" >> "$TINY_CLOUD_VAR/$data" || continue
+								echo >> "$TINY_CLOUD_VAR/$data"
+								;;
+							http://*|https://*)
+								wget -qO - "$v/$data" >> "$TINY_CLOUD_VAR/$data" || continue
+								echo >> "$TINY_CLOUD_VAR/$data"
+								;;
+							*) log -s warning "Unknown NoCloud seedfrom value '$v'"
+								;;
+						esac
+					done
+					;;
+				*)  log -s warning "Unknown NoCloud kernel cmdline key '$k'"
+					;;
+			esac
+		done
+		return
+	done
+	return 1
 }
 
 _load_nocloud_volume() {
-    mkdir -p "$ROOT"/run/tiny-cloud
-    local mntdir=$(mktemp -d "$ROOT/run/tiny-cloud/cidata-XXXXXX")
-    local data mounted
+	mkdir -p "$ROOT"/run/tiny-cloud
+	local mntdir=$(mktemp -d "$ROOT/run/tiny-cloud/cidata-XXXXXX")
+	local data mounted
 
-    mkdir -p "$mntdir"
-    for fstype in vfat iso9660; do
-        [ "$mounted" ] && break
-        for label in cidata CIDATA; do
-            [ -n "$mounted" ] && break
-            mount -o ro -t "$fstype" LABEL="$label" "$mntdir" && mounted=1
-        done
-    done
-    if [ -n "$mounted" ]; then
-        for data in $NOCLOUD_FILES; do
-            # lack of source results in empty target
-            cat "$mntdir/$data" > "$TINY_CLOUD_VAR/$data" 2>/dev/null
-        done
-        umount "$mntdir"
-    else
-        return 1
-    fi
-    rmdir "$mntdir"
+	mkdir -p "$mntdir"
+	for fstype in vfat iso9660; do
+		[ "$mounted" ] && break
+		for label in cidata CIDATA; do
+			[ -n "$mounted" ] && break
+			mount -o ro -t "$fstype" LABEL="$label" "$mntdir" && mounted=1
+		done
+	done
+	if [ -n "$mounted" ]; then
+		for data in $NOCLOUD_FILES; do
+			# lack of source results in empty target
+			cat "$mntdir/$data" > "$TINY_CLOUD_VAR/$data" 2>/dev/null
+		done
+		umount "$mntdir"
+	else
+		return 1
+	fi
+	rmdir "$mntdir"
 }
 
 load_nocloud() {
-    # start with a clean slate
-    (cd "$TINY_CLOUD_VAR" && rm -f $NOCLOUD_FILES)
+	# start with a clean slate
+	(cd "$TINY_CLOUD_VAR" && rm -f $NOCLOUD_FILES)
 
-    if _load_nocloud_cmdline || _load_nocloud_volume; then
-        touch "$TINY_CLOUD_VAR/.nocloud_loaded"
-    else
-        log -s err "Unable to load NoCloud datasource"
-        return 1
-    fi
+	if _load_nocloud_cmdline || _load_nocloud_volume; then
+		touch "$TINY_CLOUD_VAR/.nocloud_loaded"
+	else
+		log -s err "Unable to load NoCloud datasource"
+		return 1
+	fi
 
-    # minimally, we expect some content in meta-data
-    [ -s "$TINY_CLOUD_VAR/meta-data" ] ||
-        log -s warning "NoCloud 'meta-data' is empty"
+	# minimally, we expect some content in meta-data
+	[ -s "$TINY_CLOUD_VAR/meta-data" ] ||
+		log -s warning "NoCloud 'meta-data' is empty"
 }
 
 _imds() {
-    mkdir -p "$TINY_CLOUD_VAR"
-    local file="$TINY_CLOUD_VAR/$(echo "$1" | cut -d/ -f1)"
-    local keypath="$(echo "$1" | cut -d/ -f2- | tr / ' ')"
+	mkdir -p "$TINY_CLOUD_VAR"
+	local file="$TINY_CLOUD_VAR/$(echo "$1" | cut -d/ -f1)"
+	local keypath="$(echo "$1" | cut -d/ -f2- | tr / ' ')"
 
-    is_nocloud_loaded || load_nocloud
+	is_nocloud_loaded || load_nocloud
 
-    # does file exist?
-    [ -f "$file" ] || return 1
+	# does file exist?
+	[ -f "$file" ] || return 1
 
-    # use 'file/' to get top-level keys
-    if [ $(basename "$file") = "$keypath" ]; then
-        cat "$file"
-    else
-        yx -f "$file" $keypath
-    fi
+	# use 'file/' to get top-level keys
+	if [ $(basename "$file") = "$keypath" ]; then
+		cat "$file"
+	else
+		yx -f "$file" $keypath
+	fi
 }

@@ -1,5 +1,5 @@
 # Tiny Cloud - common script functions
-# vim: ts=4 et ft=sh:
+# vim:set ft=sh:
 # shellcheck shell=sh
 
 # set defaults
@@ -10,62 +10,62 @@
 : "${TINY_CLOUD_VAR:=$ROOT/var/lib/cloud}"
 
 log() {
-    local facility="local7"
-    local stderr init
-    local tag=$(basename "$0")
-    while [ "${1#-}" != "$1" ]; do
-        case "$1" in
-            -i) init=1 ;;   # TODO: value = indent?
-            -f) facility="$2"; shift ;;
-            -s) stderr=-s ;;
-            -t) tag="$tag/$2"; shift ;;
-        esac
-        shift
-    done
-    local level="$1"
-    [ -z "$DEBUG" ] && [ "$level" = debug ] && return
-    shift
+	local facility="local7"
+	local stderr init
+	local tag=$(basename "$0")
+	while [ "${1#-}" != "$1" ]; do
+		case "$1" in
+			-i) init=1 ;;   # TODO: value = indent?
+			-f) facility="$2"; shift ;;
+			-s) stderr=-s ;;
+			-t) tag="$tag/$2"; shift ;;
+		esac
+		shift
+	done
+	local level="$1"
+	[ -z "$DEBUG" ] && [ "$level" = debug ] && return
+	shift
 
-    [ -n "$init" ] && echo "$@" >&2
-    logger $stderr -p "$facility.$level" -t "${tag}[$$]" "$@"
-    case "$level" in
-        crit|alert|emerg) exit 1 ;;
-    esac
+	[ -n "$init" ] && echo "$@" >&2
+	logger $stderr -p "$facility.$level" -t "${tag}[$$]" "$@"
+	case "$level" in
+		crit|alert|emerg) exit 1 ;;
+	esac
 }
 
 # usage: replace_word <search> <replace> <list>...
 replace_word() {
-    local search="$1" replace="$2"
-    shift 2
-    for word in "$@"; do
-        if [ "$word" = "$search" ]; then
-            echo "$replace"
-        else
-            echo "$word"
-        fi
-    done
+	local search="$1" replace="$2"
+	shift 2
+	for word in "$@"; do
+		if [ "$word" = "$search" ]; then
+			echo "$replace"
+		else
+			echo "$word"
+		fi
+	done
 }
 
 # usage: insert_after <where> <what> <list>...
 insert_after() {
-    local search="$1" addition="$2"
-    shift 2
-    for i in "$@"; do
-        echo "$i"
-        if [ "$i" = "$search" ]; then
-            echo "$addition"
-        fi
-    done
+	local search="$1" addition="$2"
+	shift 2
+	for i in "$@"; do
+		echo "$i"
+		if [ "$i" = "$search" ]; then
+			echo "$addition"
+		fi
+	done
 }
 
 # usage: add_once <file> <line-to-add>...
 add_once() {
-    local file="$1"
-    shift
-    for line; do
-        if ! grep -x -F "$line" "$file" 2>/dev/null; then
-            mkdir -p "${file%/*}"
-            printf "%s\n" "$line" >> "$file"
-        fi
-    done
+	local file="$1"
+	shift
+	for line; do
+		if ! grep -x -F "$line" "$file" 2>/dev/null; then
+			mkdir -p "${file%/*}"
+			printf "%s\n" "$line" >> "$file"
+		fi
+	done
 }

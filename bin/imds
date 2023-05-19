@@ -1,5 +1,5 @@
 #!/bin/sh
-# vim:set ts=4 et ft=sh:
+# vim:set ft=sh:
 
 # Tiny Cloud - Instance MetaData Service client
 
@@ -9,43 +9,43 @@
 . "$LIBDIR/tiny-cloud/common"
 
 if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
-    cat <<EOT
-Usage: imds [-h] { -e | +e | +n | +s | +t | @<alias> | <imds-path> } ...
-  -h           : help
-  -e / +e      : ignore / catch errors
-  +n / +s / +t : insert newline / space / tab
-  <alias> :-
-    hostname       : instance hostname
-    local-hostname : instance local hostname
-    ssh-keys       : instance SSH keys
-    userdata       : instance user data
-    nics           : instance NICs
-    nic:<iface>[,<nic-key> ...] : specific NIC interface
-      <iface>   : network interface (i.e. eth1)
-      <nic-key> :- { -e | +e | +n | +s | +t | @<nic-alias> | <nic-path> }
-        <nic-alias> :-
-          mac         : mac address
-          ipv4        : ipv4 address(es)
-          ipv6        : ipv6 address(es)
-          ipv4-net    : subnet ipv4 network(s)
-          ipv6-net    : subnet ipv6 network(s)
-          ipv4-prefix : delegated ipv4 CIDR(s)
-          ipv6-prefix : delegated ipv6 CIDR(s)
-EOT
-    exit 0
+	cat <<-EOT
+		Usage: imds [-h] { -e | +e | +n | +s | +t | @<alias> | <imds-path> } ...
+		  -h           : help
+		  -e / +e      : ignore / catch errors
+		  +n / +s / +t : insert newline / space / tab
+		  <alias> :-
+		    hostname       : instance hostname
+		    local-hostname : instance local hostname
+		    ssh-keys       : instance SSH keys
+		    userdata       : instance user data
+		    nics           : instance NICs
+		    nic:<iface>[,<nic-key> ...] : specific NIC interface
+		      <iface>   : network interface (i.e. eth1)
+		      <nic-key> :- { -e | +e | +n | +s | +t | @<nic-alias> | <nic-path> }
+		        <nic-alias> :-
+		          mac         : mac address
+		          ipv4        : ipv4 address(es)
+		          ipv6        : ipv6 address(es)
+		          ipv4-net    : subnet ipv4 network(s)
+		          ipv6-net    : subnet ipv6 network(s)
+		          ipv4-prefix : delegated ipv4 CIDR(s)
+		          ipv6-prefix : delegated ipv6 CIDR(s)
+	EOT
+	exit 0
 fi
 
 ### cloud-specific variables/functions
 
 unset \
-    IMDS_HEADER \
-    IMDS_URI \
-    IMDS_QUERY
+	IMDS_HEADER \
+	IMDS_URI \
+	IMDS_QUERY
 unset -f \
-    _imds_token \
-    _imds_header \
-    _imds_nic_index \
-        2>/dev/null	|| true
+	_imds_token \
+	_imds_header \
+	_imds_nic_index \
+		2>/dev/null || true
 
 ### default variables/functions
 
@@ -67,19 +67,19 @@ IMDS_IPV4_PREFIX="ipv4-prefix"
 IMDS_IPV6_PREFIX="ipv6-prefix"
 
 _imds() {
-    wget --quiet --timeout 1 --output-document - \
-        --header "$(_imds_header)" \
-        "http://$IMDS_ENDPOINT/$IMDS_URI/$1$IMDS_QUERY"
+	wget --quiet --timeout 1 --output-document - \
+		--header "$(_imds_header)" \
+		"http://$IMDS_ENDPOINT/$IMDS_URI/$1$IMDS_QUERY"
 }
 
 _imds_userdata() { _imds "$IMDS_USERDATA"; }
 
 _imds_ssh_keys() {
-    local key
-    for key in $(_imds "$IMDS_SSH_KEYS"); do
-        _imds "$IMDS_SSH_KEYS/${key%=*}/openssh-key"
-        echo
-    done | sort -u
+	local key
+	for key in $(_imds "$IMDS_SSH_KEYS"); do
+		_imds "$IMDS_SSH_KEYS/${key%=*}/openssh-key"
+		echo
+	done | sort -u
 }
 
 _imds_nic_index() { cat "/sys/class/net/$1/address"; }
@@ -87,71 +87,71 @@ _imds_nic_index() { cat "/sys/class/net/$1/address"; }
 ### load cloud-specific variables and functions
 
 if [ ! -d "$LIBDIR/tiny-cloud/cloud/$CLOUD" ]; then
-    echo "ERROR: Unknown Cloud '$CLOUD'" >&2
+	echo "ERROR: Unknown Cloud '$CLOUD'" >&2
 fi
 . "$LIBDIR/tiny-cloud/cloud/$CLOUD/imds"
 
 ### non-overrideable functions
 
 imds() {
-    local cmd args key rv err=1
-    while [ -n "$1" ]; do
-        cmd=_imds
-        args=
-        key="$1"; shift
-        case $key in
-            # error handling
-            -e) err=0; continue ;;          # ignore
-            +e) err=1; continue ;;          # return
-            # TODO: retry/deadline
-            # output control
-            +n) printf "\n"; continue ;;           # insert newline
-            +s) printf " "; continue ;;    # insert space
-            +t) printf "\t"; continue ;;  # insert tab
-            # key aliasing
-            @hostname)        args="$IMDS_HOSTNAME" ;;
-            @local-hostname)  args="$IMDS_LOCAL_HOSTNAME" ;;
-            @ssh-keys)        cmd=_imds_ssh_keys ;;
-            @userdata)        cmd=_imds_userdata ;;
-            @nics)            args="$IMDS_NICS" ;;
-            @nic:*)
-                cmd=imds
-                args=$(_imds_nic_args $(echo "${key#@nic:}" | tr , ' '))
-                ;;
-            # use key verbatim
-            *) args="$key" ;;
-        esac
-        # TODO: retry/deadline
-        "$cmd" $args
-        rv=$?
-        [ $err -eq 0 ] && continue
-        [ $rv = "0" ] || return $rv
-    done
+	local cmd args key rv err=1
+	while [ -n "$1" ]; do
+		cmd=_imds
+		args=
+		key="$1"; shift
+		case $key in
+			# error handling
+			-e) err=0; continue ;;		  # ignore
+			+e) err=1; continue ;;		  # return
+			# TODO: retry/deadline
+			# output control
+			+n) printf "\n"; continue ;;		   # insert newline
+			+s) printf " "; continue ;;	# insert space
+			+t) printf "\t"; continue ;;  # insert tab
+			# key aliasing
+			@hostname)		args="$IMDS_HOSTNAME" ;;
+			@local-hostname)  args="$IMDS_LOCAL_HOSTNAME" ;;
+			@ssh-keys)		cmd=_imds_ssh_keys ;;
+			@userdata)		cmd=_imds_userdata ;;
+			@nics)			args="$IMDS_NICS" ;;
+			@nic:*)
+				cmd=imds
+				args=$(_imds_nic_args $(echo "${key#@nic:}" | tr , ' '))
+				;;
+			# use key verbatim
+			*) args="$key" ;;
+		esac
+		# TODO: retry/deadline
+		"$cmd" $args
+		rv=$?
+		[ $err -eq 0 ] && continue
+		[ $rv = "0" ] || return $rv
+	done
 }
 
 _imds_nic_args() {
-    local key nic
-    nic=$(_imds_nic_index "$1") || return 1
-    if [ -z "$2" ]; then
-        echo "$IMDS_NICS/$nic"
-        return
-    fi
-    while [ -n "$2" ]; do
-        key="$2"
-        shift
-        case "$key" in
-            @mac)           key="$IMDS_MAC" ;;
-            @ipv4)          key="$IMDS_IPV4" ;;
-            @ipv6)          key="$IMDS_IPV6" ;;
-            @ipv4-net)      key="$IMDS_IPV4_NET" ;;
-            @ipv6-net)      key="$IMDS_IPV6_NET" ;;
-            @ipv4-prefix)   key="$IMDS_IPV4_PREFIX" ;;
-            @ipv6-prefix)   key="$IMDS_IPV6_PREFIX" ;;
-            # error/output control passthrough
-            -e|+[enst])     printf "$key\n"; continue ;;
-        esac
-        printf "$IMDS_NICS/$nic/$key\n"
-    done
+	local key nic
+	nic=$(_imds_nic_index "$1") || return 1
+	if [ -z "$2" ]; then
+		echo "$IMDS_NICS/$nic"
+		return
+	fi
+	while [ -n "$2" ]; do
+		key="$2"
+		shift
+		case "$key" in
+			@mac)		   key="$IMDS_MAC" ;;
+			@ipv4)		  key="$IMDS_IPV4" ;;
+			@ipv6)		  key="$IMDS_IPV6" ;;
+			@ipv4-net)	  key="$IMDS_IPV4_NET" ;;
+			@ipv6-net)	  key="$IMDS_IPV6_NET" ;;
+			@ipv4-prefix)   key="$IMDS_IPV4_PREFIX" ;;
+			@ipv6-prefix)   key="$IMDS_IPV6_PREFIX" ;;
+			# error/output control passthrough
+			-e|+[enst])	 printf "$key\n"; continue ;;
+		esac
+		printf "$IMDS_NICS/$nic/$key\n"
+	done
 }
 
 imds "$@"

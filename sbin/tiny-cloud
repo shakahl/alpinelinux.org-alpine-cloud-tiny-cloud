@@ -1,5 +1,5 @@
 #!/bin/sh
-# vim:set ts=4 et ft=sh:
+# vim:set ft=sh:
 
 # Tiny Cloud
 
@@ -9,69 +9,69 @@ set -e
 . "$LIBDIR/tiny-cloud/common"
 
 usage() {
-    cat <<EOF
-Usage: ${0##*/} [-h | --help] { early | net | main | final | --bootstrap [complete|incomplete|status] | --setup }
-EOF
+	cat <<-EOF
+		Usage: ${0##*/} [-h | --help] { early | net | main | final | --bootstrap [complete|incomplete|status] | --setup }
+	EOF
 }
 
 bootstrap_complete() {
-    touch "$TINY_CLOUD_VAR/.bootstrap-complete"
+	touch "$TINY_CLOUD_VAR/.bootstrap-complete"
 }
 bootstrap_incomplete() {
-    rm -f "$TINY_CLOUD_VAR/.bootstrap-complete"
+	rm -f "$TINY_CLOUD_VAR/.bootstrap-complete"
 }
 is_bootstrap_complete() {
-    [ -f "$TINY_CLOUD_VAR/.bootstrap-complete" ]
+	[ -f "$TINY_CLOUD_VAR/.bootstrap-complete" ]
 }
 
 args=$(getopt -o hsb: --long help,setup,bootstrap: -n ${0##*/} -- "$@") || {  usage >&2; exit 1; }
 if [ $# -eq 0 ]; then
-    usage >&2
-    exit 1
+	usage >&2
+	exit 1
 fi
 eval set -- "$args"
 while true; do
-    case "$1" in
-        -h|--help) usage; exit 0;;
-        -b|--bootstrap) shift
-            case "$1" in
-                complete)   # indicate bootstrap is done
-                    bootstrap_complete
-                    log -i notice 'bootstrap marked complete';;
-                incomplete) # indicate bootstrap isn't done
-                    bootstrap_incomplete
-                    log -i warn 'bootstrap marked incomplete';;
-                status) is_bootstrap_complete && echo 'complete' || echo 'incomplete' ;;
-                *) usage >&2; exit 1;;
-            esac
-            exit 0;;
-        -s|--setup) # just openrc for now
-            for phase in -early -net '' -final; do
-                rc-update -a del "tiny-cloud$phase" || true
-            done
-            rc-update add tiny-cloud-early boot
-            rc-update add tiny-cloud-net default
-            rc-update add tiny-cloud default
-            rc-update add tiny-cloud-final default
-            exit 0;;
-        --) shift; break;;
-        *) usage >&2; exit 1;;
-    esac
-    shift
+	case "$1" in
+		-h|--help) usage; exit 0;;
+		-b|--bootstrap) shift
+			case "$1" in
+				complete)   # indicate bootstrap is done
+					bootstrap_complete
+					log -i notice 'bootstrap marked complete';;
+				incomplete) # indicate bootstrap isn't done
+					bootstrap_incomplete
+					log -i warn 'bootstrap marked incomplete';;
+				status) is_bootstrap_complete && echo 'complete' || echo 'incomplete' ;;
+				*) usage >&2; exit 1;;
+			esac
+			exit 0;;
+		-s|--setup) # just openrc for now
+			for phase in -early -net '' -final; do
+				rc-update -a del "tiny-cloud$phase" || true
+			done
+			rc-update add tiny-cloud-early boot
+			rc-update add tiny-cloud-net default
+			rc-update add tiny-cloud default
+			rc-update add tiny-cloud-final default
+			exit 0;;
+		--) shift; break;;
+		*) usage >&2; exit 1;;
+	esac
+	shift
 done
 
 phase="$1"
 shift
 
 case "$phase" in
-    early|net|main|final) ;;
-    *) usage >&2; exit 1;;
+	early|net|main|final) ;;
+	*) usage >&2; exit 1;;
 esac
 
 # is initial bootstrap already done?
 if is_bootstrap_complete; then
-    log -i -t "$phase" info "already bootstrapped"
-    exit 0;
+	log -i -t "$phase" info "already bootstrapped"
+	exit 0;
 fi
 
 # load init functions
@@ -81,48 +81,48 @@ fi
 
 # should we skip this action?
 skip_action() {
-    local action="$1"
-    for i in $SKIP_INIT_ACTIONS; do
-        [ "$i" = "$action" ] && return 0
-    done
-    return 1
+	local action="$1"
+	for i in $SKIP_INIT_ACTIONS; do
+		[ "$i" = "$action" ] && return 0
+	done
+	return 1
 }
 
 # mandatory final action...
 init__bootstrap_complete() {
-    bootstrap_complete
+	bootstrap_complete
 }
 INIT_ACTIONS_FINAL="${INIT_ACTIONS_FINAL} bootstrap_complete"
 
 ### let's do stuff!
 
 case "$phase" in
-    early)  INIT_ACTIONS="$INIT_ACTIONS_EARLY";;
-    net)    INIT_ACTIONS="$INIT_ACTIONS_NET";;
-    main)   INIT_ACTIONS="$INIT_ACTIONS_MAIN";;
-    final)  INIT_ACTIONS="$INIT_ACTIONS_FINAL";;
-    *)      usage >&2; exit 1
+	early)  INIT_ACTIONS="$INIT_ACTIONS_EARLY";;
+	net)	INIT_ACTIONS="$INIT_ACTIONS_NET";;
+	main)   INIT_ACTIONS="$INIT_ACTIONS_MAIN";;
+	final)  INIT_ACTIONS="$INIT_ACTIONS_FINAL";;
+	*)	  usage >&2; exit 1
 esac
 
 printf '\n' >&2
 for ACTION in $INIT_ACTIONS; do
-    if skip_action "$ACTION"; then
-        printf '   -- ' >&2
-        log -i -t "$phase" notice "$ACTION: skipped"
-        continue
-    fi
-    printf '   ++ ' >&2
-    log -i -t "$phase" info "$ACTION: starting"
-    RESULT="unknown"
-    LEVEL="err"
-    if type "init__$ACTION" | grep -q -w "function"; then
-        if "init__$ACTION" "$@"; then
-            RESULT="done"
-            LEVEL="info"
-        else
-            RESULT="failed"
-        fi
-    fi
-    printf '   ++ ' >&2
-    log -i -t "$phase" "$LEVEL" "$ACTION: $RESULT"
+	if skip_action "$ACTION"; then
+		printf '   -- ' >&2
+		log -i -t "$phase" notice "$ACTION: skipped"
+		continue
+	fi
+	printf '   ++ ' >&2
+	log -i -t "$phase" info "$ACTION: starting"
+	RESULT="unknown"
+	LEVEL="err"
+	if type "init__$ACTION" | grep -q -w "function"; then
+		if "init__$ACTION" "$@"; then
+			RESULT="done"
+			LEVEL="info"
+		else
+			RESULT="failed"
+		fi
+	fi
+	printf '   ++ ' >&2
+	log -i -t "$phase" "$LEVEL" "$ACTION: $RESULT"
 done

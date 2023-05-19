@@ -1,8 +1,8 @@
 #!/bin/sh
-# vim:set ts=2 et:
+# vim:set ft=sh:
 
 # NOTE: The mdev-conf APK handles this now, but only for xvd or sd links (not
-#   both)
+#	 both)
 
 : "${LIBDIR:=$PREFIX/lib}"
 . "$LIBDIR/tiny-cloud/common"
@@ -11,39 +11,39 @@
 [ -x /usr/sbin/nvme ] || log crit "nvme cli not installed"
 
 raw_ebs_alias() {
-  /usr/sbin/nvme id-ctrl "/dev/$BASE" -b 2>/dev/null |
-    dd bs=32 skip=96 count=1 2>/dev/null
+	/usr/sbin/nvme id-ctrl "/dev/$BASE" -b 2>/dev/null |
+	dd bs=32 skip=96 count=1 2>/dev/null
 }
 
 case $ACTION in
-  add|"")
-    BASE=$(echo "$MDEV" | sed -re 's/^(nvme[0-9]+n[0-9]+).*/\1/')
-    PART=$(echo "$MDEV" | sed -re 's/nvme[0-9]+n[0-9]+p?//g')
-    # TODO: deadline instead of max tries
-    MAXTRY=30
-    TRY=0
-    until [ -n "$EBS" ]; do
-      EBS=$(raw_ebs_alias | sed -nre '/^(\/dev\/)?(s|xv)d[a-z]{1,2} /p' | tr -d ' ')
-      [ -n "$EBS" ] && break
-      TRY=$((TRY + 1))
-      if [ $TRY -eq $MAXTRY ]; then
-        log err "Failed to get EBS volume alias for $MDEV after $MAXTRY attempts ($(raw_ebs_alias))"
-        exit 1
-      fi
-      sleep 0.1
-    done
-    # remove any leading '/dev/', 'sd', or 'xvd', and append partition
-    EBS=${EBS#/dev/}
-    EBS=${EBS#sd}
-    EBS=${EBS#xvd}$PART
-    ln -sf "$MDEV" "sd$EBS" && log notice "Added sd$EBS symlink for $MDEV"
-    ln -sf "$MDEV" "xvd$EBS" && log notice "Added xvd$EBS symlink for $MDEV"
-    ;;
-  remove)
-    for TARGET in sd* xvd*
-    do
-      [ "$(readlink "$TARGET" 2>/dev/null)" = "$MDEV" ] && rm -f "$TARGET" && \
-        log notice "Removed $TARGET symlink for $MDEV"
-    done
-    ;;
+	add|"")
+	BASE=$(echo "$MDEV" | sed -re 's/^(nvme[0-9]+n[0-9]+).*/\1/')
+	PART=$(echo "$MDEV" | sed -re 's/nvme[0-9]+n[0-9]+p?//g')
+	# TODO: deadline instead of max tries
+	MAXTRY=30
+	TRY=0
+	until [ -n "$EBS" ]; do
+		EBS=$(raw_ebs_alias | sed -nre '/^(\/dev\/)?(s|xv)d[a-z]{1,2} /p' | tr -d ' ')
+		[ -n "$EBS" ] && break
+		TRY=$((TRY + 1))
+		if [ $TRY -eq $MAXTRY ]; then
+		log err "Failed to get EBS volume alias for $MDEV after $MAXTRY attempts ($(raw_ebs_alias))"
+		exit 1
+		fi
+		sleep 0.1
+	done
+	# remove any leading '/dev/', 'sd', or 'xvd', and append partition
+	EBS=${EBS#/dev/}
+	EBS=${EBS#sd}
+	EBS=${EBS#xvd}$PART
+	ln -sf "$MDEV" "sd$EBS" && log notice "Added sd$EBS symlink for $MDEV"
+	ln -sf "$MDEV" "xvd$EBS" && log notice "Added xvd$EBS symlink for $MDEV"
+	;;
+	remove)
+	for TARGET in sd* xvd*
+	do
+		[ "$(readlink "$TARGET" 2>/dev/null)" = "$MDEV" ] && rm -f "$TARGET" && \
+		log notice "Removed $TARGET symlink for $MDEV"
+	done
+	;;
 esac

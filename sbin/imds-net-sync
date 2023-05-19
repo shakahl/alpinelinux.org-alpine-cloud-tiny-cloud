@@ -1,5 +1,5 @@
 #!/bin/sh
-# vim: ts=4 et ft=sh:
+# vim:set ft=sh:
 
 # Sync interface's network configuration with IMDS
 
@@ -21,129 +21,129 @@ let RTABLE+=10000
 
 # ip [+F] [-4|-6] <object> <command> [<parameters>]
 ip() {
-    local fail_ok v=-4 cmd level
-    [ "$1" = '+F' ] && fail_ok=1 && shift
-    if [ "$1" = '-4' ] || [ "$1" = '-6' ]; then
-        v="$1"
-        shift
-    fi
-    cmd="$2"
-    [ "$cmd" = show ] && level=debug || level=info
-    if /sbin/ip "$v" "$@" || [ -n "$fail_ok" ]; then
-        log -s "$level" "OK: ip $v $*"
-    else
-        log -s err "FAIL: ip $v $*"
-    fi
+	local fail_ok v=-4 cmd level
+	[ "$1" = '+F' ] && fail_ok=1 && shift
+	if [ "$1" = '-4' ] || [ "$1" = '-6' ]; then
+		v="$1"
+		shift
+	fi
+	cmd="$2"
+	[ "$cmd" = show ] && level=debug || level=info
+	if /sbin/ip "$v" "$@" || [ -n "$fail_ok" ]; then
+		log -s "$level" "OK: ip $v $*"
+	else
+		log -s err "FAIL: ip $v $*"
+	fi
 }
 
 # get secondary IPv4s currently on the interface
 iface_ip4s() {
-    ip -4 addr show "$IFACE" secondary |
-        sed -E -e '/inet /!d' -e 's/.*inet ([0-9.]+).*/\1/'
+	ip -4 addr show "$IFACE" secondary |
+		sed -E -e '/inet /!d' -e 's/.*inet ([0-9.]+).*/\1/'
 }
 
 # get IPv6s currently on the interface
 iface_ip6s() {
-    ip -6 addr show "$IFACE" scope global |
-        sed -E -e '/inet6/!d' -e 's/.*inet6 ([0-9a-f:]+).*/\1/'
+	ip -6 addr show "$IFACE" scope global |
+		sed -E -e '/inet6/!d' -e 's/.*inet6 ([0-9a-f:]+).*/\1/'
 }
 
 imds_ip4s() {
-    local ip4=$(imds "@nic:$IFACE,@ipv4")
-    local ip4s=$(echo "$ip4" | tail +2)   # secondary IPv4s
-    local ip4p ip4_cidr ip4_gw
+	local ip4=$(imds "@nic:$IFACE,@ipv4")
+	local ip4s=$(echo "$ip4" | tail +2)   # secondary IPv4s
+	local ip4p ip4_cidr ip4_gw
 
-    # non-eth0 interfaces need custom route tables
-    #
-    if [ "$IFACE" != eth0 ] && [ -n "$ip4s" ] &&
-            [ -z $(ip +F -4 route show table "$RTABLE" 2>/dev/null) ]; then
-        ip4p=$(echo "$ip4" | head -1) # primary IPv4
-        ip4_cidr=$(imds "@nic:$IFACE,@ipv4-net")    # TODO: get from iface instead?
-        # TODO: this may not hold true for non-AWS clouds
-        ip4_gw=$(echo "$ip4_cidr" | cut -d/ -f1 |
-            awk -F. '{ print $1"."$2"."$3"."$4+1 }')
-        ip -4 route add default via "$ip4_gw" dev "$IFACE" table "$RTABLE"
-        ip -4 route add "$ip4_cidr" dev "$IFACE" proto kernel scope link \
-            src "$ip4p" table "$RTABLE"
-    fi
-    echo "$ip4s"
+	# non-eth0 interfaces need custom route tables
+	#
+	if [ "$IFACE" != eth0 ] && [ -n "$ip4s" ] &&
+			[ -z $(ip +F -4 route show table "$RTABLE" 2>/dev/null) ]; then
+		ip4p=$(echo "$ip4" | head -1) # primary IPv4
+		ip4_cidr=$(imds "@nic:$IFACE,@ipv4-net")	# TODO: get from iface instead?
+		# TODO: this may not hold true for non-AWS clouds
+		ip4_gw=$(echo "$ip4_cidr" | cut -d/ -f1 |
+			awk -F. '{ print $1"."$2"."$3"."$4+1 }')
+		ip -4 route add default via "$ip4_gw" dev "$IFACE" table "$RTABLE"
+		ip -4 route add "$ip4_cidr" dev "$IFACE" proto kernel scope link \
+			src "$ip4p" table "$RTABLE"
+	fi
+	echo "$ip4s"
 }
 
 # TODO: 3.18+ when we use dhcpcd for ipv4 & ipv6, we only need to do secondary IPv6s
 #   circle back and see how amazon-ec2-net-utils is handling everything these days
 imds_ip6s() {
-    local ip6s gw tries=20
-    ip6s=$(imds "@nic:$IFACE,@ipv6")
+	local ip6s gw tries=20
+	ip6s=$(imds "@nic:$IFACE,@ipv6")
 
-    # non-eth0 interfaces need custom route tables
-    #
-    # NOTE: busybox iproute2 doesn't do 'route show table' properly for IPv6,
-    #       so iproute2-minimal package is required!
-    #
-    if [ "$IFACE" != eth0 ] && [ -n "$ip6s" ] &&
-            [ -z $(ip +F -6 route show table "$RTABLE" 2>/dev/null) ]; then
-        while true; do
-            gw=$(ip -6 route show dev "$IFACE" default | awk '{ print $3 }')
-            [ -n "$gw" ] && break
-            let tries--
-            if [ "$tries" -eq 0 ]; then
-                log -s warn "Unable to get IPv6 gateway RA after 10s"
-                break
-            fi
-            sleep 0.5
-        done
-        ip -6 route add default via "$gw" dev "$IFACE" table "$RTABLE"
-        # TODO? match imds_ip4s() with ip -6 route add "ip6_cidr" dev "$IFACE" ...
-    fi
-    echo "$ip6s"
+	# non-eth0 interfaces need custom route tables
+	#
+	# NOTE: busybox iproute2 doesn't do 'route show table' properly for IPv6,
+	#	   so iproute2-minimal package is required!
+	#
+	if [ "$IFACE" != eth0 ] && [ -n "$ip6s" ] &&
+			[ -z $(ip +F -6 route show table "$RTABLE" 2>/dev/null) ]; then
+		while true; do
+			gw=$(ip -6 route show dev "$IFACE" default | awk '{ print $3 }')
+			[ -n "$gw" ] && break
+			let tries--
+			if [ "$tries" -eq 0 ]; then
+				log -s warn "Unable to get IPv6 gateway RA after 10s"
+				break
+			fi
+			sleep 0.5
+		done
+		ip -6 route add default via "$gw" dev "$IFACE" table "$RTABLE"
+		# TODO? match imds_ip4s() with ip -6 route add "ip6_cidr" dev "$IFACE" ...
+	fi
+	echo "$ip6s"
 }
 
 in_list() {
-    echo "$2" | grep -q "^$1$"
+	echo "$2" | grep -q "^$1$"
 }
 
 # ip_addr {4|6} {add|del} <ip>
 ip_addr() {
-    local mask=32   # IPv4 always /32
-    [ "$1" -eq 6 ] && mask=128  # IPv6 always /128
-    ip -"$1" addr "$2" "$3/$mask" dev "$IFACE"
+	local mask=32   # IPv4 always /32
+	[ "$1" -eq 6 ] && mask=128  # IPv6 always /128
+	ip -"$1" addr "$2" "$3/$mask" dev "$IFACE"
 
-    # TODO? delegated ipv[46] prefixes?
+	# TODO? delegated ipv[46] prefixes?
 
-    # non-eth0 interfaces get rules associating IPs with route tables
-    [ "$IFACE" = eth0 ] && return
-    ip -"$1" rule "$2" from "$3" lookup "$RTABLE"
-    ip -"$1" rule "$2" to "$3" lookup "$RTABLE"
+	# non-eth0 interfaces get rules associating IPs with route tables
+	[ "$IFACE" = eth0 ] && return
+	ip -"$1" rule "$2" from "$3" lookup "$RTABLE"
+	ip -"$1" rule "$2" to "$3" lookup "$RTABLE"
 }
 
 # sync_ips {4|6} "<imds-ips>" "<iface-ips>"
 sync_ips() {
-    local i
-    # remove extra IPs
-    for i in $3; do
-        in_list "$i" "$2" || ip_addr "$1" del "$i"
-    done
-    # add missing IPs
-    # NOTE: this adds an extra <IPv4>/32 for the primary IP
-    for i in $2; do
-        in_list "$i" "$3" || ip_addr "$1" add "$i"
-    done
+	local i
+	# remove extra IPs
+	for i in $3; do
+		in_list "$i" "$2" || ip_addr "$1" del "$i"
+	done
+	# add missing IPs
+	# NOTE: this adds an extra <IPv4>/32 for the primary IP
+	for i in $2; do
+		in_list "$i" "$3" || ip_addr "$1" add "$i"
+	done
 }
 
 imds_iface_sync() {
-    log -s info "SYNCING: $IFACE"
-    sync_ips 4 "$(imds_ip4s)" "$(iface_ip4s)"
-    sync_ips 6 "$(imds_ip6s)" "$(iface_ip6s)"
-    log -s info "FINISHED: $IFACE"
+	log -s info "SYNCING: $IFACE"
+	sync_ips 4 "$(imds_ip4s)" "$(iface_ip4s)"
+	sync_ips 6 "$(imds_ip6s)" "$(iface_ip6s)"
+	log -s info "FINISHED: $IFACE"
 }
 
 case "$PHASE" in
-    post-up)
-        # TODO: daemonize this
-        imds_iface_sync
-        ;;
-    pre-down)
-        # TODO: kill daemon, maybe some cleanup
-        ;;
-    *)
+	post-up)
+		# TODO: daemonize this
+		imds_iface_sync
+		;;
+	pre-down)
+		# TODO: kill daemon, maybe some cleanup
+		;;
+	*)
 esac

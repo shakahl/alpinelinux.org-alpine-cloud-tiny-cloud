@@ -1,5 +1,5 @@
 # Tiny Cloud - Init Functions
-# vim:set ts=4 et ft=sh:
+# vim:set ft=sh:
 # shellcheck shell=sh
 
 # set defaults
@@ -12,18 +12,18 @@
 ### default phase actions (without leading 'init__')
 
 DEFAULT_ACTIONS_EARLY="
-    expand_root
-    install_hotplugs
-    set_default_interfaces
-    create_default_user
-    enable_sshd
+	expand_root
+	install_hotplugs
+	set_default_interfaces
+	create_default_user
+	enable_sshd
 "
 DEFAULT_ACTIONS_NET="
-    save_userdata
+	save_userdata
 "
 DEFAULT_ACTIONS_MAIN="
-    set_hostname
-    set_ssh_keys
+	set_hostname
+	set_ssh_keys
 "
 DEFAULT_ACTIONS_FINAL=""
 
@@ -40,236 +40,236 @@ DEFAULT_ACTIONS_FINAL=""
 ### standard init-early functions...
 
 init__expand_root() {
-    local dev=$(awk '$2 == "/" {print $1}' "$ROOT"/proc/mounts 2>/dev/null)
-    local filesystem=$(awk '$2 == "/" {print $3}' "$ROOT"/proc/mounts 2>/dev/null)
-    local partition=$(cat "$ROOT/sys/class/block/${dev#/dev/}/partition" 2>/dev/null)
+	local dev=$(awk '$2 == "/" {print $1}' "$ROOT"/proc/mounts 2>/dev/null)
+	local filesystem=$(awk '$2 == "/" {print $3}' "$ROOT"/proc/mounts 2>/dev/null)
+	local partition=$(cat "$ROOT/sys/class/block/${dev#/dev/}/partition" 2>/dev/null)
 
-    # only support ext2/ext3/ext4 for now
-    case "$filesystem" in
-        ext*) ;;
-        *) return;;
-    esac
+	# only support ext2/ext3/ext4 for now
+	case "$filesystem" in
+		ext*) ;;
+		*) return;;
+	esac
 
-    if [ -n "$partition" ]; then
-        # it's a partition, resize it
-        local volume=$(readlink -f "$ROOT/sys/class/block/${dev#/dev/}/..")
-        volume="/dev/${volume##*/}"
-        echo ", +" | $MOCK sfdisk -q --no-reread -N "$partition" "$volume"
-        $MOCK partx -u "$volume"
-    fi
-    # resize filesystem
-    $MOCK resize2fs "$dev"
+	if [ -n "$partition" ]; then
+		# it's a partition, resize it
+		local volume=$(readlink -f "$ROOT/sys/class/block/${dev#/dev/}/..")
+		volume="/dev/${volume##*/}"
+		echo ", +" | $MOCK sfdisk -q --no-reread -N "$partition" "$volume"
+		$MOCK partx -u "$volume"
+	fi
+	# resize filesystem
+	$MOCK resize2fs "$dev"
 }
 
 init__install_hotplugs() {
-    local level result rc=0
+	local level result rc=0
 
-    [ ! -n "$HOTPLUG_MODULES" ] && return
-    if [ -f "$LIBDIR/tiny-cloud/$HOTPLUG_TYPE" ]; then
-        . "$LIBDIR/tiny-cloud/$HOTPLUG_TYPE"
-    fi
+	[ ! -n "$HOTPLUG_MODULES" ] && return
+	if [ -f "$LIBDIR/tiny-cloud/$HOTPLUG_TYPE" ]; then
+		. "$LIBDIR/tiny-cloud/$HOTPLUG_TYPE"
+	fi
 
-    for module in $HOTPLUG_MODULES; do
-        result='unknown'
-        level='err'
-        printf "      >> " >&2
-        log -i -t "$phase/$ACTION" info "$module: installing"
-        if type "mod__$module" | grep -q -w "function"; then
-            if "mod__$module"; then
-                result='installed'
-                level='info'
-            else
-                result='failed'
-                rc=1
-            fi
-        fi
-        printf "      >> " >&2
-        log -i -t "$phase/$ACTION" info "$module: $result"
-    done
-    return $rc
+	for module in $HOTPLUG_MODULES; do
+		result='unknown'
+		level='err'
+		printf "	  >> " >&2
+		log -i -t "$phase/$ACTION" info "$module: installing"
+		if type "mod__$module" | grep -q -w "function"; then
+			if "mod__$module"; then
+				result='installed'
+				level='info'
+			else
+				result='failed'
+				rc=1
+			fi
+		fi
+		printf "	  >> " >&2
+		log -i -t "$phase/$ACTION" info "$module: $result"
+	done
+	return $rc
 }
 
 # collect ethernet interfaces, sorted by index
 ethernets() {
-    for i in "$ROOT/sys/class/net/"*; do
-        local iface="${i##*/}"
-        case "$iface" in
-            eth*) echo "$(cat "$i/ifindex") $iface";;
-        esac
-    done | sort -n | awk '{print $2}'
+	for i in "$ROOT/sys/class/net/"*; do
+		local iface="${i##*/}"
+		case "$iface" in
+			eth*) echo "$(cat "$i/ifindex") $iface";;
+		esac
+	done | sort -n | awk '{print $2}'
 }
 
 # find the interface that is has operstate up
 find_first_interface_up() {
-    local n=0
-    [ $# -eq 0 ] && return
-    while [ $n -le ${TINY_CLOUD_LINK_WAIT_MAX:-10} ]; do
-        for i in "$@"; do
-            if [ "$(cat "$ROOT/sys/class/net/$i/operstate")" = "up" ]; then
-                echo "$i"
-                return
-            fi
-        done
-        sleep 0.1
-        n=$((n+1))
-    done
+	local n=0
+	[ $# -eq 0 ] && return
+	while [ $n -le ${TINY_CLOUD_LINK_WAIT_MAX:-10} ]; do
+		for i in "$@"; do
+			if [ "$(cat "$ROOT/sys/class/net/$i/operstate")" = "up" ]; then
+				echo "$i"
+				return
+			fi
+		done
+		sleep 0.1
+		n=$((n+1))
+	done
 }
 
 # auto detect which network interface to auto configure
 # check which is connected or fallback to first
 # This will set link to down to all eth* except the found
 auto_detect_ethernet_interface() {
-    local ifaces="$(ethernets)"
-    [ -z "$ifaces" ] && return
+	local ifaces="$(ethernets)"
+	[ -z "$ifaces" ] && return
 
-    # find first connected interface
-    for i in $ifaces; do
-        $MOCK ip link set dev $i up >/dev/null
-    done
-    local iface="$(find_first_interface_up $ifaces)"
+	# find first connected interface
+	for i in $ifaces; do
+		$MOCK ip link set dev $i up >/dev/null
+	done
+	local iface="$(find_first_interface_up $ifaces)"
 
-    # use first if all are disconnected
-    if [ -z "$iface" ]; then
-        set -- $ifaces
-        iface="$1"
-    fi
+	# use first if all are disconnected
+	if [ -z "$iface" ]; then
+		set -- $ifaces
+		iface="$1"
+	fi
 
-    # we will use the found interface later so lets keep it up
-    for i in $ifaces; do
-        if [ "$i" != "$iface" ]; then
-            $MOCK ip link set dev $i down >/dev/null
-        fi
-    done
-    echo "$iface"
+	# we will use the found interface later so lets keep it up
+	for i in $ifaces; do
+		if [ "$i" != "$iface" ]; then
+			$MOCK ip link set dev $i down >/dev/null
+		fi
+	done
+	echo "$iface"
 }
 
 init__set_default_interfaces() {
-    if [ -f "$ROOT"/etc/network/interfaces ]; then
-        log -i -t "$phase" info "$ACTION: already set up"
-        return
-    fi
+	if [ -f "$ROOT"/etc/network/interfaces ]; then
+		log -i -t "$phase" info "$ACTION: already set up"
+		return
+	fi
 
-    mkdir -p "$ROOT/etc/network"
-    printf "%s\n%s\n\n" \
-        "auto lo" \
-        "iface lo inet loopback" \
-        > "$ROOT/etc/network/interfaces"
+	mkdir -p "$ROOT/etc/network"
+	printf "%s\n%s\n\n" \
+		"auto lo" \
+		"iface lo inet loopback" \
+		> "$ROOT/etc/network/interfaces"
 
-    local iface="$(auto_detect_ethernet_interface)"
-    if [ -z "$iface" ]; then
-        # TODO: message/log?
-        return
-    fi
-    printf "%s\n%s\n\t%s\n\n" \
-        "auto $iface" \
-        "iface $iface" \
-        "use dhcp"  >> "$ROOT/etc/network/interfaces"
+	local iface="$(auto_detect_ethernet_interface)"
+	if [ -z "$iface" ]; then
+		# TODO: message/log?
+		return
+	fi
+	printf "%s\n%s\n\t%s\n\n" \
+		"auto $iface" \
+		"iface $iface" \
+		"use dhcp"  >> "$ROOT/etc/network/interfaces"
 }
 
 init__create_default_user() {
-    local user="$CLOUD_USER"
-    # don't do anything if it already exists
-    if getent passwd "$user" >/dev/null; then
-        log -i -t "$phase" info "$ACTION: already exists"
-        return
-    fi
+	local user="$CLOUD_USER"
+	# don't do anything if it already exists
+	if getent passwd "$user" >/dev/null; then
+		log -i -t "$phase" info "$ACTION: already exists"
+		return
+	fi
 
-    $MOCK addgroup "$user"
-    $MOCK adduser -h "/home/$user" -s /bin/sh -G "$user" -D "$user"
-    $MOCK addgroup "$user" wheel
-    echo "$user:*" | $MOCK chpasswd -e
+	$MOCK addgroup "$user"
+	$MOCK adduser -h "/home/$user" -s /bin/sh -G "$user" -D "$user"
+	$MOCK addgroup "$user" wheel
+	echo "$user:*" | $MOCK chpasswd -e
 
-    # setup sudo and/or doas
-    if [ -d "$ROOT/etc/sudoers.d" ]; then
-        echo '%wheel ALL=(ALL) NOPASSWD: ALL' > "$ROOT/etc/sudoers.d/wheel"
-    fi
-    if [ -d "$ROOT/etc/doas.d" ]; then
-        echo 'permit nopass :wheel' > "$TARGET/etc/doas.d/wheel.conf"
-    fi
+	# setup sudo and/or doas
+	if [ -d "$ROOT/etc/sudoers.d" ]; then
+		echo '%wheel ALL=(ALL) NOPASSWD: ALL' > "$ROOT/etc/sudoers.d/wheel"
+	fi
+	if [ -d "$ROOT/etc/doas.d" ]; then
+		echo 'permit nopass :wheel' > "$TARGET/etc/doas.d/wheel.conf"
+	fi
 }
 
 init__enable_sshd() {
-    $MOCK rc-update add sshd default
-    # in case something else has enabled/disabled dservices
-    $MOCK rc-update --update
+	$MOCK rc-update add sshd default
+	# in case something else has enabled/disabled dservices
+	$MOCK rc-update --update
 }
 
 
 ### standard init-main functions
 
 init__set_hostname() {
-    local fqdn=$(imds @hostname)
-    if [ -z "$fqdn" ]; then
-        log -i -t "$phase" info "$ACTION: no hostname set"
-        return
-    fi
+	local fqdn=$(imds @hostname)
+	if [ -z "$fqdn" ]; then
+		log -i -t "$phase" info "$ACTION: no hostname set"
+		return
+	fi
 
-    local host="${fqdn%%\.*}"
-    if [ -z "$host" ]; then
-        log -i -t "$phase" warn "$ACTION: invalid hostname '$fqdn'"
-        return 1
-    fi
+	local host="${fqdn%%\.*}"
+	if [ -z "$host" ]; then
+		log -i -t "$phase" warn "$ACTION: invalid hostname '$fqdn'"
+		return 1
+	fi
 
-    mkdir -p "$ROOT"/etc
-    echo "$host" > "$ROOT"/etc/hostname
-    $MOCK hostname -F "$ROOT"/etc/hostname
-    echo -e "127.0.1.1\t$fqdn $host" >> "$ROOT"/etc/hosts
+	mkdir -p "$ROOT"/etc
+	echo "$host" > "$ROOT"/etc/hostname
+	$MOCK hostname -F "$ROOT"/etc/hostname
+	echo -e "127.0.1.1\t$fqdn $host" >> "$ROOT"/etc/hosts
 }
 
 init__set_ssh_keys() {
-    local sshkeys="$(imds @ssh-keys)"
-    if [ -z "$sshkeys" ]; then
-        log -i -t "$phase" info "$ACTION: no ssh key found"
-        return
-    fi
-    local user="$CLOUD_USER"
-    local pwent="$(getent passwd "$user")"
-    if [ -z "$pwent" ]; then
-        log -i -t "$phase" err "$ACTION: failed to find user $user"
-        return 1
-    fi
-    local group=$(echo "$pwent" | cut -d: -f4)
-    local ssh_dir="${ROOT}$(echo "$pwent" | cut -d: -f6)/.ssh"
-    local keys_file="$ssh_dir/authorized_keys"
+	local sshkeys="$(imds @ssh-keys)"
+	if [ -z "$sshkeys" ]; then
+		log -i -t "$phase" info "$ACTION: no ssh key found"
+		return
+	fi
+	local user="$CLOUD_USER"
+	local pwent="$(getent passwd "$user")"
+	if [ -z "$pwent" ]; then
+		log -i -t "$phase" err "$ACTION: failed to find user $user"
+		return 1
+	fi
+	local group=$(echo "$pwent" | cut -d: -f4)
+	local ssh_dir="${ROOT}$(echo "$pwent" | cut -d: -f6)/.ssh"
+	local keys_file="$ssh_dir/authorized_keys"
 
-    if [ ! -d "$ssh_dir" ]; then
-        mkdir -p "$ssh_dir"
-        chmod 700 "$ssh_dir"
-    fi
+	if [ ! -d "$ssh_dir" ]; then
+		mkdir -p "$ssh_dir"
+		chmod 700 "$ssh_dir"
+	fi
 
-    touch "$keys_file"
-    chmod 600 "$keys_file"
-    $MOCK chown -R "$user:$group" "$ssh_dir"
-    echo "$sshkeys" > "$keys_file"
+	touch "$keys_file"
+	chmod 600 "$keys_file"
+	$MOCK chown -R "$user:$group" "$ssh_dir"
+	echo "$sshkeys" > "$keys_file"
 }
 
 init__save_userdata() {
-    local userdata="$TINY_CLOUD_VAR/user-data"
-    if [ -f "$userdata" ]; then
-        log -i -t "$phase" info "$ACTION: user-data already saved"
-        return
-    fi
-    local tmpfile=$(mktemp "$userdata.XXXXXX")
+	local userdata="$TINY_CLOUD_VAR/user-data"
+	if [ -f "$userdata" ]; then
+		log -i -t "$phase" info "$ACTION: user-data already saved"
+		return
+	fi
+	local tmpfile=$(mktemp "$userdata.XXXXXX")
 
-    imds -e @userdata > "$tmpfile"
-    if printf '\037\213\010' | cmp -s -n 3 "$tmpfile"; then
-        gzip -dc "$tmpfile" > "$userdata"
-    elif printf 'BZh' | cmp -s -n 3 "$tmpfile"; then
-        bzip2 -dc "$tmpfile" > "$userdata"
-    elif printf '\375\067\172\130\132\000' | cmp -s -n 6 "$tmpfile"; then
-        unxz -c "$tmpfile" > "$userdata"
-    elif printf '\135\000\000' | cmp -s -n 3 "$tmpfile"; then
-        lzma -dc "$tmpfile" > "$userdata"
-    elif printf '\211\114\132' | cmp -s -n 3 "$tmpfile"; then
-        lzop -dc "$tmpfile" > "$userdata"
-    elif printf '\004\042\115\030' | cmp -s -n 4 "$tmpfile"; then
-        lz4 -dc "$tmpfile" > "$userdata"
-    elif printf '(\265/\375' | cmp -s -n 4 "$tmpfile"; then
-        zstd -dc "$tmpfile" > "$userdata"
-    else
-        cp "$tmpfile" "$userdata"
-    fi
-    rm "$tmpfile"
+	imds -e @userdata > "$tmpfile"
+	if printf '\037\213\010' | cmp -s -n 3 "$tmpfile"; then
+		gzip -dc "$tmpfile" > "$userdata"
+	elif printf 'BZh' | cmp -s -n 3 "$tmpfile"; then
+		bzip2 -dc "$tmpfile" > "$userdata"
+	elif printf '\375\067\172\130\132\000' | cmp -s -n 6 "$tmpfile"; then
+		unxz -c "$tmpfile" > "$userdata"
+	elif printf '\135\000\000' | cmp -s -n 3 "$tmpfile"; then
+		lzma -dc "$tmpfile" > "$userdata"
+	elif printf '\211\114\132' | cmp -s -n 3 "$tmpfile"; then
+		lzop -dc "$tmpfile" > "$userdata"
+	elif printf '\004\042\115\030' | cmp -s -n 4 "$tmpfile"; then
+		lz4 -dc "$tmpfile" > "$userdata"
+	elif printf '(\265/\375' | cmp -s -n 4 "$tmpfile"; then
+		zstd -dc "$tmpfile" > "$userdata"
+	else
+		cp "$tmpfile" "$userdata"
+	fi
+	rm "$tmpfile"
 }
 
 
@@ -279,26 +279,26 @@ init__save_userdata() {
 ### load cloud-specific init functions / vars (potentially overriding)
 
 if [ -f "$LIBDIR/tiny-cloud/cloud/$CLOUD/init" ]; then
-    . "$LIBDIR/tiny-cloud/cloud/$CLOUD/init"
+	. "$LIBDIR/tiny-cloud/cloud/$CLOUD/init"
 fi
 
 
 ### load user-data type-specific init functions / vars (potentially overriding)
 
 userdata_type() {
-    if [ ! -f "$TINY_CLOUD_VAR/user-data" ]; then
-        echo missing
-        return
-    fi
-    header=$(head -n1 "$TINY_CLOUD_VAR/user-data" | sed -e 's/[[:space:]].*//g')
-    case "$header" in
-        '#!'*)  echo script;;
-        '#'*)   echo ${header#\#};;
-        *)      echo unknown;;
-    esac
+	if [ ! -f "$TINY_CLOUD_VAR/user-data" ]; then
+		echo missing
+		return
+	fi
+	header=$(head -n1 "$TINY_CLOUD_VAR/user-data" | sed -e 's/[[:space:]].*//g')
+	case "$header" in
+		'#!'*)  echo script;;
+		'#'*)   echo ${header#\#};;
+		*)	  echo unknown;;
+	esac
 }
 
 USERDATA_TYPE="$(userdata_type)"
 if [ -f "$LIBDIR/tiny-cloud/user-data/$USERDATA_TYPE" ]; then
-    . "$LIBDIR/tiny-cloud/user-data/$USERDATA_TYPE"
+	. "$LIBDIR/tiny-cloud/user-data/$USERDATA_TYPE"
 fi

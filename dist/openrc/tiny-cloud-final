@@ -1,5 +1,5 @@
 #!/sbin/openrc-run
-# vim:set ts=8 noet ft=sh:
+# vim:set ft=sh:
 # shellcheck shell=sh
 
 description="Tiny Cloud Bootstrap - final phase"

@@ -1,117 +1,117 @@
 # Script UserData Functions
-# vim:set ts=4 et ft=sh:
+# vim:set ft=sh:
 # shellcheck shell=sh
 
 INIT_ACTIONS_MAIN="$(insert_after set_hostname \
-    "userdata_bootcmd userdata_write_files userdata_ntp userdata_apk_cache userdata_apk_repositories userdata_packages" \
-    $INIT_ACTIONS_MAIN)"
+	"userdata_bootcmd userdata_write_files userdata_ntp userdata_apk_cache userdata_apk_repositories userdata_packages" \
+	$INIT_ACTIONS_MAIN)"
 INIT_ACTIONS_FINAL="$INIT_ACTIONS_FINAL userdata_runcmd"
 
 get_userdata() {
-    IFS="/"
-    yx -f "$TINY_CLOUD_VAR/user-data" $1 2>/dev/null
-    unset IFS
+	IFS="/"
+	yx -f "$TINY_CLOUD_VAR/user-data" $1 2>/dev/null
+	unset IFS
 }
 
 init__userdata_bootcmd() {
-    # run bootcmd
-    local bootcmds="$(get_userdata bootcmd)"
-    for i in $bootcmds; do
-        local cmd="$(get_userdata bootcmd/"$i")"
-        sh -c "$cmd"
-    done
+	# run bootcmd
+	local bootcmds="$(get_userdata bootcmd)"
+	for i in $bootcmds; do
+		local cmd="$(get_userdata bootcmd/"$i")"
+		sh -c "$cmd"
+	done
 }
 
 init__userdata_ntp() {
-    local ntp_enabled="$(get_userdata ntp/enabled)"
-    if [ "$ntp_enabled" != "yes" ] && [ "$ntp_enabled" != "true" ]; then
-        return
-    fi
-    local ntp_client="$(get_userdata ntp/ntp_client)"
-    local svc= pkg=
-    case "$ntp_client" in
-        busybox)
-            svc=ntpd
-            ;;
-        chrony|"")
-            pkg=chrony
-            svc=chronyd
-            ;;
-        openntpd)
-            pkg=openntpd
-            svc=openntpd
-            ;;
-    esac
-    if [ -n "$pkg" ]; then
-        $MOCK apk add "$pkg"
-    fi
-    if [ -n "$svc" ]; then
-        $MOCK rc-update add "$svc" default
-        $MOCK rc-service "$svc" start
-    fi
+	local ntp_enabled="$(get_userdata ntp/enabled)"
+	if [ "$ntp_enabled" != "yes" ] && [ "$ntp_enabled" != "true" ]; then
+		return
+	fi
+	local ntp_client="$(get_userdata ntp/ntp_client)"
+	local svc= pkg=
+	case "$ntp_client" in
+		busybox)
+			svc=ntpd
+			;;
+		chrony|"")
+			pkg=chrony
+			svc=chronyd
+			;;
+		openntpd)
+			pkg=openntpd
+			svc=openntpd
+			;;
+	esac
+	if [ -n "$pkg" ]; then
+		$MOCK apk add "$pkg"
+	fi
+	if [ -n "$svc" ]; then
+		$MOCK rc-update add "$svc" default
+		$MOCK rc-service "$svc" start
+	fi
 }
 
 init__userdata_apk_cache() {
-    local cache="$(get_userdata apk/cache)"
-    if [ -z "$cache" ]; then
-        return
-    fi
-    mkdir -p "$ROOT/$cache"
-    # make link relative
-    case "$cache" in
-        /*) cache="../..$cache";;
-    esac
-    mkdir -p "$ROOT"/etc/apk
-    ln -sf "$cache" "$ROOT"/etc/apk/cache
+	local cache="$(get_userdata apk/cache)"
+	if [ -z "$cache" ]; then
+		return
+	fi
+	mkdir -p "$ROOT/$cache"
+	# make link relative
+	case "$cache" in
+		/*) cache="../..$cache";;
+	esac
+	mkdir -p "$ROOT"/etc/apk
+	ln -sf "$cache" "$ROOT"/etc/apk/cache
 }
 
 init__userdata_apk_cache() {
-    local cache="$(get_userdata apk/cache)"
-    if [ -z "$cache" ]; then
-        return
-    fi
-    mkdir -p "$ROOT/$cache"
-    # make link relative
-    case "$cache" in
-        /*) cache="../..$cache";;
-    esac
-    mkdir -p "$ROOT"/etc/apk
-    ln -sf "$cache" "$ROOT"/etc/apk/cache
+	local cache="$(get_userdata apk/cache)"
+	if [ -z "$cache" ]; then
+		return
+	fi
+	mkdir -p "$ROOT/$cache"
+	# make link relative
+	case "$cache" in
+		/*) cache="../..$cache";;
+	esac
+	mkdir -p "$ROOT"/etc/apk
+	ln -sf "$cache" "$ROOT"/etc/apk/cache
 }
 
 init__userdata_apk_repositories() {
-    local repositories="$(get_userdata apk/repositories)"
-    mkdir -p "$ROOT"/etc/apk
-    for r in $repositories; do
-        local baseurl="$(get_userdata apk/repositories/$r/base_url)"
-        local repos="$(get_userdata apk/repositories/$r/repos)"
-        local version="$(get_userdata apk/repositories/$r/version)"
-        if [ -z "$version" ]; then
-            local version_id=$( . "$ROOT"/etc/os-release 2>/dev/null && echo "$VERSION_ID")
-            case "$version_id" in
-                edge*|*_alpha*) version="edge";;
-                [0-9]*.[0-9]*.[0-9]*) version="v${version_id%.*}";;
-            esac
-        fi
-        if [ -n "$version" ] && [ "$version" != "." ] && [ "$version" != "/" ]; then
-            baseurl="${baseurl%/}/$version"
-        fi
-        for repo in $repos; do
-            local uri="${baseurl%/}/$(get_userdata apk/repositories/$r/repos/$repo)"
-            add_once "$ROOT"/etc/apk/repositories "$uri"
-        done
-    done
+	local repositories="$(get_userdata apk/repositories)"
+	mkdir -p "$ROOT"/etc/apk
+	for r in $repositories; do
+		local baseurl="$(get_userdata apk/repositories/$r/base_url)"
+		local repos="$(get_userdata apk/repositories/$r/repos)"
+		local version="$(get_userdata apk/repositories/$r/version)"
+		if [ -z "$version" ]; then
+			local version_id=$( . "$ROOT"/etc/os-release 2>/dev/null && echo "$VERSION_ID")
+			case "$version_id" in
+				edge*|*_alpha*) version="edge";;
+				[0-9]*.[0-9]*.[0-9]*) version="v${version_id%.*}";;
+			esac
+		fi
+		if [ -n "$version" ] && [ "$version" != "." ] && [ "$version" != "/" ]; then
+			baseurl="${baseurl%/}/$version"
+		fi
+		for repo in $repos; do
+			local uri="${baseurl%/}/$(get_userdata apk/repositories/$r/repos/$repo)"
+			add_once "$ROOT"/etc/apk/repositories "$uri"
+		done
+	done
 }
 
 init__userdata_packages() {
-    local packages="$(get_userdata packages)"
-    local pkgs=
-    for i in $packages; do
-        pkgs="$pkgs $(get_userdata packages/$i)"
-    done
-    if [ -n "$pkgs" ]; then
-        $MOCK apk add $pkgs
-    fi
+	local packages="$(get_userdata packages)"
+	local pkgs=
+	for i in $packages; do
+		pkgs="$pkgs $(get_userdata packages/$i)"
+	done
+	if [ -n "$pkgs" ]; then
+		$MOCK apk add $pkgs
+	fi
 }
 
 init__userdata_runcmd() {
@@ -124,60 +124,60 @@ init__userdata_runcmd() {
 
 # write_file <path> <mode> <owner> <encoding> <append>
 write_file() {
-    # Defaults used are the same as for full cloud-init "spec":
-    # https://cloudinit.readthedocs.io/en/latest/reference/modules.html#write-files
-    local path="$1"
-    local mode="${2:-0644}"
-    local owner="${3:-root:root}"
-    local encoding="${4:-text/plain}"
-    local append="${5:-false}"
+	# Defaults used are the same as for full cloud-init "spec":
+	# https://cloudinit.readthedocs.io/en/latest/reference/modules.html#write-files
+	local path="$1"
+	local mode="${2:-0644}"
+	local owner="${3:-root:root}"
+	local encoding="${4:-text/plain}"
+	local append="${5:-false}"
 
-    if [ "$append" != "true" ] && [ "$append" != "false" ]; then
-        log err "append must be true or false"
-        return
-    fi
+	if [ "$append" != "true" ] && [ "$append" != "false" ]; then
+		log err "append must be true or false"
+		return
+	fi
 
-    local tmpfile="$(mktemp $TINY_CLOUD_VAR/user-data.write_files.XXXXXX)"
+	local tmpfile="$(mktemp $TINY_CLOUD_VAR/user-data.write_files.XXXXXX)"
 
-    case "$encoding" in
-        gzip|gz|gz+base64|gzip+base64|gz+b64|gzip+b64)
-            base64 -d | gzip -d > "$tmpfile"
-            ;;
-        base64|b64)
-            base64 -d > "$tmpfile"
-            ;;
-        text/plain)
-            cat > "$tmpfile"
-            ;;
-    esac
+	case "$encoding" in
+		gzip|gz|gz+base64|gzip+base64|gz+b64|gzip+b64)
+			base64 -d | gzip -d > "$tmpfile"
+			;;
+		base64|b64)
+			base64 -d > "$tmpfile"
+			;;
+		text/plain)
+			cat > "$tmpfile"
+			;;
+	esac
 
-    if [ "$append" = "true" ]; then
-        cat "$tmpfile" >> "$path"
-    else
-        cat "$tmpfile" > "$path"
-    fi
-    rm -f "$tmpfile"
+	if [ "$append" = "true" ]; then
+		cat "$tmpfile" >> "$path"
+	else
+		cat "$tmpfile" > "$path"
+	fi
+	rm -f "$tmpfile"
 
-    chmod "$mode" "$path"
-    # mocked as we do not know which users we could use in testing
-    # this way we can check the proper invocation at least
-    $MOCK chown "$owner" "$path"
+	chmod "$mode" "$path"
+	# mocked as we do not know which users we could use in testing
+	# this way we can check the proper invocation at least
+	$MOCK chown "$owner" "$path"
 }
 
 init__userdata_write_files() {
-    local files="$(get_userdata write_files)"
+	local files="$(get_userdata write_files)"
 
-    for i in $files; do
-        local path="$(get_userdata write_files/$i/path)"
-        if [ -z "$path" ]; then
-            continue
-        fi
+	for i in $files; do
+		local path="$(get_userdata write_files/$i/path)"
+		if [ -z "$path" ]; then
+			continue
+		fi
 
-        mkdir -p "$(dirname "$ROOT/$path")"
-        get_userdata write_files/$i/content | write_file "$ROOT/$path" \
-            "$(get_userdata write_files/$i/permissions)" \
-            "$(get_userdata write_files/$i/owner)" \
-            "$(get_userdata write_files/$i/encoding)" \
-            "$(get_userdata write_files/$i/append)"
-    done
+		mkdir -p "$(dirname "$ROOT/$path")"
+		get_userdata write_files/$i/content | write_file "$ROOT/$path" \
+			"$(get_userdata write_files/$i/permissions)" \
+			"$(get_userdata write_files/$i/owner)" \
+			"$(get_userdata write_files/$i/encoding)" \
+			"$(get_userdata write_files/$i/append)"
+	done
 }

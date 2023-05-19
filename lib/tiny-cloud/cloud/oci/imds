@@ -1,5 +1,5 @@
 # OCI Instance MetaData Service variables and functions
-# vim:set ts=4 et ft=sh:
+# vim:set ft=sh:
 # shellcheck shell=sh
 
 IMDS_HEADER="Authorization"
@@ -13,25 +13,25 @@ IMDS_NICS="nics"
 
 # TODO: flesh out networking
 unset \
-    IMDS_MAC \
-    IMDS_IPV4 \
-    IMDS_IPV6 \
-    IMDS_IPV4_NET \
-    IMDS_IPV6_NET \
-    IMDS_IPV4_PREFIX \
-    IMDS_IPV6_PREFIX
+	IMDS_MAC \
+	IMDS_IPV4 \
+	IMDS_IPV6 \
+	IMDS_IPV4_NET \
+	IMDS_IPV6_NET \
+	IMDS_IPV4_PREFIX \
+	IMDS_IPV6_PREFIX
 
 _imds_header() {
-    echo "$IMDS_HEADER: Bearer Oracle"
+	echo "$IMDS_HEADER: Bearer Oracle"
 }
 
 _imds_ssh_keys() { _imds "$IMDS_SSH_KEYS"; }
 
 _imds_nic_index() {
-    local m n=0
-    local mac=$(cat "/sys/class/net/$1/mac")
-    while m=$(imds "$IMDS_NICS/$n/mac" | tr A-F a-f); do
-        [ "$m" = "$mac" ] && echo $n; return 0
-    done
-    return 1
+	local m n=0
+	local mac=$(cat "/sys/class/net/$1/mac")
+	while m=$(imds "$IMDS_NICS/$n/mac" | tr A-F a-f); do
+		[ "$m" = "$mac" ] && echo $n; return 0
+	done
+	return 1
 }

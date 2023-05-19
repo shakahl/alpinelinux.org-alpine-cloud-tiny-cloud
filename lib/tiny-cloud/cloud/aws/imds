@@ -1,5 +1,5 @@
 # AWS Instance MetaData Service variables and functions
-# vim:set ts=4 et ft=sh:
+# vim:set ft=sh:
 # shellcheck shell=sh
 
 IMDS_HEADER="X-aws-ec2-metadata-token"
@@ -8,11 +8,11 @@ IMDS_TOKEN_TTL_HEADER="X-aws-ec2-metadata-token-ttl-seconds"
 IMDS_URI="latest"
 
 _imds_token() {
-    printf "PUT /latest/api/token HTTP/1.0\r\n%s: %s\r\n\r\n" \
-        "$IMDS_TOKEN_TTL_HEADER" "$IMDS_TOKEN_TTL" \
-        | nc -w 1 "$IMDS_ENDPOINT" 80 | tail -n 1
+	printf "PUT /latest/api/token HTTP/1.0\r\n%s: %s\r\n\r\n" \
+		"$IMDS_TOKEN_TTL_HEADER" "$IMDS_TOKEN_TTL" \
+		| nc -w 1 "$IMDS_ENDPOINT" 80 | tail -n 1
 }
 
 _imds_header() {
-    echo "$IMDS_HEADER: $(_imds_token)"
+	echo "$IMDS_HEADER: $(_imds_token)"
 }
