@@ -20,12 +20,12 @@ test-oksh:
     - apk add oksh
     - ln -sf /bin/oksh /bin/sh
 
-# disabling for now - yash now hates 'local'
-.test-yash:
-  extends: test-default
-  before_script:
-    - apk add yash
-    - ln -sf /usr/bin/yash /bin/sh
+# disabled - yash hates 'local'
+#test-yash:
+#  extends: test-default
+#  before_script:
+#    - apk add yash
+#    - ln -sf /usr/bin/yash /bin/sh
 
 test-zsh:
   extends: test-default

@@ -72,7 +72,7 @@ init__install_hotplugs() {
 	for module in $HOTPLUG_MODULES; do
 		result='unknown'
 		level='err'
-		printf "	  >> " >&2
+		printf "      >> " >&2
 		log -i -t "$phase/$ACTION" info "$module: installing"
 		if type "mod__$module" | grep -q -w "function"; then
 			if "mod__$module"; then
@@ -83,7 +83,7 @@ init__install_hotplugs() {
 				rc=1
 			fi
 		fi
-		printf "	  >> " >&2
+		printf "      >> " >&2
 		log -i -t "$phase/$ACTION" info "$module: $result"
 	done
 	return $rc

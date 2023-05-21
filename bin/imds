@@ -101,19 +101,19 @@ imds() {
 		key="$1"; shift
 		case $key in
 			# error handling
-			-e) err=0; continue ;;		  # ignore
-			+e) err=1; continue ;;		  # return
+			-e) err=0; continue ;;	# ignore
+			+e) err=1; continue ;;	# return
 			# TODO: retry/deadline
 			# output control
-			+n) printf "\n"; continue ;;		   # insert newline
-			+s) printf " "; continue ;;	# insert space
-			+t) printf "\t"; continue ;;  # insert tab
+			+n) printf "\n"; continue ;;	# insert newline
+			+s) printf " "; continue ;;		# insert space
+			+t) printf "\t"; continue ;;	# insert tab
 			# key aliasing
-			@hostname)		args="$IMDS_HOSTNAME" ;;
-			@local-hostname)  args="$IMDS_LOCAL_HOSTNAME" ;;
-			@ssh-keys)		cmd=_imds_ssh_keys ;;
-			@userdata)		cmd=_imds_userdata ;;
-			@nics)			args="$IMDS_NICS" ;;
+			@hostname)			args="$IMDS_HOSTNAME" ;;
+			@local-hostname)	args="$IMDS_LOCAL_HOSTNAME" ;;
+			@ssh-keys)			cmd=_imds_ssh_keys ;;
+			@userdata)			cmd=_imds_userdata ;;
+			@nics)				args="$IMDS_NICS" ;;
 			@nic:*)
 				cmd=imds
 				args=$(_imds_nic_args $(echo "${key#@nic:}" | tr , ' '))

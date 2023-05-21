@@ -2,7 +2,7 @@
 # vim:set ft=sh:
 
 # NOTE: The mdev-conf APK handles this now, but only for xvd or sd links (not
-#	 both)
+#	both)
 
 : "${LIBDIR:=$PREFIX/lib}"
 . "$LIBDIR/tiny-cloud/common"

@@ -15,7 +15,7 @@ log() {
 	local tag=$(basename "$0")
 	while [ "${1#-}" != "$1" ]; do
 		case "$1" in
-			-i) init=1 ;;   # TODO: value = indent?
+			-i) init=1 ;;
 			-f) facility="$2"; shift ;;
 			-s) stderr=-s ;;
 			-t) tag="$tag/$2"; shift ;;
