@@ -17,7 +17,13 @@ init_tests \
 	auto_detect_ethernet_interface \
 	set_default_interfaces \
 	enable_sshd \
-	create_default_user
+	create_default_user \
+	save_userdata_plain \
+	save_userdata_compressed \
+	set_hostname \
+	set_ssh_keys \
+	userdata_type \
+	run_userdata
 
 PROVIDERS="alpine aws azure gcp nocloud oci"
 
@@ -124,4 +130,124 @@ create_default_user_body() {
 		-o match:"addgroup alpine wheel" \
 		-o match:"chpasswd -e" \
 		sh -c ". $lib; init__create_default_user"
+}
+
+save_userdata_plain_body() {
+	fake_userdata_nocloud <<-EOF
+		#userdata
+	EOF
+	CLOUD="nocloud" atf_check -e match:"NoCloud 'meta-data' is empty" \
+		sh -c ". \"$lib\"; init__save_userdata"
+	atf_check -o match:"^#userdata" cat var/lib/cloud/user-data
+}
+
+save_userdata_compressed_body() {
+	for comp in  gzip bzip2 xz lzma lzop lz4 zstd; do
+		# fake_userdata_nocloud will set PATH so dont run it in a subshell
+		printf "%s\n" "#userdata" | $comp -c > tmpfile
+		fake_userdata_nocloud < tmpfile
+
+		CLOUD="nocloud" atf_check \
+			-e 'ignore' \
+			sh -c ". \"$lib\"; init__save_userdata"
+
+		if ! grep "^#userdata" var/lib/cloud/user-data; then
+			atf_fail "$comp failed"
+		fi
+	done
+}
+
+set_nocloud_meta() {
+	local metadata="$(cat)"
+	fake_bin mount <<-EOF
+		#!/bin/sh
+		# find last arg which is the mount dir
+		while ! [ -d "\$1" ]; do
+			shift
+		done
+		printf "%s" "$metadata" \
+			> "\$1"/meta-data
+	EOF
+
+	fake_bin umount <<-EOF
+		#!/bin/sh
+		while ! [ -d "\$1" ]; do
+			shift
+		done
+		rm -f "\$1"/meta-data
+	EOF
+	mkdir -p mnt
+}
+
+set_hostname_body() {
+	set_nocloud_meta <<-EOF
+		hostname: myhostname
+	EOF
+
+	CLOUD="nocloud" atf_check \
+		-o match:"hostname.*-F $PWD/etc/hostname" \
+		sh -c ". \"$lib\"; init__set_hostname"
+	atf_check -o match:"^myhostname$" cat etc/hostname
+}
+
+set_ssh_keys_body() {
+	fake_bin getent <<-EOF
+		#!/bin/sh
+		echo "alpine:x:1000:1000:Linux User,,,:/home/alpine:/bin/sh"
+	EOF
+	set_nocloud_meta user-data <<-EOF
+		public-keys:
+		  - openssh-key: ssh-ed25519 keydata
+		  - openssh-key: ssh-rsa foobar
+	EOF
+	CLOUD="nocloud" atf_check \
+		-o match:"chown.*/\.ssh" \
+		sh -c ". \"$lib\"; init__set_ssh_keys"
+	atf_check  -o match:"^ssh-ed25519 keydata" \
+		-o match:"^ssh-rsa foobar" \
+		cat home/alpine/.ssh/authorized_keys
+}
+
+userdata_type_body() {
+	mkdir -p var/lib/cloud
+	for c in $PROVIDERS; do
+		rm -f var/lib/cloud/user-data
+		CLOUD="$c" atf_check \
+			-o match:"missing" \
+			sh -c ". \"$lib\"; userdata_type"
+
+		echo "#tiny-cloud-config" > var/lib/cloud/user-data
+		CLOUD="$c" atf_check \
+			-o match:"tiny-cloud-config" \
+			sh -c ". \"$lib\"; userdata_type"
+
+		echo "no-content-type" > var/lib/cloud/user-data
+		CLOUD="$c" atf_check \
+			-o match:"unknown" \
+			sh -c ". \"$lib\"; userdata_type"
+
+		echo "#alpine-config" > var/lib/cloud/user-data
+		CLOUD="$c" atf_check \
+			-o match:"alpine-config" \
+			sh -c ". \"$lib\"; userdata_type"
+
+		echo "#!/bin/sh" > var/lib/cloud/user-data
+		CLOUD="$c" atf_check -s exit:0 \
+			-o match:"script" \
+			sh -c ". \"$lib\"; userdata_type"
+	done
+}
+
+run_userdata_body() {
+	fake_userdata_nocloud <<-EOF
+		#!/bin/sh
+		echo "hello from user-data"
+	EOF
+	CLOUD="nocloud" atf_check -e match:"NoCloud 'meta-data' is empty" \
+		sh -c ". \"$lib\"; init__save_userdata"
+	CLOUD="nocloud" atf_check \
+		-o match:"hello from user-data" \
+		sh -c ". \"$lib\"; init__run_userdata"
+	grep "hello from user-data" var/log/user-data.log || atf_fail "user-data.log failed"
+	grep -w "0" var/log/user-data.exit || atf_fail "user-data.exit failed"
 }
