@@ -34,6 +34,7 @@ no_metadata_boot_body() {
 			-e not-match:"not found" \
 			-e not-match:"o such file" \
 			-o match:"rc-update add.*sshd" \
+			-e not-match:"mount:" \
 			tiny-cloud boot
 	done
 }
@@ -43,6 +44,7 @@ no_userdata_early_body() {
 		CLOUD="$provider" atf_check \
 			-e not-match:"unknown" \
 			-e match:"save_userdata.*done" \
+			-e not-match:"mount:" \
 			tiny-cloud early
 	done
 }
@@ -52,6 +54,7 @@ no_userdata_main_body() {
 		# we should not set empty hostname
 		# we should not create .ssh dir for non-existing user
 		CLOUD="$provider" atf_check \
+			-e not-match:"mount:" \
 			-e not-match:"failed" \
 			-e not-match:"unknown" \
 			-o not-match:"hostname.*-F" \

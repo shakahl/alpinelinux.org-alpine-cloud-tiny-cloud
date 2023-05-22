@@ -56,7 +56,7 @@ _load_nocloud_volume() {
 		[ "$mounted" ] && break
 		for label in cidata CIDATA; do
 			[ -n "$mounted" ] && break
-			mount -o ro -t "$fstype" LABEL="$label" "$mntdir" && mounted=1
+			mount -o ro -t "$fstype" LABEL="$label" "$mntdir" 2>/dev/null && mounted=1
 		done
 	done
 	if [ -n "$mounted" ]; then
