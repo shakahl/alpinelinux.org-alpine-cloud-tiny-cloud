@@ -1,5 +1,5 @@
 #!/bin/sh
-# vim:set ft=sh:
+# vim:set filetype=sh:
 
 # Tiny Cloud IMDS ifupdown-ng executor
 

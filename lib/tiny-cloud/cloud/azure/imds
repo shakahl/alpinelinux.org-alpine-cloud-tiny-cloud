@@ -1,5 +1,5 @@
 # Azure Instance MetaData Service variables and functions
-# vim:set ft=sh:
+# vim:set filetype=sh:
 # shellcheck shell=sh
 
 IMDS_HEADER="Metadata"

@@ -1,5 +1,5 @@
 # Tiny Cloud - Init Functions
-# vim:set ft=sh:
+# vim:set filetype=sh:
 # shellcheck shell=sh
 
 INIT_ACTIONS_BOOT="$(replace_word set_default_interfaces set_network_interfaces $INIT_ACTIONS_BOOT)"

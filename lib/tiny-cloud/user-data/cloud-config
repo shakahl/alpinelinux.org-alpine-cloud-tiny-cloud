@@ -1,5 +1,5 @@
 # CloudConfig UserData Functions
-# vim:set ft=sh:
+# vim:set filetype=sh:
 # shellcheck shell=sh
 
 # TODO

@@ -1,5 +1,5 @@
 #!/bin/sh
-# vim:set ft=sh:
+# vim:set filetype=sh:
 
 # NOTE: The mdev-conf APK handles this now, but only for xvd or sd links (not
 #	both)

@@ -1,5 +1,5 @@
 # Missing UserData Functions
-# vim:set ft=sh:
+# vim:set filetype=sh:
 # shellcheck shell=sh
 
 init__missing_userdata() {

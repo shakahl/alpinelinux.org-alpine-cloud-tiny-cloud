@@ -1,5 +1,5 @@
 #!/usr/bin/env atf-sh
-# vim:set ft=sh
+# vim:set filetype=sh:
 # shellcheck shell=sh
 
 . $(atf_get_srcdir)/test_env.sh

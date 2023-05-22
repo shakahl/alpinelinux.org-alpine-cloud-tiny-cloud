@@ -1,5 +1,5 @@
 # Tiny Cloud - mdev hotplug functions
-# vim:set ft=sh:
+# vim:set filetype=sh:
 # shellcheck shell=sh
 
 # generic helper function to install mdev rules

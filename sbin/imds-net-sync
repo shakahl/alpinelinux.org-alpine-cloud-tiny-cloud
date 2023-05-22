@@ -1,5 +1,5 @@
 #!/bin/sh
-# vim:set ft=sh:
+# vim:set filetype=sh:
 
 # Sync interface's network configuration with IMDS
 
