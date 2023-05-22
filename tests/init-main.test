@@ -10,10 +10,7 @@ lib="$srcdir"/lib/tiny-cloud/init
 
 init_tests \
 	set_hostname \
-	set_ssh_keys \
-	save_userdata_plain \
-	save_userdata_compressed
-
+	set_ssh_keys
 
 set_nocloud_meta() {
 	local metadata="$(cat)"
@@ -64,29 +61,4 @@ set_ssh_keys_body() {
 	atf_check  -o match:"^ssh-ed25519 keydata" \
 		-o match:"^ssh-rsa foobar" \
 		cat home/alpine/.ssh/authorized_keys
-}
-
-save_userdata_plain_body() {
-	fake_userdata_nocloud <<-EOF
-		#userdata
-	EOF
-	CLOUD="nocloud" atf_check -e match:"NoCloud 'meta-data' is empty" \
-		sh -c ". \"$lib\"; init__save_userdata"
-	atf_check -o match:"^#userdata" cat var/lib/cloud/user-data
-}
-
-save_userdata_compressed_body() {
-	for comp in  gzip bzip2 xz lzma lzop lz4 zstd; do
-		# fake_userdata_nocloud will set PATH so dont run it in a subshell
-		printf "%s\n" "#userdata" | $comp -c > tmpfile
-		fake_userdata_nocloud < tmpfile
-
-		CLOUD="nocloud" atf_check \
-			-e 'ignore' \
-			sh -c ". \"$lib\"; init__save_userdata"
-
-		if ! grep "^#userdata" var/lib/cloud/user-data; then
-			atf_fail "$comp failed"
-		fi
-	done
 }

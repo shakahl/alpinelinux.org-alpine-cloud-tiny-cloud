@@ -11,14 +11,14 @@
 
 ### default phase actions (without leading 'init__')
 
-DEFAULT_ACTIONS_EARLY="
+DEFAULT_ACTIONS_BOOT="
 	expand_root
 	install_hotplugs
 	set_default_interfaces
 	create_default_user
 	enable_sshd
 "
-DEFAULT_ACTIONS_NET="
+DEFAULT_ACTIONS_EARLY="
 	save_userdata
 "
 DEFAULT_ACTIONS_MAIN="
@@ -27,8 +27,8 @@ DEFAULT_ACTIONS_MAIN="
 "
 DEFAULT_ACTIONS_FINAL=""
 
+: "${INIT_ACTIONS_BOOT=$DEFAULT_ACTIONS_BOOT}"
 : "${INIT_ACTIONS_EARLY=$DEFAULT_ACTIONS_EARLY}"
-: "${INIT_ACTIONS_NET=$DEFAULT_ACTIONS_NET}"
 : "${INIT_ACTIONS_MAIN=$DEFAULT_ACTIONS_MAIN}"
 : "${INIT_ACTIONS_FINAL=$DEFAULT_ACTIONS_FINAL}"
 
@@ -37,7 +37,7 @@ DEFAULT_ACTIONS_FINAL=""
 [ ! -d "$TINY_CLOUD_VAR" ] && mkdir -p "$TINY_CLOUD_VAR" || true
 
 
-### standard init-early functions...
+### standard boot phase functions...
 
 init__expand_root() {
 	local dev=$(awk '$2 == "/" {print $1}' "$ROOT"/proc/mounts 2>/dev/null)
@@ -185,6 +185,8 @@ init__create_default_user() {
 	fi
 	if [ -d "$ROOT/etc/doas.d" ]; then
 		echo 'permit nopass :wheel' > "$TARGET/etc/doas.d/wheel.conf"
+	elif [ -f "$ROOT/etc/doas.conf" ]; then
+		add_once "$TARGET/etc/doas.conf" "permit nopass :wheel"
 	fi
 }
 
@@ -194,8 +196,39 @@ init__enable_sshd() {
 	$MOCK rc-update --update
 }
 
+### standard early phase functions
 
-### standard init-main functions
+init__save_userdata() {
+	local userdata="$TINY_CLOUD_VAR/user-data"
+	if [ -f "$userdata" ]; then
+		log -i -t "$phase" info "$ACTION: user-data already saved"
+		return
+	fi
+	local tmpfile=$(mktemp "$userdata.XXXXXX")
+
+	imds -e @userdata > "$tmpfile"
+	if printf '\037\213\010' | cmp -s -n 3 "$tmpfile"; then
+		gzip -dc "$tmpfile" > "$userdata"
+	elif printf 'BZh' | cmp -s -n 3 "$tmpfile"; then
+		bzip2 -dc "$tmpfile" > "$userdata"
+	elif printf '\375\067\172\130\132\000' | cmp -s -n 6 "$tmpfile"; then
+		unxz -c "$tmpfile" > "$userdata"
+	elif printf '\135\000\000' | cmp -s -n 3 "$tmpfile"; then
+		lzma -dc "$tmpfile" > "$userdata"
+	elif printf '\211\114\132' | cmp -s -n 3 "$tmpfile"; then
+		lzop -dc "$tmpfile" > "$userdata"
+	elif printf '\004\042\115\030' | cmp -s -n 4 "$tmpfile"; then
+		lz4 -dc "$tmpfile" > "$userdata"
+	elif printf '(\265/\375' | cmp -s -n 4 "$tmpfile"; then
+		zstd -dc "$tmpfile" > "$userdata"
+	else
+		cp "$tmpfile" "$userdata"
+	fi
+	rm "$tmpfile"
+}
+
+
+### standard main phase functions
 
 init__set_hostname() {
 	local fqdn=$(imds @hostname)
@@ -243,37 +276,8 @@ init__set_ssh_keys() {
 	echo "$sshkeys" > "$keys_file"
 }
 
-init__save_userdata() {
-	local userdata="$TINY_CLOUD_VAR/user-data"
-	if [ -f "$userdata" ]; then
-		log -i -t "$phase" info "$ACTION: user-data already saved"
-		return
-	fi
-	local tmpfile=$(mktemp "$userdata.XXXXXX")
 
-	imds -e @userdata > "$tmpfile"
-	if printf '\037\213\010' | cmp -s -n 3 "$tmpfile"; then
-		gzip -dc "$tmpfile" > "$userdata"
-	elif printf 'BZh' | cmp -s -n 3 "$tmpfile"; then
-		bzip2 -dc "$tmpfile" > "$userdata"
-	elif printf '\375\067\172\130\132\000' | cmp -s -n 6 "$tmpfile"; then
-		unxz -c "$tmpfile" > "$userdata"
-	elif printf '\135\000\000' | cmp -s -n 3 "$tmpfile"; then
-		lzma -dc "$tmpfile" > "$userdata"
-	elif printf '\211\114\132' | cmp -s -n 3 "$tmpfile"; then
-		lzop -dc "$tmpfile" > "$userdata"
-	elif printf '\004\042\115\030' | cmp -s -n 4 "$tmpfile"; then
-		lz4 -dc "$tmpfile" > "$userdata"
-	elif printf '(\265/\375' | cmp -s -n 4 "$tmpfile"; then
-		zstd -dc "$tmpfile" > "$userdata"
-	else
-		cp "$tmpfile" "$userdata"
-	fi
-	rm "$tmpfile"
-}
-
-
-### standard init-final functions would be here, if there were any
+### standard final phase functions would be here, if there were any
 
 
 ### load cloud-specific init functions / vars (potentially overriding)

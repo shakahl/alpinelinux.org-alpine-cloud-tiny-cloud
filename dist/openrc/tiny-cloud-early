@@ -5,8 +5,8 @@
 description="Tiny Cloud Bootstrap - early phase"
 
 depend() {
-	after root logger
-	before net
+	need net
+	before tiny-cloud-main
 }
 
 start() {

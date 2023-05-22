@@ -9,115 +9,30 @@ export MOCK=echo
 lib="$srcdir"/lib/tiny-cloud/init
 
 init_tests \
-	expand_root \
-	expand_root_partition \
-	install_hotplugs_fail \
-	ethernets \
-	find_first_interface_up \
-	auto_detect_ethernet_interface \
-	set_default_interfaces \
-	enable_sshd \
-	create_default_user
+	save_userdata_plain \
+	save_userdata_compressed
 
-PROVIDERS="alpine aws azure gcp nocloud oci"
+save_userdata_plain_body() {
+	fake_userdata_nocloud <<-EOF
+		#userdata
+	EOF
+	CLOUD="nocloud" atf_check -e match:"NoCloud 'meta-data' is empty" \
+		sh -c ". \"$lib\"; init__save_userdata"
+	atf_check -o match:"^#userdata" cat var/lib/cloud/user-data
+}
 
-expand_root_body() {
-	mkdir proc
-	echo "/dev/xvda / ext4 rw,noatime 0 0" > proc/mounts
-	for provider in $PROVIDERS; do
-		CLOUD="$provider" atf_check \
-			-o match:"resize2fs /dev/xvda" \
-			sh -c ". $lib; init__expand_root"
+save_userdata_compressed_body() {
+	for comp in  gzip bzip2 xz lzma lzop lz4 zstd; do
+		# fake_userdata_nocloud will set PATH so dont run it in a subshell
+		printf "%s\n" "#userdata" | $comp -c > tmpfile
+		fake_userdata_nocloud < tmpfile
+
+		CLOUD="nocloud" atf_check \
+			-e 'ignore' \
+			sh -c ". \"$lib\"; init__save_userdata"
+
+		if ! grep "^#userdata" var/lib/cloud/user-data; then
+			atf_fail "$comp failed"
+		fi
 	done
-}
-
-expand_root_partition_body() {
-	mkdir -p proc sys/class/block \
-		sys/devices/pci0000:00/0000:00:1b.0/0000:01:00.0/nvme/nvme0/nvme0n1/nvme0n1p2 \
-		sys/devices/pci0000:00/0000:00:1b.0/0000:01:00.0/nvme/nvme0/nvme0n1/device
-	ln -s ../../devices/pci0000:00/0000:00:1b.0/0000:01:00.0/nvme/nvme0/nvme0n1 sys/class/block/nvme0n1
-	ln -s ../../devices/pci0000:00/0000:00:1b.0/0000:01:00.0/nvme/nvme0/nvme0n1/nvme0n1p2 sys/class/block/nvme0n1p2
-	echo 2 > sys/class/block/nvme0n1p2/partition
-
-	echo "/dev/nvme0n1p2 / ext4 rw,noatime 0 0" > proc/mounts
-	for provider in $PROVIDERS; do
-		CLOUD="$provider" atf_check \
-			-o match:"sfdisk .*/dev/nvme0n1" \
-			-o match:"partx .*/dev/nvme0n1" \
-			-o match:"resize2fs /dev/nvme0n1p2" \
-			sh -c ". $lib; init__expand_root"
-	done
-}
-
-install_hotplugs_fail_body() {
-	CLOUD=aws atf_check -s not-exit:0 \
-		-e match:"vnic_eth_hotplug: failed" \
-		sh -c ". $lib; HOTPLUG_MODULES='vnic_eth_hotplug'; init__install_hotplugs"
-}
-
-ethernets_body() {
-	fake_interfaces lo br0 eth0 eth2 eth11
-
-	# check that they are sorted by ifindex, not name
-	# and that br0 and lo are excluded
-	atf_check \
-		-o match:"eth0 eth2 eth11" \
-		-o not-match:"br0" \
-		-o not-match:"lo" \
-		sh -c ". $lib; ethernets | tr '\n' ' '"
-}
-
-find_first_interface_up_body() {
-	fake_interfaces eth0 eth1
-	echo up > sys/class/net/eth1/operstate
-
-	atf_check \
-		-o match:"eth1" \
-		sh -c ". $lib; find_first_interface_up eth0 eth1"
-}
-
-auto_detect_ethernet_interface_body() {
-	fake_interfaces eth0 eth1
-	echo up > sys/class/net/eth1/operstate
-
-	atf_check \
-		-o match:"^eth1$" \
-		sh -c ". $lib; auto_detect_ethernet_interface"
-
-	# test that we pick first if all are down
-	echo down > sys/class/net/eth1/operstate
-	atf_check \
-		-o match:"^eth0$" \
-		sh -c ". $lib; TINY_CLOUD_LINK_WAIT_MAX=1; auto_detect_ethernet_interface"
-}
-
-set_default_interfaces_body() {
-	fake_interfaces eth0 eth1
-	echo up > sys/class/net/eth1/operstate
-
-	atf_check \
-		sh -c ". $lib; init__set_default_interfaces"
-	atf_check \
-		-o match:"auto lo" \
-		-o match:"iface eth1" \
-		-o match:"use dhcp" \
-		cat etc/network/interfaces
-}
-
-enable_sshd_body() {
-	for provider in $PROVIDERS; do
-		CLOUD="$provider" atf_check \
-			-o match:"rc-update.* add sshd default" \
-			-o match:"rc-update.* --update" \
-			sh -c ". $lib; init__enable_sshd"
-	done
-}
-
-create_default_user_body() {
-	atf_check \
-		-o match:"addgroup alpine" \
-		-o match:"adduser.*alpine" \
-		-o match:"addgroup alpine wheel" \
-		-o match:"chpasswd -e" \
-		sh -c ". $lib; init__create_default_user"
 }

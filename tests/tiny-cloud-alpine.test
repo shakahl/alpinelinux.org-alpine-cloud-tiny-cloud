@@ -44,7 +44,7 @@ set_network_config_network_interfaces_body() {
 	atf_check \
 		-o match:"rc-update" \
 		-e match:"set_network_interfaces: done" \
-		tiny-cloud early
+		tiny-cloud boot
 	atf_check \
 		-o match:"auto eth1" \
 		-o match:"iface eth1" \
@@ -70,7 +70,7 @@ set_network_config_auto_body() {
 	atf_check \
 		-o match:"rc-update" \
 		-e match:"set_network_interfaces: done" \
-		tiny-cloud early
+		tiny-cloud boot
 	atf_check \
 		-o match:"auto eth1" \
 		-o match:"iface eth1" \
@@ -89,7 +89,7 @@ userdata_bootcmd_body() {
 		  - echo foo
 		  - echo bar
 	EOF
-	atf_check -e ignore -o ignore tiny-cloud net
+	atf_check -e ignore -o ignore tiny-cloud early
 	atf_check \
 		-e match:"userdata_bootcmd: done" \
 		-o match:"^foo$" -o match:"^bar$" \
@@ -102,7 +102,7 @@ userdata_ntp_body() {
 		ntp:
 		  enabled: true
 	EOF
-	atf_check -e ignore -o ignore tiny-cloud net
+	atf_check -e ignore -o ignore tiny-cloud early
 	atf_check \
 		-e match:"userdata_ntp: done" \
 		-o match:"apk add.*chrony" \
@@ -118,7 +118,7 @@ userdata_ntp_busybox_body() {
 		  enabled: true
 		  ntp_client: busybox
 	EOF
-	atf_check -e ignore -o ignore tiny-cloud net
+	atf_check -e ignore -o ignore tiny-cloud early
 	atf_check \
 		-e match:"userdata_ntp: done" \
 		-o not-match:"apk add" \
@@ -134,7 +134,7 @@ userdata_ntp_openntpd_body() {
 		  enabled: true
 		  ntp_client: openntpd
 	EOF
-	atf_check -e ignore -o ignore tiny-cloud net
+	atf_check -e ignore -o ignore tiny-cloud early
 	atf_check \
 		-e match:"userdata_ntp: done" \
 		-o match:"apk add.*openntpd" \
@@ -149,7 +149,7 @@ userdata_apk_cache_body() {
 		apk:
 		  cache: /var/cache/apk
 	EOF
-	atf_check -e ignore -o ignore tiny-cloud net
+	atf_check -e ignore -o ignore tiny-cloud early
 	atf_check \
 		-e match:"userdata_apk_cache: done" \
 		-o ignore \
@@ -165,7 +165,7 @@ userdata_apk_repositories_body() {
 		    - base_url: /srv/packages
 		      repos: [ "main", "community" ]
 	EOF
-	atf_check -e ignore -o ignore tiny-cloud net
+	atf_check -e ignore -o ignore tiny-cloud early
 	atf_check \
 		-e match:"userdata_apk_repositories: done" \
 		-o ignore \
@@ -184,7 +184,7 @@ userdata_apk_repositories_version_body() {
 		      version: edge
 		      repos: [ "main", "community" ]
 	EOF
-	atf_check -e ignore -o ignore tiny-cloud net
+	atf_check -e ignore -o ignore tiny-cloud early
 	atf_check \
 		-e match:"userdata_apk_repositories: done" \
 		-o ignore \
@@ -205,7 +205,7 @@ userdata_apk_repositories_version_auto_edge_body() {
 	mkdir -p etc
 	echo "VERSION_ID=3.18_alpha20230329" > etc/os-release
 
-	atf_check -e ignore -o ignore tiny-cloud net
+	atf_check -e ignore -o ignore tiny-cloud early
 	atf_check \
 		-e match:"userdata_apk_repositories: done" \
 		-o ignore \
@@ -220,7 +220,7 @@ userdata_package_update_body() {
 		#alpine-config
 		package_update: true
 	EOF
-	atf_check -e ignore -o ignore tiny-cloud net
+	atf_check -e ignore -o ignore tiny-cloud early
 	atf_check \
 		-e match:"userdata_package_update: done" \
 		-o match:"apk update" \
@@ -232,7 +232,7 @@ userdata_package_upgrade_body() {
 		#alpine-config
 		package_upgrade: true
 	EOF
-	atf_check -e ignore -o ignore tiny-cloud net
+	atf_check -e ignore -o ignore tiny-cloud early
 	atf_check \
 		-e match:"userdata_package_upgrade: done" \
 		-o match:"apk upgrade" \
@@ -246,7 +246,7 @@ userdata_packages_body() {
 		  - tmux
 		  - vim
 	EOF
-	atf_check -e ignore -o ignore tiny-cloud net
+	atf_check -e ignore -o ignore tiny-cloud early
 	atf_check \
 		-e match:"userdata_packages: done" \
 		-o match:"apk add .*tmux" \
@@ -262,7 +262,7 @@ userdata_runcmd_body() {
 		  - echo bar
 	EOF
 	# run net phase to extract the user data
-	atf_check -e ignore -o ignore tiny-cloud net
+	atf_check -e ignore -o ignore tiny-cloud early
 	atf_check \
 		-e match:"userdata_runcmd: done" \
 		-o match:"^foo$" -o match:"^bar$" \
@@ -301,7 +301,7 @@ userdata_write_files_body() {
 		    world
 	EOF
 	# fetch user-data
-	atf_check -e ignore -o ignore tiny-cloud net
+	atf_check -e ignore -o ignore tiny-cloud early
 
 	atf_check \
 		-e match:"userdata_write_files: done" \

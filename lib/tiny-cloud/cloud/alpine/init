@@ -2,7 +2,7 @@
 # vim:set ft=sh:
 # shellcheck shell=sh
 
-INIT_ACTIONS_EARLY="$(replace_word set_default_interfaces set_network_interfaces $INIT_ACTIONS_EARLY)"
+INIT_ACTIONS_BOOT="$(replace_word set_default_interfaces set_network_interfaces $INIT_ACTIONS_BOOT)"
 
 set_resolv_conf() {
 	# resolv.conf

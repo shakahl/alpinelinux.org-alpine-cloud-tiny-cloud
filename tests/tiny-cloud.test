@@ -10,8 +10,8 @@ PROVIDERS="alpine aws azure gcp nocloud oci"
 
 init_tests \
 	tiny_cloud_help \
-	no_metadata_early \
-	no_userdata_net \
+	no_metadata_boot \
+	no_userdata_early \
 	no_userdata_main \
 	no_userdata_final
 
@@ -27,23 +27,23 @@ tiny_cloud_help_body() {
 	done
 }
 
-no_metadata_early_body() {
+no_metadata_boot_body() {
 	for provider in $PROVIDERS; do
 		CLOUD="$provider" atf_check \
 			-e not-match:"unknown" \
 			-e not-match:"not found" \
 			-e not-match:"o such file" \
 			-o match:"rc-update add.*sshd" \
-			tiny-cloud early
+			tiny-cloud boot
 	done
 }
 
-no_userdata_net_body() {
+no_userdata_early_body() {
 	for provider in $PROVIDERS; do
 		CLOUD="$provider" atf_check \
 			-e not-match:"unknown" \
 			-e match:"save_userdata.*done" \
-			tiny-cloud net
+			tiny-cloud early
 	done
 }
 

@@ -10,7 +10,7 @@ set -e
 
 usage() {
 	cat <<-EOF
-		Usage: ${0##*/} [-h | --help] { early | net | main | final | --bootstrap {complete|incomplete|status} | --setup }
+		Usage: ${0##*/} [-h | --help] { boot | early | main | final | --bootstrap {complete|incomplete|status} | --setup }
 	EOF
 }
 
@@ -46,12 +46,12 @@ while true; do
 			esac
 			exit 0;;
 		-s|--setup)	# just openrc for now
-			for phase in -early -net '' -final; do
+			for phase in -boot -early -main -final '' -net; do
 				rc-update -a del "tiny-cloud$phase" || true
 			done
-			rc-update add tiny-cloud-early boot
-			rc-update add tiny-cloud-net default
-			rc-update add tiny-cloud default
+			rc-update add tiny-cloud-boot boot
+			rc-update add tiny-cloud-early default
+			rc-update add tiny-cloud-main default
 			rc-update add tiny-cloud-final default
 			exit 0;;
 		--) shift; break;;
@@ -64,7 +64,7 @@ phase="$1"
 shift
 
 case "$phase" in
-	early|net|main|final) ;;
+	boot|early|main|final) ;;
 	*) usage >&2; exit 1;;
 esac
 
@@ -97,8 +97,8 @@ INIT_ACTIONS_FINAL="${INIT_ACTIONS_FINAL} bootstrap_complete"
 ### let's do stuff!
 
 case "$phase" in
+	boot)	INIT_ACTIONS="$INIT_ACTIONS_BOOT";;
 	early)	INIT_ACTIONS="$INIT_ACTIONS_EARLY";;
-	net)	INIT_ACTIONS="$INIT_ACTIONS_NET";;
 	main)	INIT_ACTIONS="$INIT_ACTIONS_MAIN";;
 	final)	INIT_ACTIONS="$INIT_ACTIONS_FINAL";;
 	*)		usage >&2; exit 1;;

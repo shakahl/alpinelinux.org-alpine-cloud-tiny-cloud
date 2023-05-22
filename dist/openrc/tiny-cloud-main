@@ -3,7 +3,6 @@
 # shellcheck shell=sh
 
 description="Tiny Cloud Bootstrap - main phase"
-extra_commands="complete incomplete"
 
 depend() {
 	need net
@@ -15,7 +14,3 @@ start() {
 	tiny-cloud main
 	eend $?
 }
-
-# allow setting / unsetting of bootstrapped state
-complete() { tiny-cloud --bootstrap complete ; }
-incomplete() { tiny-cloud --bootstrap incomplete ; }
