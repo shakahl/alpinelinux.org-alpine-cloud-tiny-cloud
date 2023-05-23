@@ -12,6 +12,9 @@ lib="$srcdir"/lib/tiny-cloud/cloud/alpine/init
 init_tests \
 	set_network_config_network_interfaces \
 	set_network_config_auto \
+	userdata_user_name \
+	userdata_user_missing_name \
+	userdata_create_default_user \
 	userdata_bootcmd \
 	userdata_write_files \
 	userdata_ntp \
@@ -80,6 +83,43 @@ set_network_config_auto_body() {
 	if [ -e etc/resolv.conf ]; then
 		atf_fail "etc/resolv.conf should not been created with DHCP"
 	fi
+}
+
+userdata_user_name_body() {
+	fake_userdata_nocloud <<-EOF
+		#alpine-config
+		user:
+		  name: joeuser
+	EOF
+	atf_check -e ignore -o ignore tiny-cloud early
+	atf_check \
+		-e match:"create_default_user: done" \
+		-o match:"adduser.*joeuser" \
+		tiny-cloud main
+}
+
+userdata_user_missing_name_body() {
+	fake_userdata_nocloud <<-EOF
+		#alpine-config
+		user:
+		  gecos: Foo B. Baz
+	EOF
+	atf_check -e ignore -o ignore tiny-cloud early
+	atf_check \
+		-e match:"create_default_user: done" \
+		-o not-match:"adduser.*gecos" \
+		tiny-cloud main
+}
+
+userdata_create_default_user_body() {
+	fake_userdata_nocloud <<-EOF
+		#alpine-config
+	EOF
+	atf_check -e ignore -o ignore tiny-cloud early
+	atf_check \
+		-e match:"create_default_user: done" \
+		-o match:"adduser.*alpine" \
+		tiny-cloud main
 }
 
 userdata_bootcmd_body() {

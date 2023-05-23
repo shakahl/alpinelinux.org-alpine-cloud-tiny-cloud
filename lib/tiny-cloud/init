@@ -15,13 +15,13 @@ DEFAULT_ACTIONS_BOOT="
 	expand_root
 	install_hotplugs
 	set_default_interfaces
-	create_default_user
 	enable_sshd
 "
 DEFAULT_ACTIONS_EARLY="
 	save_userdata
 "
 DEFAULT_ACTIONS_MAIN="
+	create_default_user
 	set_hostname
 	set_ssh_keys
 "

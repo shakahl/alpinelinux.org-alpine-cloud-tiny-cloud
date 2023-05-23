@@ -47,6 +47,18 @@ replace_word() {
 }
 
 # usage: insert_after <where> <what> <list>...
+insert_before() {
+	local search="$1" addition="$2"
+	shift 2
+	for i in "$@"; do
+		if [ "$i" = "$search" ]; then
+			echo "$addition"
+		fi
+		echo "$i"
+	done
+}
+
+# usage: insert_after <where> <what> <list>...
 insert_after() {
 	local search="$1" addition="$2"
 	shift 2
