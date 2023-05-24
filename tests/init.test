@@ -120,10 +120,6 @@ enable_sshd_body() {
 }
 
 create_default_user_body() {
-	fake_bin getent <<-EOF
-		#!/bin/sh
-		exit 2
-	EOF
 	atf_check \
 		-o match:"addgroup alpine" \
 		-o match:"adduser.*alpine" \
