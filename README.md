@@ -8,13 +8,14 @@ do just what is necessary with a small footprint and minimal dependencies.
 A direct descendant of [tiny-ec2-bootstrap](
 https://gitlab.alpinelinux.org/alpine/cloud/tiny-ec2-bootstrap), Tiny Cloud
 works with multiple cloud providers.  Currently, the following are supported:
-* [AWS](https://aws.amazon.com) (Amazon Web Services)
-* [Azure](https://azure.microsoft.com) (Microsoft Azure)
-* [GCP](https://cloud.google.com) (Google Cloud Platform)
-* [OCI](https://cloud.oracle.com) (Oracle Cloud Infrastructure)
+* [AWS](https://aws.amazon.com): Amazon Web Services
+* [Azure](https://azure.microsoft.com): Microsoft Azure
+* [GCP](https://cloud.google.com): Google Cloud Platform
+* [OCI](https://cloud.oracle.com): Oracle Cloud Infrastructure
 * [NoCloud](
-    https://cloudinit.readthedocs.io/en/latest/topics/datasources/nocloud.html)
-  (cloud-init's NoCloud AWS-compatible data source)
+    https://cloudinit.readthedocs.io/en/latest/reference/datasources/nocloud.html
+    ):
+    cloud-init's NoCloud AWS-compatible user provided data source
 
 ## Features
 
