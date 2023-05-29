@@ -49,7 +49,7 @@ iface_ip6s() {
 }
 
 imds_ip4s() {
-	local ip4=$(imds "@nic:$IFACE,@ipv4")
+	local ip4=$(imds -E "@nic:$IFACE,@ipv4")
 	local ip4s=$(echo "$ip4" | tail +2)   # secondary IPv4s
 	local ip4p ip4_cidr ip4_gw
 
@@ -58,7 +58,7 @@ imds_ip4s() {
 	if [ "$IFACE" != eth0 ] && [ -n "$ip4s" ] &&
 			[ -z $(ip +F -4 route show table "$RTABLE" 2>/dev/null) ]; then
 		ip4p=$(echo "$ip4" | head -1) # primary IPv4
-		ip4_cidr=$(imds "@nic:$IFACE,@ipv4-net")	# TODO: get from iface instead?
+		ip4_cidr=$(imds -E "@nic:$IFACE,@ipv4-net")	# TODO: get from iface instead?
 		# TODO: this may not hold true for non-AWS clouds
 		ip4_gw=$(echo "$ip4_cidr" | cut -d/ -f1 |
 			awk -F. '{ print $1"."$2"."$3"."$4+1 }')
@@ -73,7 +73,7 @@ imds_ip4s() {
 #   circle back and see how amazon-ec2-net-utils is handling everything these days
 imds_ip6s() {
 	local ip6s gw tries=20
-	ip6s=$(imds "@nic:$IFACE,@ipv6")
+	ip6s=$(imds -E "@nic:$IFACE,@ipv6")
 
 	# non-eth0 interfaces need custom route tables
 	#

@@ -13,6 +13,7 @@ if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
 		Usage: imds [-h] { -e | +e | +n | +s | +t | @<alias> | <imds-path> } ...
 		  -h           : help
 		  -e / +e      : ignore / catch errors
+		  -E / +E      : hide / slow STDERR
 		  +n / +s / +t : insert newline / space / tab
 		  <alias> :-
 		    hostname       : instance hostname
@@ -94,15 +95,17 @@ fi
 ### non-overrideable functions
 
 imds() {
-	local cmd args key rv err=1
+	local cmd args key rv err=1 stderr=1
 	while [ -n "$1" ]; do
 		cmd=_imds
 		args=
 		key="$1"; shift
 		case $key in
-			# error handling
+			# error handling/output
 			-e) err=0; continue ;;	# ignore
 			+e) err=1; continue ;;	# return
+			-E) stderr=0; continue ;; # hide
+			+E) stderr=1; continue ;; # show
 			# TODO: retry/deadline
 			# output control
 			+n) printf "\n"; continue ;;	# insert newline
@@ -122,8 +125,13 @@ imds() {
 			*) args="$key" ;;
 		esac
 		# TODO: retry/deadline
-		"$cmd" $args
-		rv=$?
+		if [ $stderr = 1 ]; then
+			"$cmd" $args
+			rv=$?
+		else
+			"$cmd" $args 2>/dev/null
+			rv=$?
+		fi
 		[ $err -eq 0 ] && continue
 		[ $rv = "0" ] || return $rv
 	done
