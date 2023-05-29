@@ -52,10 +52,10 @@ while true; do
 			log -s info " - tiny-cloud* services removed from all runlevels"
 			rm -f "$ROOT"/etc/runlevels/*/tiny-cloud*
 			log -s info " + tiny-cloud-boot service added to boot runlevel"
-			ln -s /etc/init.d/tiny-cloud-boot "$ROOT"/etc/runlevel/boot
+			ln -s /etc/init.d/tiny-cloud-boot "$ROOT"/etc/runlevels/boot
 			for p in early main final; do
 				log -s info " + tiny-cloud-$p service added to default runlevel"
-				ln -s "/etc/init.d/tiny-cloud-$p" "$ROOT"/etc/runlevel/default
+				ln -s "/etc/init.d/tiny-cloud-$p" "$ROOT"/etc/runlevels/default
 			done
 			exit 0;;
 		--) shift; break;;
