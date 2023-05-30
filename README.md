@@ -125,7 +125,7 @@ not installed in Alpine by default, and would need to be added to the image.)_
 
 When networking, IMDS, and User-Data are all availabile, this is the phase
 takes care of the majority of bootstrapping actions that require them --
-setting up the instanxe hostname, creating default cloud user, and installing
+setting up the instance hostname, creating default cloud user, and installing
 SSH keys for it.
 
 Additional main phase actions may be taken if there is a User-Data handler

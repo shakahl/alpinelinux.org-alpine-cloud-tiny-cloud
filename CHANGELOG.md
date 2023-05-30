@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## 2023-05-XX - Tiny Cloud v3.0.0
+## 2023-05-31 - Tiny Cloud v3.0.0
 
 ### INIT SCRIPTS / PHASES
 
