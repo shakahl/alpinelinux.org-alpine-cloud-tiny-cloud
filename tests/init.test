@@ -153,30 +153,8 @@ save_userdata_compressed_body() {
 	done
 }
 
-set_nocloud_meta() {
-	local metadata="$(cat)"
-	fake_bin mount <<-EOF
-		#!/bin/sh
-		# find last arg which is the mount dir
-		while ! [ -d "\$1" ]; do
-			shift
-		done
-		printf "%s" "$metadata" \
-			> "\$1"/meta-data
-	EOF
-
-	fake_bin umount <<-EOF
-		#!/bin/sh
-		while ! [ -d "\$1" ]; do
-			shift
-		done
-		rm -f "\$1"/meta-data
-	EOF
-	mkdir -p mnt
-}
-
 set_hostname_body() {
-	set_nocloud_meta <<-EOF
+	fake_metadata_nocloud <<-EOF
 		hostname: myhostname
 	EOF
 
@@ -191,7 +169,7 @@ set_ssh_keys_body() {
 		#!/bin/sh
 		echo "alpine:x:1000:1000:Linux User,,,:/home/alpine:/bin/sh"
 	EOF
-	set_nocloud_meta user-data <<-EOF
+	fake_metadata_nocloud <<-EOF
 		public-keys:
 		  - openssh-key: ssh-ed25519 keydata
 		  - openssh-key: ssh-rsa foobar
