@@ -6,6 +6,7 @@ INIT_ACTIONS_MAIN="$(insert_before create_default_user userdata_user $INIT_ACTIO
 INIT_ACTIONS_MAIN="$(insert_after set_hostname \
 	"userdata_bootcmd userdata_write_files userdata_ntp userdata_apk_cache userdata_apk_repositories userdata_package_update userdata_package_upgrade userdata_packages" \
 	$INIT_ACTIONS_MAIN)"
+INIT_ACTIONS_MAIN="$(insert_after set_ssh_keys ssh_authorized_keys $INIT_ACTIONS_MAIN)"
 INIT_ACTIONS_FINAL="$INIT_ACTIONS_FINAL userdata_runcmd"
 
 get_userdata() {
@@ -25,6 +26,38 @@ init__userdata_user() {
 	fi
 	CLOUD_USER="${name:-$CLOUD_USER}"
 }
+
+init__ssh_authorized_keys() {
+	local sshkeys="$(get_userdata ssh_authorized_keys)"
+	if [ -z "$sshkeys" ]; then
+		return
+	fi
+	local user="$CLOUD_USER"
+	local pwent="$(getent passwd "$user")"
+	if [ -z "$pwent" ]; then
+		log -i -t "$phase" err "$ACTION: failed to find user $user"
+		return 1
+	fi
+	local group=$(echo "$pwent" | cut -d: -f4)
+	local ssh_dir="${ROOT}$(echo "$pwent" | cut -d: -f6)/.ssh"
+	local keys_file="$ssh_dir/authorized_keys"
+
+	if [ ! -d "$ssh_dir" ]; then
+		mkdir -p "$ssh_dir"
+		chmod 700 "$ssh_dir"
+	fi
+
+	touch "$keys_file"
+	chmod 600 "$keys_file"
+	$MOCK chown -R "$user:$group" "$ssh_dir"
+	for i in $sshkeys; do
+		local key="$(get_userdata ssh_authorized_keys/$i)"
+		if [ -n "$key" ]; then
+			echo "$key" >> "$keys_file"
+		fi
+	done
+}
+
 
 init__userdata_bootcmd() {
 	# run bootcmd

@@ -41,15 +41,15 @@ fake_umount() {
 
 fake_data_nocloud() {
 	local datafile="$1"
-	local file="$(mktemp -p "$PWD")"
-	cat > "$file"
+	mkdir -p tmp/fake-data
+	cat > tmp/fake-data/"$datafile"
 	fake_bin mount <<-EOF
 		#!/bin/sh
 		# find last arg which is the mount dir
 		while ! [ -d "\$1" ]; do
 			shift
 		done
-		cp "$file" "\$1"/$datafile
+		cp tmp/fake-data/* "\$1"/
 	EOF
 	mkdir -p mnt
 	fake_umount

@@ -15,6 +15,7 @@ init_tests \
 	userdata_user_name \
 	userdata_user_missing_name \
 	userdata_create_default_user \
+	userdata_ssh_authorized_keys \
 	userdata_bootcmd \
 	userdata_write_files \
 	userdata_ntp \
@@ -120,6 +121,35 @@ userdata_create_default_user_body() {
 		-e match:"create_default_user: done" \
 		-o match:"adduser.*alpine" \
 		tiny-cloud main
+}
+
+userdata_ssh_authorized_keys_body() {
+	fake_bin getent <<-EOF
+		#!/bin/sh
+		echo "alpine:x:1000:1000:Linux User,,,:/home/alpine:/bin/sh"
+	EOF
+	fake_metadata_nocloud <<-EOF
+		public-keys:
+		  - openssh-key: ssh-ed25519 keydata
+		  - openssh-key: ssh-rsa foobar
+	EOF
+	fake_userdata_nocloud <<-EOF
+		#alpine-config
+		ssh_authorized_keys:
+		  - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOIiHcbg/7ytfLFHUNLRgEAubFz/13SwXBOM/05GNZe4 user@example.com
+		  - ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA609xjvHkN8mTBiyYF6pZxMJAdy+aNZzpv+gP2dpWivJwxO7Zb9yRX6s9OKmKEj3kKRg5KQHwknSncDQ3eCljzyyer2m7ewnrAY0BrNs10o+vJfq3tsb5kZN6rZzisneHEzi5aZhmjwTItX827OaVXmIWkVHpfEVf4hVn9PuIl4AS/xtPogA/4IJrHo+DshKMaqEgII9t+/zeOEuzrSDPXDRvht768iEzGov+T4xj2LGMas9Edm/Ka4xVb5nSDZKDtXaXwshGrOxctjLZCMhT15Jdww6btrl9VltF6BLy/AJ+F1MVBjBiCjyTqaHLkuHjVQpFq2osWlDr1FrSe/S2kw== joeuser@something
+	EOF
+	atf_check -e ignore -o ignore tiny-cloud early
+	atf_check \
+		-o ignore \
+		-e match:"ssh_authorized_keys: done" \
+		tiny-cloud main
+	atf_check -o match:"ssh-ed25519 keydata" \
+		grep keydata home/alpine/.ssh/authorized_keys
+	atf_check -o match:"ssh-ed25519.*user@example.com" \
+		grep ssh-ed25519 home/alpine/.ssh/authorized_keys
+	atf_check -o match:"ssh-rsa.*joeuser@something" \
+		grep ssh-rsa home/alpine/.ssh/authorized_keys
 }
 
 userdata_bootcmd_body() {
