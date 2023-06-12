@@ -101,6 +101,6 @@ _imds() {
 	if [ $(basename "$file") = "$keypath" ]; then
 		cat "$file"
 	else
-		yx -f "$file" $keypath
+		yx -f "$file" $keypath 2>/dev/null
 	fi
 }
