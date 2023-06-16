@@ -27,7 +27,7 @@ log() {
 	shift
 
 	[ -n "$init" ] && echo "$@" >&2
-	logger $stderr -p "$facility.$level" -t "${tag}[$$]" "$@"
+	logger $stderr -p "$facility.$level" -t "${tag}[$$]" -- "$@"
 	case "$level" in
 		crit|alert|emerg) exit 1 ;;
 	esac

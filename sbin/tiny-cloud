@@ -10,7 +10,7 @@ set -e
 
 usage() {
 	cat <<-EOF
-		Usage: ${0##*/} [-h | --help] { boot | early | main | final | --bootstrap {complete|incomplete|status} | --setup }
+		Usage: ${0##*/} [-h | --help] { boot | early | main | final | --bootstrap {complete|incomplete|status} | --enable | --disable }
 	EOF
 }
 
@@ -24,7 +24,7 @@ is_bootstrap_complete() {
 	[ -f "$TINY_CLOUD_VAR/.bootstrap-complete" ]
 }
 
-args=$(getopt -o hsb: --long help,setup,bootstrap: -n ${0##*/} -- "$@") || {  usage >&2; exit 1; }
+args=$(getopt -o hEDb: --long help,enable,disable,bootstrap: -n ${0##*/} -- "$@") || {  usage >&2; exit 1; }
 if [ $# -eq 0 ]; then
 	usage >&2
 	exit 1
@@ -45,17 +45,19 @@ while true; do
 				*) usage >&2; exit 1;;
 			esac
 			exit 0;;
-		-s|--setup)	# just openrc for now
-			# for installing in mounted volumes
-			: "${ROOT:=}"
-			# start with a clean slate
-			log -i info "- tiny-cloud* services removed from all runlevels"
+		-[ED]|--enable|disable)	# just openrc for now
+			: "${ROOT:=}"	# for mounted volumes
+			# always start with a clean slate
 			rm -f "$ROOT"/etc/runlevels/*/tiny-cloud*
-			log -i info "+ tiny-cloud-boot service added to boot runlevel"
+			log -i info "- tiny-cloud* services removed from all runlevels"
+			if [ "$1" = '-D' ] || [ "$1" = '--disable' ]; then
+				exit 0
+			fi
 			ln -s /etc/init.d/tiny-cloud-boot "$ROOT"/etc/runlevels/boot
+			log -i info "+ tiny-cloud-boot service added to boot runlevel"
 			for p in early main final; do
-				log -i info "+ tiny-cloud-$p service added to default runlevel"
 				ln -s "/etc/init.d/tiny-cloud-$p" "$ROOT"/etc/runlevels/default
+				log -i info "+ tiny-cloud-$p service added to default runlevel"
 			done
 			exit 0;;
 		--) shift; break;;

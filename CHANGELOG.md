@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## UNRELEASED - Tiny Cloud v3.0.x
+
+* Replace non-functioning `tiny-cloud --setup` with working `--enable` and
+  `--disable` to enable/disable the set of Tiny Cloud init scripts.
+
+## 2023-06-12 - Tiny Cloud v3.0.1
+
+* Adds support for additional `ssh-authorized-keys` via userdata for
+  experimental Alpine auto installer.
+
 ## 2023-05-31 - Tiny Cloud v3.0.0
 
 ### INIT SCRIPTS / PHASES

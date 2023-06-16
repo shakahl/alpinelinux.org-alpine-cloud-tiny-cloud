@@ -80,9 +80,9 @@ dependencies for Tiny Cloud to support _`<cloud>`_.
 
 Alternately, you can download a release tarball, and use `make` to install it.
 
-Next, set up the RC scripts...
+Next, enable the RC scripts...
 ```
-tiny-cloud --setup
+tiny-cloud --enable
 ```
 
 That's it!  On the next boot, Tiny Cloud will bootstrap the instance.
