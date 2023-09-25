@@ -131,4 +131,7 @@ for ACTION in $INIT_ACTIONS; do
 	fi
 	printf '   ++ ' >&2
 	log -i -t "$phase" "$LEVEL" "$ACTION: $RESULT"
+	if  [ "$RESULT" = "failed" ]; then
+		exit 1
+	fi
 done

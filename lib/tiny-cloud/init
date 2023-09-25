@@ -200,10 +200,6 @@ init__enable_sshd() {
 
 init__save_userdata() {
 	local userdata="$TINY_CLOUD_VAR/user-data"
-	if [ -f "$userdata" ]; then
-		log -i -t "$phase" info "$ACTION: user-data already saved"
-		return
-	fi
 	local tmpfile=$(mktemp "$userdata.XXXXXX")
 
 	imds -e @userdata > "$tmpfile"

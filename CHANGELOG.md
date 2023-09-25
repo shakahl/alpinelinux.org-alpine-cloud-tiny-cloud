@@ -1,9 +1,13 @@
 # CHANGELOG
 
-## UNRELEASED - Tiny Cloud v3.0.x
+## 2023-09-25 - Tiny Cloud v3.0.2
 
 * Replace non-functioning `tiny-cloud --setup` with working `--enable` and
   `--disable` to enable/disable the set of Tiny Cloud init scripts.
+* Reload user-data if bootstrap is incomplete, even if previous user-data file
+  exists.
+* Init actions that fail sould cause the `tiny-cloud` to also terminate with an
+  error.
 
 ## 2023-06-12 - Tiny Cloud v3.0.1
 

@@ -21,6 +21,11 @@
   * Feature parity with current [amazon-ec2-net-utils](
     https://github.com/amazonlinux/amazon-ec2-net-utils)
   * Support for non-AWS clouds
-  * daemonize to pick up IMDS network changes between reboots
+  * Daemonize to pick up IMDS network changes between reboots
+  * ***OR DEPRECATE AND NOT INSTALL FOR AWS BY DEFAULT***
+    * `dhcpcd` seems to work just fine with multiple IPv6 delivered via DHCPv6
+    * secondary IPv4 on an interface may be an edge case
+    * probably want to keep the `vnic-eth-hotplug` portion around for adding
+      and removing VNICs
 
 * Support LVM partitioning and non-`ext[234]` filesystems
