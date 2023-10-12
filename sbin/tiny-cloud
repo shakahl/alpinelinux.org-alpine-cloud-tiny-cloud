@@ -45,7 +45,7 @@ while true; do
 				*) usage >&2; exit 1;;
 			esac
 			exit 0;;
-		-[ED]|--enable|disable)	# just openrc for now
+		-[ED]|--enable|--disable)	# just openrc for now
 			: "${ROOT:=}"	# for mounted volumes
 			# always start with a clean slate
 			rm -f "$ROOT"/etc/runlevels/*/tiny-cloud*
