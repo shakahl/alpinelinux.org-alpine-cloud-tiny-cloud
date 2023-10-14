@@ -171,20 +171,6 @@ init__userdata_apk_cache() {
 	ln -sf "$cache" "$ROOT"/etc/apk/cache
 }
 
-init__userdata_apk_cache() {
-	local cache="$(get_userdata apk/cache)"
-	if [ -z "$cache" ]; then
-		return
-	fi
-	mkdir -p "$ROOT/$cache"
-	# make link relative
-	case "$cache" in
-		/*) cache="../..$cache";;
-	esac
-	mkdir -p "$ROOT"/etc/apk
-	ln -sf "$cache" "$ROOT"/etc/apk/cache
-}
-
 init__userdata_apk_repositories() {
 	local repositories="$(get_userdata apk/repositories)"
 	mkdir -p "$ROOT"/etc/apk
