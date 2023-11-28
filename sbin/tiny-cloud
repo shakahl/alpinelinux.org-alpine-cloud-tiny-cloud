@@ -74,6 +74,11 @@ case "$phase" in
 	*) usage >&2; exit 1;;
 esac
 
+if [ -e "$ROOT"/etc/tiny-cloud.disabled ]; then
+	log -i -t "$phase" info "tiny-cloud disabled"
+	exit 0
+fi
+
 # is initial bootstrap already done?
 if is_bootstrap_complete; then
 	log -i -t "$phase" info "already bootstrapped"

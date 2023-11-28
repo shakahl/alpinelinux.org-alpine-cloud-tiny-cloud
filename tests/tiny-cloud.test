@@ -10,6 +10,7 @@ PROVIDERS="alpine aws azure gcp nocloud oci"
 
 init_tests \
 	tiny_cloud_help \
+	tiny_cloud_disabled \
 	no_metadata_boot \
 	no_userdata_early \
 	no_userdata_main \
@@ -24,6 +25,16 @@ tiny_cloud_help_body() {
 		CLOUD="$provider" atf_check -s exit:0 \
 			-o match:"Usage" \
 			tiny-cloud --help
+	done
+}
+
+tiny_cloud_disabled_body() {
+	mkdir -p etc
+	touch etc/tiny-cloud.disabled
+	for provider in $PROVIDERS; do
+		CLOUD="$provider" atf_check -s exit:0 \
+			-e match:"tiny-cloud disabled" \
+			tiny-cloud early
 	done
 }
 
