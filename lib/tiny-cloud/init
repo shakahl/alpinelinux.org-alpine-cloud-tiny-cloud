@@ -14,6 +14,7 @@
 DEFAULT_ACTIONS_BOOT="
 	expand_root
 	install_hotplugs
+	set_ephemeral_network
 	set_default_interfaces
 	enable_sshd
 "
@@ -141,6 +142,22 @@ auto_detect_ethernet_interface() {
 		fi
 	done
 	echo "$iface"
+}
+
+# may be overridded by provider
+want_ephemeral_network() {
+	false
+}
+
+init__set_ephemeral_network() {
+	if ! want_ephemeral_network; then
+		return
+	fi
+	local iface="$(auto_detect_ethernet_interface)"
+	if [ -z "$iface" ]; then
+		return
+	fi
+	$MOCK udhcpc -i "$iface" -f
 }
 
 init__set_default_interfaces() {

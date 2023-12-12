@@ -10,6 +10,7 @@ export CLOUD=alpine
 lib="$srcdir"/lib/tiny-cloud/cloud/alpine/init
 
 init_tests \
+	set_ephemeral_network_cmdline \
 	set_network_config_network_interfaces \
 	set_network_config_auto \
 	userdata_user_name \
@@ -30,6 +31,16 @@ init_tests \
 	userdata_packages \
 	userdata_runcmd
 
+set_ephemeral_network_cmdline_body() {
+	fake_interfaces eth0 eth1 eth2
+	echo up > sys/class/net/eth1/operstate
+	mkdir -p proc
+	echo "ds=nocloud;h=foo;seedfrom=https://example.tld" > proc/cmdline
+	atf_check \
+		-o match:"udhcpc.*eth1" \
+		-e match:"set_ephemeral_network: done" \
+		tiny-cloud boot
+}
 
 set_network_config_network_interfaces_body() {
 	fake_metadata_nocloud <<-EOF

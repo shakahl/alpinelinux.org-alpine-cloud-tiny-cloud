@@ -13,6 +13,36 @@ set_resolv_conf() {
 	done
 }
 
+has_ipv4_address() {
+	$MOCK ip -4 -o addr show | awk '$2 != "lo" {print $4}' \
+		| grep -q -E '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+'
+}
+
+want_ephemeral_network() {
+	if has_ipv4_address; then
+		return 1
+	fi
+	for i in $(cat "$ROOT"/proc/cmdline 2>/dev/null) \
+			$(cat "$ROOT"/sys/class/dmi/id/product_serial 2>/dev/null); do
+		case "$i" in
+			"ds=nocloud;"*)
+				for kv in $(echo "${i#*;}" | tr \; ' '); do
+					k="${kv%%=*}"
+					v="${kv#*=}"
+					case "$k" in
+						s|seedfrom)
+							case "$v" in
+								http://*|https://*) return 0;;
+							esac
+							;;
+					esac
+				done
+				;;
+		esac
+	done
+	return 1
+}
+
 init__set_network_interfaces() {
 	local interfaces="$(imds meta-data/network-interfaces)"
 	mkdir -p "$ROOT"/etc/network
