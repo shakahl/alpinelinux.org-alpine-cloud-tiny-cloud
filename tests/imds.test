@@ -32,7 +32,8 @@ init_tests \
 	imds_ssh_keys_nocloud \
 	imds_ssh_keys_oci \
 	\
-	imds_nocloud_cmdline_local_hostname
+	imds_nocloud_cmdline_local_hostname \
+	imds_nocloud_smbios_local_hostname
 
 imds_help_body() {
 	atf_check -o match:"Usage: imds" imds -h
@@ -120,6 +121,17 @@ imds_nocloud_cmdline_local_hostname_body() {
 	mkdir proc
 	for key in h local-hostname; do
 		echo "BOOT_IMAGE=/boot/vmlinuz-lts ro ds=nocloud;$key=myhostname" > proc/cmdline
+		CLOUD=nocloud atf_check \
+			-o match:'^myhostname$' \
+			imds @local-hostname
+	done
+}
+
+imds_nocloud_smbios_local_hostname_body() {
+	atf_require_prog yx
+	mkdir -p sys/class/dmi/id
+	for key in h local-hostname; do
+		echo "ds=nocloud;$key=myhostname" > sys/class/dmi/id/product_serial
 		CLOUD=nocloud atf_check \
 			-o match:'^myhostname$' \
 			imds @local-hostname

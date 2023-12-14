@@ -8,8 +8,8 @@ is_nocloud_loaded() { [ -f "$TINY_CLOUD_VAR/.nocloud_loaded" ]; }
 
 _load_nocloud_cmdline() {
 	local kopt kv k v data
-
-	for kopt in $(cat "$ROOT/proc/cmdline" 2>/dev/null); do
+	for kopt in $(cat "$ROOT/proc/cmdline" 2>/dev/null) \
+			$(grep '^ds=nocloud' "$ROOT"/sys/class/dmi/id/product_serial 2>/dev/null) ; do
 		echo "$kopt" | grep -qE '(^|=)ds=nocloud(-net)?;' || continue
 		for kv in $(echo "${kopt#*;}" | tr \; ' '); do
 			k=$(echo "$kv" | cut -d= -f1)
