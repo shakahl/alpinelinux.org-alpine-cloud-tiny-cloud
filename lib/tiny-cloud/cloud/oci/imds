@@ -8,7 +8,7 @@ IMDS_URI="opc/v2"
 IMDS_HOSTNAME="instance/hostname"
 IMDS_LOCAL_HOSTNAME="$IMDS_HOSTNAME"
 IMDS_SSH_KEYS="instance/metadata/ssh_authorized_keys"
-IMDS_USERDATA="instance/metadata/userdata"
+IMDS_USERDATA="instance/metadata/user_data"
 IMDS_NICS="nics"
 
 # TODO: flesh out networking
