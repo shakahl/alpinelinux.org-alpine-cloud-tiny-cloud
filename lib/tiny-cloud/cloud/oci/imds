@@ -35,3 +35,8 @@ _imds_nic_index() {
 	done
 	return 1
 }
+
+# decode userdata value
+_imds_userdata() {
+	imds "$IMDS_USERDATA" | base64 -d
+}
