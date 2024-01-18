@@ -157,7 +157,7 @@ init__set_ephemeral_network() {
 	if [ -z "$iface" ]; then
 		return
 	fi
-	$MOCK udhcpc -i "$iface" -f
+	$MOCK udhcpc -i "$iface" -f -q
 }
 
 init__set_default_interfaces() {
