@@ -5,7 +5,7 @@
 . $(atf_get_srcdir)/test_env.sh
 
 export PREFIX="$srcdir"
-PROVIDERS="alpine aws azure gcp nocloud"
+PROVIDERS="alpine aws azure gcp nocloud scaleway"
 
 init_tests \
 	imds_help \
@@ -17,6 +17,7 @@ init_tests \
 	imds_hostname_gcp \
 	imds_hostname_nocloud \
 	imds_hostname_oci \
+	imds_hostname_scaleway \
 	\
 	imds_local_hostname_alpine \
 	imds_local_hostname_aws \
@@ -24,6 +25,7 @@ init_tests \
 	imds_local_hostname_gcp \
 	imds_local_hostname_nocloud \
 	imds_local_hostname_oci \
+	imds_local_hostname_scaleway \
 	\
 	imds_ssh_keys_alpine \
 	imds_ssh_keys_aws \
@@ -31,9 +33,12 @@ init_tests \
 	imds_ssh_keys_gcp \
 	imds_ssh_keys_nocloud \
 	imds_ssh_keys_oci \
+	imds_ssh_keys_scaleway \
 	\
 	imds_nocloud_cmdline_local_hostname \
-	imds_nocloud_smbios_local_hostname
+	imds_nocloud_smbios_local_hostname \
+	\
+	imds_userdata_scaleway
 
 imds_help_body() {
 	atf_check -o match:"Usage: imds" imds -h
@@ -66,6 +71,12 @@ imds_hostname_azure_body()	{ check_hostname azure; }
 imds_hostname_gcp_body()	{ check_hostname gcp; }
 imds_hostname_nocloud_body()	{ check_hostname nocloud; }
 imds_hostname_oci_body()	{ check_hostname oci; }
+imds_hostname_scaleway_body()	{
+	fake_metadata scaleway <<-EOF
+HOSTNAME=myhostname
+EOF
+	CLOUD="scaleway" atf_check -o match:"myhostname" imds @hostname
+}
 
 check_local_hostname() {
 	fake_metadata "$1" <<-EOF
@@ -86,6 +97,12 @@ imds_local_hostname_azure_body()	{ check_local_hostname azure; }
 imds_local_hostname_gcp_body()		{ check_local_hostname gcp; }
 imds_local_hostname_nocloud_body()	{ check_local_hostname nocloud; }
 imds_local_hostname_oci_body()	{ check_local_hostname oci; }
+imds_local_hostname_scaleway_body()	{
+	fake_metadata scaleway <<-EOF
+HOSTNAME=myhostname
+EOF
+	CLOUD="scaleway" atf_check -o match:"myhostname" imds @local-hostname
+}
 
 check_ssh_keys() {
 	local key="ssh-ed25519 keydata"
@@ -106,6 +123,7 @@ check_ssh_keys() {
 		  # oci
 		  metadata:
 		    ssh_authorized_keys: $key
+
 	EOF
 	CLOUD="$1" atf_check -o match:"$key" imds @ssh-keys
 }
@@ -115,6 +133,21 @@ imds_ssh_keys_azure_body()	{ check_ssh_keys azure; }
 imds_ssh_keys_gcp_body()	{ check_ssh_keys gcp; }
 imds_ssh_keys_nocloud_body()	{ check_ssh_keys nocloud; }
 imds_ssh_keys_oci_body()	{ check_ssh_keys oci; }
+imds_ssh_keys_scaleway_body()	{
+	local key="ssh-ed25519 keydata"
+	fake_metadata scaleway <<-EOF
+SSH_PUBLIC_KEYS=1
+SSH_PUBLIC_KEYS_0='ID KEY FINGERPRINT CREATION_DATE MODIFICATION_DATE DESCRIPTION IP'
+SSH_PUBLIC_KEYS_0_ID=00000000-0000-0000-0000-000000000000
+SSH_PUBLIC_KEYS_0_KEY='$key'
+SSH_PUBLIC_KEYS_0_FINGERPRINT='256 MD5:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00 ssh_test_key (ssh-ed25519)'
+SSH_PUBLIC_KEYS_0_CREATION_DATE=2024-01-25T19:51:28.263483+00:00
+SSH_PUBLIC_KEYS_0_MODIFICATION_DATE=2024-01-25T19:51:28.263483+00:00
+SSH_PUBLIC_KEYS_0_DESCRIPTION=ssh_test_key
+SSH_PUBLIC_KEYS_0_IP=
+EOF
+	CLOUD="scaleway" atf_check -o match:"$key" imds @ssh-keys
+}
 
 imds_nocloud_cmdline_local_hostname_body() {
 	atf_require_prog yx
@@ -136,4 +169,12 @@ imds_nocloud_smbios_local_hostname_body() {
 			-o match:'^myhostname$' \
 			imds @local-hostname
 	done
+}
+
+imds_userdata_scaleway_body() {
+	local cmd="sh ./cmd"
+	fake_userdata_scaleway <<-EOF
+$cmd
+EOF
+	CLOUD="scaleway" atf_check -o match:"$cmd" imds @userdata
 }

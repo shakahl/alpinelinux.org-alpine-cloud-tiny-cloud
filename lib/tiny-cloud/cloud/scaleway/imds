@@ -1,0 +1,40 @@
+# Scaleway Instance MetaData Service variables and functions
+# vim:set filetype=sh:
+# shellcheck shell=sh
+
+IMDS_ENDPOINT="169.254.42.42"
+IMDS_URI="conf"
+
+IMDS_HOSTNAME="HOSTNAME"
+IMDS_LOCAL_HOSTNAME="$IMDS_HOSTNAME"
+IMDS_SSH_KEYS="SSH_PUBLIC_KEYS_[0-9]+_KEY"
+
+_imds() {
+	wget --quiet --timeout 1 --output-document - "http://$IMDS_ENDPOINT/$IMDS_URI$IMDS_QUERY" | egrep "^${1}=" | cut -d'=' -f2
+}
+
+_imds_ssh_keys() {
+	imds "$IMDS_SSH_KEYS" | tr -d "'" | sort -u
+}
+
+_imds_userdata() {
+	mkdir -p "$ROOT/run/tiny-cloud"
+	TMPFILE=$(mktemp "$ROOT/run/tiny-cloud/userdata.XXXXXX")
+
+	trap cleanup EXIT
+
+	cleanup() {
+		rm $TMPFILE
+	}
+
+	# Scaleway requires IMDS to use low-numbered ports to fetch
+	# userdata, which wget can't do
+	printf "GET /user_data/cloud-init HTTP/1.0\r\n\r\n" \
+		| nc -w 1 -p 1000 "$IMDS_ENDPOINT" 80 > $TMPFILE
+
+	STATUS=$(head -n 1 $TMPFILE | cut -d ' ' -f 2)
+
+	if [ $STATUS -eq 200 ]; then
+		awk 'NR==1,/^\r$/ {next} {printf "%s%s",$0,RT}' $TMPFILE
+	fi
+}

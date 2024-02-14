@@ -7,6 +7,7 @@ PATH="$atf_srcdir/bin:$srcdir/bin:$srcdir/sbin:$PATH"
 export TINY_CLOUD_BASEDIR="$srcdir"
 export ROOT="$PWD"
 
+
 init_tests() {
 	TESTS=
 	for t; do
@@ -83,6 +84,15 @@ fake_metadata_oci() {
 	export WGET_STRIP_PREFIX="/opc/v2"
 }
 
+fake_metadata_scaleway() {
+	cat > "169.254.42.42.txt"
+	export WGET_STRIP_PREFIX="/conf"
+}
+
+fake_userdata_scaleway() {
+	cat > "169.254.42.42.txt"
+}
+
 fake_metadata() {
 	case "${1:-$CLOUD}" in
 		alpine|nocloud) fake_metadata_nocloud;;
@@ -90,6 +100,7 @@ fake_metadata() {
 		azure) fake_metadata_azure;;
 		gcp) fake_metadata_gcp;;
 		oci) fake_metadata_oci;;
+		scaleway) fake_metadata_scaleway;;
 		*) echo "TODO: fake_metadata_$CLOUD" >&2;;
 	esac
 }

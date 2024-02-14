@@ -84,12 +84,18 @@ path="${url#http*://$host}"
 path="${path#${WGET_STRIP_PREFIX:-/}}"
 path="${path%\?*}"
 
+
 if [ -z "$WGETCONTENT" ]; then
-	(
-	IFS=/
-	set -- ${path#/}
-	yx -f "${WGET_YAML:-$host.yaml}" "$@" 2>/dev/null
-	)
+	# Scaleway has all the data on a single TXT endpoint
+	if [ "$CLOUD" = "scaleway" ]; then
+		cat "${WGET_YAML:-$host.txt}"
+	else
+		(
+		IFS=/
+		set -- ${path#/}
+		yx -f "${WGET_YAML:-$host.yaml}" "$@" 2>/dev/null
+		)
+	fi
 fi
 
 : "${outfile:=index.html}"

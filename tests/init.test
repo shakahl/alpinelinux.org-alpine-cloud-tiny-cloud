@@ -25,7 +25,7 @@ init_tests \
 	userdata_type \
 	run_userdata
 
-PROVIDERS="alpine aws azure gcp nocloud oci"
+PROVIDERS="alpine aws azure gcp nocloud oci scaleway"
 
 expand_root_body() {
 	mkdir proc

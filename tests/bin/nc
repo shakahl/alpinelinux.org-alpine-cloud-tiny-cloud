@@ -1,6 +1,27 @@
 #!/bin/sh
 input="$(cat)"
+host=""
+port=""
+local_port=1024
 case "$input" in
 	-*) echo "nc: bad input: \$input" >&2; exit 1;;
 esac
-echo "token-foo"
+while [ ! -z $1 ]; do
+	case $1 in
+		-w) shift 2;;
+		-p) local_port=$2; shift 2;;
+		*) if [ -z $host ]; then host=$1; elif [ -z $port ]; then port=$1; fi; shift 1;;
+	esac
+done
+
+# Scaleway
+if [ "$CLOUD" = "scaleway" ]; then
+	if [ $local_port -gt 1023 ]; then
+		NC_CONTENT="invalid local port"
+	else
+		NC_CONTENT="$(cat ${NC_FILE:-$host.txt})"
+	fi
+	printf "HTTP/1.1 200 OK\r\n\r\n%s" "$NC_CONTENT"
+else
+	echo "token-foo"
+fi
