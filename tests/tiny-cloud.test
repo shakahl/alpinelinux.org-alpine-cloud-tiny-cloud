@@ -6,7 +6,7 @@
 
 export PREFIX="$srcdir"
 export MOCK=echo
-PROVIDERS="alpine aws azure gcp nocloud oci scaleway"
+PROVIDERS="alpine aws azure gcp nocloud oci scaleway hetzner"
 
 init_tests \
 	tiny_cloud_help \

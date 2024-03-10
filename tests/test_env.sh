@@ -93,6 +93,11 @@ fake_userdata_scaleway() {
 	cat > "169.254.42.42.txt"
 }
 
+fake_metadata_hetzner() {
+	cat > "169.254.169.254.yaml"
+	export WGET_STRIP_PREFIX="/hetzner/v1/metadata"
+}
+
 fake_metadata() {
 	case "${1:-$CLOUD}" in
 		alpine|nocloud) fake_metadata_nocloud;;
@@ -101,6 +106,7 @@ fake_metadata() {
 		gcp) fake_metadata_gcp;;
 		oci) fake_metadata_oci;;
 		scaleway) fake_metadata_scaleway;;
+		hetzner) fake_metadata_hetzner;;
 		*) echo "TODO: fake_metadata_$CLOUD" >&2;;
 	esac
 }
