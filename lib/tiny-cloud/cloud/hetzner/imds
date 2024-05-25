@@ -15,7 +15,7 @@ _imds_header() {
 }
 
 _imds_ssh_keys() {
-	_imds "$IMDS_SSH_KEYS" | sed 's/"/\n/g' | egrep -v '(\[|\]|,)' | sort -u
+	_imds "$IMDS_SSH_KEYS" | sed 's/"/\n/g' | grep -E -v '(\[|\]|,)' | sort -u
 }
 
 _imds_userdata() {

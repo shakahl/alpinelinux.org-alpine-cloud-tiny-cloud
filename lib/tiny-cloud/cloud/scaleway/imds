@@ -10,7 +10,7 @@ IMDS_LOCAL_HOSTNAME="$IMDS_HOSTNAME"
 IMDS_SSH_KEYS="SSH_PUBLIC_KEYS_[0-9]+_KEY"
 
 _imds() {
-	wget --quiet --timeout 1 --output-document - "http://$IMDS_ENDPOINT/$IMDS_URI$IMDS_QUERY" | egrep "^${1}=" | cut -d'=' -f2
+	wget --quiet --timeout 1 --output-document - "http://$IMDS_ENDPOINT/$IMDS_URI$IMDS_QUERY" | grep -E "^${1}=" | cut -d'=' -f2
 }
 
 _imds_ssh_keys() {

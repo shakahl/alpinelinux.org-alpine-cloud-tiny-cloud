@@ -106,8 +106,9 @@ imds_local_hostname_oci_body()	{ check_local_hostname oci; }
 imds_local_hostname_scaleway_body()	{
 	fake_metadata scaleway <<-EOF
 HOSTNAME=myhostname
+FOO=bar
 EOF
-	CLOUD="scaleway" atf_check -o match:"myhostname" imds @local-hostname
+	CLOUD="scaleway" atf_check -o match:"^myhostname$" imds @local-hostname
 }
 imds_local_hostname_hetzner_body()	{ check_local_hostname hetzner; }
 
