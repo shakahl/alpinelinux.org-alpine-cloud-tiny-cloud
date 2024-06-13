@@ -1,0 +1,11 @@
+#!/bin/sh
+
+# Tiny Cloud - Autodetect
+# vim:set filetype=sh:
+# shellcheck shell=sh
+
+grep -w 'ds=nocloud' "$ROOT"/proc/cmdline 2>/dev/null \
+	|| grep -w "^ds=nocloud" "$ROOT"/sys/class/dmi/id/product_serial 2>/dev/null \
+	|| findfs LABEL=cidata >/dev/null 2>&1 \
+	|| findfs LABEL=CIDATA >/dev/null 2>&1 \
+	&& echo "10 nocloud"

@@ -23,7 +23,11 @@ init_tests \
 	set_hostname \
 	set_ssh_keys \
 	userdata_type \
-	run_userdata
+	run_userdata \
+	autodetect_unknown \
+	autodetect_nocloud_cmdline \
+	autodetect_nocloud_dmi \
+	autodetect_nocloud_volume
 
 PROVIDERS="aws azure gcp nocloud oci scaleway hetzner"
 
@@ -224,4 +228,41 @@ run_userdata_body() {
 		sh -c ". \"$lib\"; init__run_userdata"
 	grep "hello from user-data" var/log/user-data.log || atf_fail "user-data.log failed"
 	grep -w "0" var/log/user-data.exit || atf_fail "user-data.exit failed"
+}
+
+autodetect_unknown_body() {
+	atf_check \
+		-o match:"unknown" \
+		sh -c ". \"$lib\"; echo \$CLOUD"
+}
+
+autodetect_nocloud_cmdline_body() {
+	mkdir -p proc
+	echo "quiet ds=nocloud;s=https://10.42.42.42/ console=ttyS0" > proc/cmdline
+	atf_check \
+		-o match:"nocloud" \
+		sh -c ". \"$lib\"; echo \$CLOUD"
+}
+
+autodetect_nocloud_dmi_body() {
+	mkdir -p sys/class/dmi/id
+	echo "ds=nocloud;s=https://10.42.42.42/" > sys/class/dmi/id/product_serial
+	atf_check \
+		-o match:"nocloud" \
+		sh -c ". \"$lib\"; echo \$CLOUD"
+}
+
+autodetect_nocloud_volume_body() {
+	fake_bin findfs <<-EOF
+		#!/bin/sh
+		case "\$1" in
+			LABEL=cidata) echo "/dev/sda1";;
+			LABEL=CIDATA) echo "/dev/sda2";;
+			*) exit 1;;
+		esac
+	EOF
+
+	atf_check \
+		-o match:"nocloud" \
+		sh -c ". \"$lib\"; echo \$CLOUD"
 }

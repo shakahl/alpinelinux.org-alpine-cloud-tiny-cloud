@@ -4,7 +4,7 @@
 
 # set defaults
 [ -f "$ROOT/etc/tiny-cloud.conf" ] && . "$ROOT/etc/tiny-cloud.conf"
-: "${CLOUD:=unknown}"
+: "${CLOUD:=auto}"
 : "${CLOUD_USER:=alpine}"
 : "${TINY_CLOUD_LOGS:=$ROOT/var/log}"
 : "${TINY_CLOUD_VAR:=$ROOT/var/lib/cloud}"

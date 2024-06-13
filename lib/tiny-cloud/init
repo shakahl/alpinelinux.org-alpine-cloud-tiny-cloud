@@ -37,6 +37,20 @@ DEFAULT_ACTIONS_FINAL=""
 [ ! -d "$TINY_CLOUD_LOGS" ] && mkdir -p "$TINY_CLOUD_LOGS" || true
 [ ! -d "$TINY_CLOUD_VAR" ] && mkdir -p "$TINY_CLOUD_VAR" || true
 
+# autodetect cloud
+if [ "$CLOUD" = "auto" ]; then
+	CLOUD=$(cat "$TINY_CLOUD_VAR"/.autodetect 2>/dev/null) || {
+		CLOUD=$(
+			for i in "$LIBDIR"/tiny-cloud/cloud/*/autodetect; do
+				if [ -f "$i" ]; then
+					"$i"
+				fi
+			done | sort -n | cut -d' ' -f2 | head -n 1
+		)
+		: ${CLOUD:=unknown}
+		printf "%s\n" "$CLOUD" > "$TINY_CLOUD_VAR"/.autodetect
+	}
+fi
 
 ### standard boot phase functions...
 
