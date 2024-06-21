@@ -20,14 +20,24 @@ while [ ! -z "$1" ]; do
 	esac
 done
 
-# Scaleway
-if [ "$CLOUD" = "scaleway" ]; then
-	if [ $local_port -gt 1023 ]; then
-		NC_CONTENT="invalid local port"
-	else
-		NC_CONTENT="$(cat ${NC_FILE:-$host.txt})"
-	fi
-	printf "HTTP/1.1 200 OK\r\n\r\n%s" "$NC_CONTENT"
-else
-	echo "token-foo"
-fi
+case "$CLOUD" in
+	scaleway)
+		if [ $local_port -gt 1023 ]; then
+			NC_CONTENT="invalid local port"
+		else
+			NC_CONTENT="$(cat ${NC_FILE:-$host.txt})"
+		fi
+		printf "HTTP/1.1 200 OK\r\n\r\n%s" "$NC_CONTENT"
+		;;
+	incus)
+		set -- $input  # GET $URL HTTP/1.0
+		url="$2"
+		NC_CONTENT="$(cat ${NC_FILE:-${host%:*}.txt})"
+		len=$(printf "%s" "$NC_CONTENT" | wc -c)
+		printf "HTTP/1.0 200 $url OK\r\nContent-Type: application/json\r\nContent-Length: $len\r\n\r\n%s" \
+			"$NC_CONTENT"
+		;;
+	*)
+		echo "token-foo"
+		;;
+esac

@@ -98,15 +98,24 @@ fake_metadata_hetzner() {
 	export WGET_STRIP_PREFIX="/hetzner/v1/metadata"
 }
 
+fake_metadata_incus() {
+	cat > "local.txt"
+}
+
+fake_userdata_incus() {
+	cat > "local.txt"
+}
+
 fake_metadata() {
 	case "${1:-$CLOUD}" in
 		alpine|nocloud) fake_metadata_nocloud;;
 		aws) fake_metadata_aws;;
 		azure) fake_metadata_azure;;
 		gcp) fake_metadata_gcp;;
+		hetzner) fake_metadata_hetzner;;
+		incus) fake_metadata_incus;;
 		oci) fake_metadata_oci;;
 		scaleway) fake_metadata_scaleway;;
-		hetzner) fake_metadata_hetzner;;
 		*) echo "TODO: fake_metadata_$CLOUD" >&2;;
 	esac
 }

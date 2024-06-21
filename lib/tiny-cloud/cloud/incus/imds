@@ -1,0 +1,21 @@
+# Incus Instance Metadata
+# vim:set filetype=sh:
+# shellcheck shell=sh
+
+# https://linuxcontainers.org/incus/docs/main/dev-incus/
+
+IMDS_URI=/1.0/meta-data
+IMDS_LOCAL_HOSTNAME="local-hostname"
+IMDS_HOSTNAME="local-hostname"
+IMDS_ENDPOINT=local:/dev/incus/sock
+
+_imds() {
+	printf "GET %s HTTP/1.0\n\n" "$IMDS_URI" \
+		| nc "$IMDS_ENDPOINT" | dos2unix \
+		| awk -F ': ' -v key="$1" '$1 == key { print $2 }'
+}
+
+_imds_userdata() {
+	printf "GET /1.0/config/user.user-data HTTP/1.0\n\n" \
+		| nc "$IMDS_ENDPOINT" | sed '1,/^\r$/d'
+}

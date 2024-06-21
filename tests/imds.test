@@ -18,6 +18,7 @@ init_tests \
 	imds_hostname_oci \
 	imds_hostname_scaleway \
 	imds_hostname_hetzner \
+	imds_hostname_incus \
 	\
 	imds_local_hostname_aws \
 	imds_local_hostname_azure \
@@ -26,6 +27,7 @@ init_tests \
 	imds_local_hostname_oci \
 	imds_local_hostname_scaleway \
 	imds_local_hostname_hetzner \
+	imds_local_hostname_incus \
 	\
 	imds_ssh_keys_aws \
 	imds_ssh_keys_azure \
@@ -38,6 +40,7 @@ init_tests \
 	imds_nocloud_cmdline_local_hostname \
 	imds_nocloud_smbios_local_hostname \
 	\
+	imds_userdata_incus \
 	imds_userdata_scaleway
 
 imds_help_body() {
@@ -68,6 +71,13 @@ check_hostname() {
 imds_hostname_aws_body()	{ check_hostname aws; }
 imds_hostname_azure_body()	{ check_hostname azure; }
 imds_hostname_gcp_body()	{ check_hostname gcp; }
+imds_hostname_incus_body()	{
+	fake_metadata incus <<-EOF
+		#cloud-config
+		local-hostname: myhostname
+	EOF
+	CLOUD="incus" atf_check -o match:"myhostname" imds @hostname
+}
 imds_hostname_nocloud_body()	{ check_hostname nocloud; }
 imds_hostname_oci_body()	{ check_hostname oci; }
 imds_hostname_scaleway_body()	{
@@ -80,7 +90,7 @@ imds_hostname_hetzner_body()	{ check_hostname hetzner; }
 
 check_local_hostname() {
 	fake_metadata "$1" <<-EOF
-		# nocloud, alpine, aws
+		# nocloud, alpine, aws, incus
 		local-hostname: myhostname
 		# hetzner
 		hostname: myhostname
@@ -96,6 +106,7 @@ check_local_hostname() {
 imds_local_hostname_aws_body()		{ check_local_hostname aws; }
 imds_local_hostname_azure_body()	{ check_local_hostname azure; }
 imds_local_hostname_gcp_body()		{ check_local_hostname gcp; }
+imds_local_hostname_incus_body()	{ check_local_hostname incus; }
 imds_local_hostname_nocloud_body()	{ check_local_hostname nocloud; }
 imds_local_hostname_oci_body()	{ check_local_hostname oci; }
 imds_local_hostname_scaleway_body()	{
@@ -106,6 +117,7 @@ EOF
 	CLOUD="scaleway" atf_check -o match:"^myhostname$" imds @local-hostname
 }
 imds_local_hostname_hetzner_body()	{ check_local_hostname hetzner; }
+imds_local_hostname_incus_body()	{ check_local_hostname incus; }
 
 check_ssh_keys() {
 	local key="ssh-ed25519 keydata"
@@ -179,6 +191,13 @@ imds_nocloud_smbios_local_hostname_body() {
 			-o match:'^myhostname$' \
 			imds @local-hostname
 	done
+}
+
+imds_userdata_incus_body() {
+	fake_userdata_incus <<-EOF
+		#alpine-config
+	EOF
+	CLOUD="incus" atf_check -o match:"#alpine-config" imds @userdata
 }
 
 imds_userdata_scaleway_body() {
