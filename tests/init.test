@@ -25,7 +25,7 @@ init_tests \
 	userdata_type \
 	run_userdata
 
-PROVIDERS="alpine aws azure gcp nocloud oci scaleway hetzner"
+PROVIDERS="aws azure gcp nocloud oci scaleway hetzner"
 
 expand_root_body() {
 	mkdir proc

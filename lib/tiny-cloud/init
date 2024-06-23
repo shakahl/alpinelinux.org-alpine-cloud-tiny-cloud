@@ -295,6 +295,11 @@ init__set_ssh_keys() {
 
 ### load cloud-specific init functions / vars (potentially overriding)
 
+if [ "$CLOUD" = "alpine" ]; then
+	log -i -t "$phase" warn "CLOUD provider alpine is deprecated. Use nocloud"
+	CLOUD="nocloud"
+fi
+
 if [ -f "$LIBDIR/tiny-cloud/cloud/$CLOUD/init" ]; then
 	. "$LIBDIR/tiny-cloud/cloud/$CLOUD/init"
 fi

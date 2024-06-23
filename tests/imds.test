@@ -5,13 +5,12 @@
 . $(atf_get_srcdir)/test_env.sh
 
 export PREFIX="$srcdir"
-PROVIDERS="alpine aws azure gcp nocloud scaleway"
+PROVIDERS="aws azure gcp nocloud scaleway"
 
 init_tests \
 	imds_help \
 	imds_space \
 	\
-	imds_hostname_alpine \
 	imds_hostname_aws \
 	imds_hostname_azure \
 	imds_hostname_gcp \
@@ -20,7 +19,6 @@ init_tests \
 	imds_hostname_scaleway \
 	imds_hostname_hetzner \
 	\
-	imds_local_hostname_alpine \
 	imds_local_hostname_aws \
 	imds_local_hostname_azure \
 	imds_local_hostname_gcp \
@@ -29,7 +27,6 @@ init_tests \
 	imds_local_hostname_scaleway \
 	imds_local_hostname_hetzner \
 	\
-	imds_ssh_keys_alpine \
 	imds_ssh_keys_aws \
 	imds_ssh_keys_azure \
 	imds_ssh_keys_gcp \
@@ -68,7 +65,6 @@ check_hostname() {
 	EOF
 	CLOUD="$1" atf_check -o match:"myhostname" imds @hostname
 }
-imds_hostname_alpine_body()	{ check_hostname alpine; }
 imds_hostname_aws_body()	{ check_hostname aws; }
 imds_hostname_azure_body()	{ check_hostname azure; }
 imds_hostname_gcp_body()	{ check_hostname gcp; }
@@ -97,7 +93,6 @@ check_local_hostname() {
 	EOF
 	CLOUD="$1" atf_check -o match:"myhostname" imds @local-hostname
 }
-imds_local_hostname_alpine_body()	{ check_local_hostname alpine; }
 imds_local_hostname_aws_body()		{ check_local_hostname aws; }
 imds_local_hostname_azure_body()	{ check_local_hostname azure; }
 imds_local_hostname_gcp_body()		{ check_local_hostname gcp; }
@@ -135,7 +130,6 @@ check_ssh_keys() {
 	EOF
 	CLOUD="$1" atf_check -o match:"$key" imds @ssh-keys
 }
-imds_ssh_keys_alpine_body()	{ check_ssh_keys alpine; }
 imds_ssh_keys_aws_body()	{ check_ssh_keys aws; }
 imds_ssh_keys_azure_body()	{ check_ssh_keys azure; }
 imds_ssh_keys_gcp_body()	{ check_ssh_keys gcp; }

@@ -6,8 +6,7 @@
 
 export PREFIX="$srcdir"
 export MOCK=echo
-export CLOUD=alpine
-lib="$srcdir"/lib/tiny-cloud/cloud/alpine/init
+export CLOUD=nocloud
 
 init_tests \
 	set_ephemeral_network_cmdline \
