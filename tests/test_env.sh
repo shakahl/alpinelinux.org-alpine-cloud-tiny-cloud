@@ -120,3 +120,10 @@ fake_interfaces() {
 		n=$((n+1))
 	done
 }
+
+fake_disk() {
+	local dev="$1" size="$2"
+	mkdir -p sys/class/block/$dev
+	touch sys/class/block/$dev/device
+	echo "$size" > sys/class/block/$1/size
+}

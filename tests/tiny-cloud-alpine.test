@@ -28,7 +28,8 @@ init_tests \
 	userdata_package_update \
 	userdata_package_upgrade \
 	userdata_packages \
-	userdata_runcmd
+	userdata_runcmd \
+	userdata_autoinstall
 
 set_ephemeral_network_cmdline_body() {
 	fake_interfaces eth0 eth1 eth2
@@ -413,3 +414,24 @@ userdata_write_files_body() {
 		world
 	EOF
 }
+
+userdata_autoinstall_body() {
+	fake_userdata_nocloud <<-EOF
+		#alpine-config
+		autoinstall: true
+	EOF
+	fake_bin blkid <<-EOF
+		#!/bin/sh
+		true
+	EOF
+	fake_disk nvme0n8 10000
+	fake_disk vda 20000
+
+	# run net phase to extract the user data
+	atf_check -e ignore -o ignore tiny-cloud early
+	atf_check \
+		-e match:"userdata_autoinstall: done" \
+		-o match:"setup-disk" \
+		tiny-cloud final
+}
+

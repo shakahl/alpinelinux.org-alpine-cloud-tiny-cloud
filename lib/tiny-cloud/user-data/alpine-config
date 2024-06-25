@@ -7,7 +7,7 @@ INIT_ACTIONS_MAIN="$(insert_after set_hostname \
 	"userdata_bootcmd userdata_write_files userdata_ntp userdata_apk_cache userdata_apk_repositories userdata_package_update userdata_package_upgrade userdata_packages" \
 	$INIT_ACTIONS_MAIN)"
 INIT_ACTIONS_MAIN="$(insert_after set_ssh_keys ssh_authorized_keys $INIT_ACTIONS_MAIN)"
-INIT_ACTIONS_FINAL="$INIT_ACTIONS_FINAL userdata_runcmd"
+INIT_ACTIONS_FINAL="$INIT_ACTIONS_FINAL userdata_runcmd userdata_autoinstall"
 
 get_userdata() {
 	IFS="/"
@@ -226,4 +226,30 @@ init__userdata_runcmd() {
 		local cmd="$(get_userdata runcmd/$i)"
 		sh -c "$cmd"
 	done
+}
+
+find_biggest_empty_disk() {
+	local d
+	for d in  "$ROOT"/sys/class/block/*/device; do
+		p=${d%/device}
+		if [ -e "$p"/size ] && [ -z "$(blkid /dev/${p##*/})" ]; then
+			echo "$(cat $p/size) ${p##*/}"
+		fi
+	done | sort -n | tail -n 1 | cut -d' ' -f2
+}
+
+init__userdata_autoinstall() {
+	local autoinstall="$(get_userdata autoinstall)"
+	if [ "$autoinstall" = "true" ]; then
+		local disk="$(find_biggest_empty_disk)"
+		if [ -n "$disk" ]; then
+			rm -f "$ROOT"/etc/runlevels/*/tiny-cloud*
+			$MOCK lbu include /root/.ssh /home
+			$MOCK ERASE_DISKS=/dev/$disk setup-disk -m sys /dev/$disk
+			# TODO: make reboot configurable
+			$MOCK reboot
+		else
+			log err "no empty disk found"
+		fi
+	fi
 }
