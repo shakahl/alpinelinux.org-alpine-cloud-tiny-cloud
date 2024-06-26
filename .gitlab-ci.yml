@@ -32,3 +32,14 @@ test-zsh:
   before_script:
     - apk add zsh
     - ln -sf /bin/zsh /bin/sh
+
+test-install:
+  image: alpine:latest
+  stage: test
+  script:
+    - apk add make
+    - make install PREFIX=/tmp/tiny-cloud
+  tags:
+    - docker-alpine
+    - x86_64
+
