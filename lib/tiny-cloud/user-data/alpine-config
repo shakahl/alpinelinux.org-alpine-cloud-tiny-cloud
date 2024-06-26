@@ -172,6 +172,11 @@ init__userdata_apk_cache() {
 }
 
 init__userdata_apk_repositories() {
+	local apk="$(get_userdata apk)"
+	if [ -z "$apk" ] && ! [ -e "$ROOT"/etc/apk/repositories ]; then
+		$MOCK setup-apkrepos -1 -c
+		return
+	fi
 	local repositories="$(get_userdata apk/repositories)"
 	mkdir -p "$ROOT"/etc/apk
 	for r in $repositories; do

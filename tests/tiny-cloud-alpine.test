@@ -22,6 +22,7 @@ init_tests \
 	userdata_ntp_busybox \
 	userdata_ntp_openntpd \
 	userdata_apk_cache \
+	userdata_apk_empty \
 	userdata_apk_repositories \
 	userdata_apk_repositories_version \
 	userdata_apk_repositories_version_auto_edge \
@@ -236,6 +237,17 @@ userdata_apk_cache_body() {
 		-o ignore \
 		tiny-cloud main
 	atf_check -o match:"$PWD/var/cache/apk" readlink -f etc/apk/cache
+}
+
+userdata_apk_empty_body() {
+	fake_userdata_nocloud <<-EOF
+		#alpine-config
+	EOF
+	atf_check -e ignore -o ignore tiny-cloud early
+	atf_check \
+		-e match:"userdata_apk_repositories: done" \
+		-o match:"setup-apkrepos -1 -c" \
+		tiny-cloud main
 }
 
 userdata_apk_repositories_body() {
