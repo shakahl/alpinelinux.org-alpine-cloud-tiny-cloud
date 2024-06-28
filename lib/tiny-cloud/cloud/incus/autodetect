@@ -1,0 +1,3 @@
+#!/bin/sh
+
+test -e "$ROOT"/dev/incus/sock && echo "10 incus"
