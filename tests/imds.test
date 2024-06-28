@@ -14,28 +14,29 @@ init_tests \
 	imds_hostname_aws \
 	imds_hostname_azure \
 	imds_hostname_gcp \
+	imds_hostname_hetzner \
+	imds_hostname_incus \
 	imds_hostname_nocloud \
 	imds_hostname_oci \
 	imds_hostname_scaleway \
-	imds_hostname_hetzner \
-	imds_hostname_incus \
 	\
 	imds_local_hostname_aws \
 	imds_local_hostname_azure \
 	imds_local_hostname_gcp \
+	imds_local_hostname_hetzner \
+	imds_local_hostname_incus \
 	imds_local_hostname_nocloud \
 	imds_local_hostname_oci \
 	imds_local_hostname_scaleway \
-	imds_local_hostname_hetzner \
-	imds_local_hostname_incus \
 	\
 	imds_ssh_keys_aws \
 	imds_ssh_keys_azure \
 	imds_ssh_keys_gcp \
+	imds_ssh_keys_hetzner \
+	imds_ssh_keys_incus \
 	imds_ssh_keys_nocloud \
 	imds_ssh_keys_oci \
 	imds_ssh_keys_scaleway \
-	imds_ssh_keys_hetzner \
 	\
 	imds_nocloud_cmdline_local_hostname \
 	imds_nocloud_smbios_local_hostname \
@@ -169,6 +170,21 @@ imds_ssh_keys_hetzner_body()	{
 		public-keys: '["$key"]'
 	EOF
 	CLOUD="hetzner" atf_check -o match:"$key" imds @ssh-keys
+}
+
+imds_ssh_keys_incus_body()	{
+	local key="ssh-ed25519 keydata"
+	fake_userdata_incus <<-EOF
+		ssh_authorized_keys:
+		  - asdasdf
+		  # other key
+		  - $key
+		foo: bar
+	EOF
+	CLOUD="incus" atf_check \
+		-o match:"$key" \
+		-o not-match:"other key" \
+		imds @ssh-keys
 }
 
 imds_nocloud_cmdline_local_hostname_body() {

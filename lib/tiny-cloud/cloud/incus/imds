@@ -19,3 +19,9 @@ _imds_userdata() {
 	printf "GET /1.0/config/user.user-data HTTP/1.0\n\n" \
 		| nc "$IMDS_ENDPOINT" | sed '1,/^\r$/d'
 }
+
+_imds_ssh_keys() {
+	# extract ssh_authorized_keys from user-data
+	_imds_userdata \
+		| awk '/^ssh_authorized_keys:/ {flag=1; next} /^[a-z]/ {flag=0} flag && /^ *- / {sub(/^ *- /, ""); print}'
+}
